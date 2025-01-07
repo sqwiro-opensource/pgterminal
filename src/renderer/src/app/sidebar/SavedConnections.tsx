@@ -1,22 +1,25 @@
-import React from 'react'
-import { Database, ChevronRight, MoreVertical } from 'lucide-react'
+import React from 'react';
+import { Database, ChevronRight, MoreVertical } from 'lucide-react';
 
-import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button'
+import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
-} from '@cloudhub-ux/shadcn/esm/components/ui/dropdown-menu'
-import useDatabaseContext from '@src/renderer/context/useDatabaseContext'
-import ConnectionForm from '@src/renderer/app/sidebar/ConnectionForm'
-import INITIAL_STATE from '@src/renderer/context/INITIAL_STATE'
+} from '@cloudhub-ux/shadcn/esm/components/ui/dropdown-menu';
+import useDatabaseContext from '@src/renderer/context/useDatabaseContext';
+import ConnectionForm from '@src/renderer/app/sidebar/ConnectionForm';
+import INITIAL_STATE from '@src/renderer/context/INITIAL_STATE';
+import { MdiRefresh } from '@cloudhub-ux-icons/mdi';
+import useSelectedDatabaseContext from '../database/context/useSelectedDatabaseContext';
 
 export function SavedConnections() {
-  const { savedConnections, selectedConnection, dispatch } = useDatabaseContext()
+  const { savedConnections, selectedConnection, dispatch } = useDatabaseContext();
+  const { reload } = useSelectedDatabaseContext();
 
   const disconnect = async () => {
-    await window.api.disconnectServer(savedConnections[selectedConnection])
+    await window.api.disconnectServer(savedConnections[selectedConnection]);
 
     dispatch((state) => ({
       databaseContext: {
@@ -25,8 +28,8 @@ export function SavedConnections() {
         selectedConnection: ''
       },
       selectedDatabase: INITIAL_STATE.databaseContext.selectedDatabase
-    }))
-  }
+    }));
+  };
 
   return (
     <div className="space-y-1">
@@ -56,6 +59,10 @@ export function SavedConnections() {
             <div key={connection.name} className="flex items-center justify-between">
               <ConnectionForm connection={connection} />
 
+              <Button variant="ghost" size="icon" className="h-8 w-8 p-0" onClick={reload}>
+                <MdiRefresh className="h-4 w-4" />
+              </Button>
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -70,5 +77,5 @@ export function SavedConnections() {
             </div>
           ))}
     </div>
-  )
+  );
 }

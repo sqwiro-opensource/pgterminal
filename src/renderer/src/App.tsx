@@ -1,23 +1,23 @@
-import Versions from './components/Versions'
-import electronLogo from './assets/electron.svg'
-import INITIAL_STATE from '@src/renderer/context/INITIAL_STATE'
-import { ThemeProvider } from '@cloudhub-ux/min'
+import Versions from './components/Versions';
+import electronLogo from './assets/electron.svg';
+import INITIAL_STATE from '@src/renderer/context/INITIAL_STATE';
+import { ThemeProvider } from '@cloudhub-ux/min';
 
-import { AppContextProvider } from '@cloudhub-ux/zstore'
-import LocationProvider from '@cloudhub-ux/mui/dist/customhooks/LocationProvider'
-import ShadcnThemeProvider from '@cloudhub-ux/shadcn/esm/theme/ShadcnThemeProvider'
-import { fonts, sizes } from '@src/renderer/theme'
-import MainPage from '@src/renderer/app/mainpage/MainPage'
+import { AppContextProvider } from '@cloudhub-ux/zstore';
+import LocationProvider from '@cloudhub-ux/mui/dist/customhooks/LocationProvider';
+import ShadcnThemeProvider from '@cloudhub-ux/shadcn/esm/theme/ShadcnThemeProvider';
+import { fonts, sizes } from '@src/renderer/theme';
+import MainPage from '@src/renderer/app/mainpage/MainPage';
 
 // Define process if it doesn't exist
 if (typeof window !== 'undefined' && !window.process) {
-  window.process = { env: { NODE_ENV: 'production' } }
+  window.process = { env: { NODE_ENV: 'production' } };
 }
 
 function App(): JSX.Element {
-  const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+  const ipcHandle = (): void => window.electron.ipcRenderer.send('ping');
 
-  const ColorTheme = 'slateTheme'
+  const ColorTheme = 'slateTheme';
 
   return (
     <AppContextProvider
@@ -44,7 +44,7 @@ function App(): JSX.Element {
         </ShadcnThemeProvider>
       </LocationProvider>
     </AppContextProvider>
-  )
+  );
 }
 
-export default App
+export default App;

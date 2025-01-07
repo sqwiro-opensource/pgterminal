@@ -3692,6 +3692,13 @@
   dependencies:
     undici-types "~6.20.0"
 
+"@types/node@^20.11.26":
+  version "20.17.11"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.17.11.tgz#2c05215fc37316b1596df7fbdba52151eaf83c50"
+  integrity sha512-Ept5glCK35R8yeyIeYlRIZtX6SLRyqMhOFTgj5SOkMpLTdw3SEHI9fHx60xaUZ+V1aJxQJODE+7/j5ocZydYTg==
+  dependencies:
+    undici-types "~6.19.2"
+
 "@types/node@^20.14.8", "@types/node@^20.9.0":
   version "20.17.10"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-20.17.10.tgz#3f7166190aece19a0d1d364d75c8b0b5778c1e18"
@@ -4108,6 +4115,13 @@ app-builder-lib@24.13.3:
     semver "^7.3.8"
     tar "^6.1.12"
     temp-file "^3.4.0"
+
+arangojs@^9.2.0:
+  version "9.2.0"
+  resolved "https://registry.yarnpkg.com/arangojs/-/arangojs-9.2.0.tgz#a14ce764da5a9353cb96c8d9719cfd773b2cb327"
+  integrity sha512-WIoFPCrBeuX1kBzGwue4t+jjYFW/ipto4ZO5s6e1v6dMsZE4I+d5Bid2glL+D5UeUJ6qGgqfe3KOAAW1t0Pc2A==
+  dependencies:
+    "@types/node" "^20.11.26"
 
 arg@^5.0.2:
   version "5.0.2"

@@ -1,18 +1,18 @@
-import useAppContext from '@src/renderer/context/useAppContext'
-import { AsyncStorage } from '@cloudhub-ux/mui'
-import React from 'react'
+import useAppContext from '@src/renderer/context/useAppContext';
+import { AsyncStorage } from '@cloudhub-ux/mui';
+import React from 'react';
 
 function useDatabaseContext() {
   const { databaseContext, dispatch } = useAppContext((state) => ({
     databaseContext: state.databaseContext,
     dispatch: state.dispatch
-  }))
+  }));
 
-  const { savedConnections } = databaseContext
+  const { savedConnections } = databaseContext;
 
   React.useEffect(() => {
     async function getConnections() {
-      const savedConnections = await AsyncStorage.getItem('savedConnections')
+      const savedConnections = await AsyncStorage.getItem('savedConnections');
 
       if (savedConnections && Object.keys(savedConnections).length > 0) {
         dispatch((state) => ({
@@ -20,21 +20,17 @@ function useDatabaseContext() {
             ...state.databaseContext,
             savedConnections: savedConnections
           }
-        }))
+        }));
       }
     }
 
-    getConnections()
-  }, [])
-
-  React.useEffect(() => {
-    AsyncStorage.setItem('savedConnections', savedConnections)
-  }, [JSON.stringify(savedConnections)])
+    getConnections();
+  }, []);
 
   return {
     ...databaseContext,
     dispatch
-  }
+  };
 }
 
-export default useDatabaseContext
+export default useDatabaseContext;

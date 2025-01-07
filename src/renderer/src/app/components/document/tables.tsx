@@ -67,12 +67,17 @@ export const SimpleTable = function SimpleTable({
     title?: string;
     align?: 'left' | 'right' | 'center';
     component?: 'th' | 'td';
+    render?: (row: any) => React.ReactNode;
   }>;
   rows: Array<{
     [key: string]: string | number | React.ReactNode;
   }>;
   sx?: any;
 }) {
+  const renderRow = React.useMemo((row: any, render: (row: any) => React.ReactNode) => {
+    return render(row);
+  }, []);
+
   return (
     <TableContainer component={Paper}>
       <Table sx={{ ...sx }} aria-label="customized table">
@@ -94,7 +99,7 @@ export const SimpleTable = function SimpleTable({
                   {...(col.align ? { align: col.align } : {})}
                   {...(col.component ? { component: col.component } : {})}
                 >
-                  {row[col.name]}
+                  {col.render ? renderRow(row, col.render) : row[col.name]}
                 </StyledTableCell>
               ))}
             </StyledTableRow>

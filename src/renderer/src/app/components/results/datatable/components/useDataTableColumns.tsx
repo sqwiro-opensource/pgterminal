@@ -1,47 +1,88 @@
-'use client'
+'use client';
 
-import { ColumnDef } from '@tanstack/react-table'
+import { ColumnDef } from '@tanstack/react-table';
 
-import { Badge } from '@cloudhub-ux/shadcn/src/components/ui/badge'
-import { Checkbox } from '@cloudhub-ux/shadcn/src/components/ui/checkbox'
-import { DataTableColumnHeader } from './data-table-column-header'
-import { DataTableRowActions } from './data-table-row-actions'
-import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button'
-import { MdiChevronDown, MdiChevronRight } from '@cloudhub-ux-icons/mdi'
-import React from 'react'
+import { Badge } from '@cloudhub-ux/shadcn/src/components/ui/badge';
+import { Checkbox } from '@cloudhub-ux/shadcn/src/components/ui/checkbox';
+import { DataTableColumnHeader } from './data-table-column-header';
+import { DataTableRowActions } from './data-table-row-actions';
+import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button';
+import { MdiChevronDown, MdiChevronRight } from '@cloudhub-ux-icons/mdi';
+import React from 'react';
+import useTabInterfaceContext from '@src/renderer/context/useTabInterfaceContext';
 
 type FileData = {
-  createdAt: number
-  updatedAt: number
-  id: string
-  _id: string
-  name: string
-  type: string
-  tags: string[]
-  favorited: string
-}
+  createdAt: number;
+  updatedAt: number;
+  id: string;
+  _id: string;
+  name: string;
+  type: string;
+  tags: string[];
+  favorited: string;
+};
 
 const TableCell = ({ children }: { children: React.ReactNode }) => {
   // only one line and no overflow just ellipsis
-  return <div className="flex items-center truncate">{children}</div>
-}
+  return <div className="flex items-center truncate">{children}</div>;
+};
 
-export const useDataTableColumns = ({ sampleRow }: { sampleRow: FileData }) => {
+const Row_IdCell = ({ value, row }: { value: string; row: FileData }) => {
+  const { openDocumentTab } = useTabInterfaceContext();
+
+  console.log(value);
+
+  if (`${value}`.includes('/')) {
+    const [tableName, document_id] = `${value}`.split('/');
+
+    if (`${tableName}`.includes('_')) {
+      const [schema, schema_tableName] = tableName.split('_');
+
+      return (
+        <Button
+          variant="link"
+          className="p-0 m-0"
+          onClick={() => {
+            openDocumentTab({
+              schema,
+              tableName,
+              pk: '_id',
+              value: `${value}`,
+              document: row || {}
+            });
+          }}
+        >
+          <span>{value}</span>
+        </Button>
+      );
+    }
+  }
+
+  return <span>{value}</span>;
+};
+
+export const useDataTableColumns = ({
+  sampleRow,
+  onEdit = () => {}
+}: {
+  sampleRow: FileData;
+  onEdit: (row?: any) => void;
+}) => {
   const columnNames = Object.keys(sampleRow || {}).map((key) => ({
     name: key,
     isJsonBDataType:
       typeof sampleRow[key as keyof typeof sampleRow] === 'object' ||
       Array.isArray(sampleRow[key as keyof typeof sampleRow])
-  }))
+  }));
 
-  const [expandedRows, setExpandedRows] = React.useState<Record<string, boolean>>({})
+  const [expandedRows, setExpandedRows] = React.useState<Record<string, boolean>>({});
 
   const toggleRow = (rowId: string) => {
     setExpandedRows((prev) => ({
       ...prev,
       [rowId]: !prev[rowId]
-    }))
-  }
+    }));
+  };
 
   const columns: ColumnDef<FileData>[] = [
     {
@@ -90,8 +131,8 @@ export const useDataTableColumns = ({ sampleRow }: { sampleRow: FileData }) => {
       cell: ({ row }) => <div>{row.index + 1}</div>
     },
 
-    ...columnNames.map((column) => ({
-      accessorKey: column.name,
+    ...columnNames.map((dataColumn) => ({
+      accessorKey: dataColumn.name,
       header: ({ column }) => {
         return (
           <DataTableColumnHeader
@@ -99,28 +140,36 @@ export const useDataTableColumns = ({ sampleRow }: { sampleRow: FileData }) => {
             title={column.id}
             className="font-semibold text-md light:text-black dark:text-white"
           />
-        )
+        );
       },
-      cell: ({ row }) => (
-        <TableCell>
-          {column.isJsonBDataType
-            ? JSON.stringify(row.getValue(column.name))
-            : row.getValue(column.name)}
+      cell: ({ row, column }) => (
+        <TableCell style={{ width: column.getSize() }} className="w-96 truncate">
+          {dataColumn.name === '_id' ? (
+            <div style={{ width: column.getSize() }}>
+              <Row_IdCell value={row.getValue(dataColumn.name)} row={row.original} />
+            </div>
+          ) : (
+            <div style={{ width: column.getSize() }}>
+              {['string', 'number'].includes(typeof row.getValue(dataColumn.name))
+                ? row.getValue(dataColumn.name)
+                : JSON.stringify(row.getValue(dataColumn.name))}
+            </div>
+          )}
         </TableCell>
       ),
-      enableSorting: column.isJsonBDataType === false,
+      enableSorting: dataColumn.isJsonBDataType === false,
       enableHiding: true
     })),
 
     {
       id: 'actions',
 
-      cell: ({ row }) => <DataTableRowActions row={row} />
+      cell: ({ row }) => <DataTableRowActions row={row} onEdit={onEdit} />
     }
-  ]
+  ];
 
   return {
     columns,
     expandedRows
-  }
-}
+  };
+};

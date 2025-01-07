@@ -109,13 +109,21 @@ export type IInitialState = {
           expanded: boolean;
           viewList: {
             [key: string]: {
+              expanded: boolean;
               viewName: string;
               query: string;
               columns: {
-                [key: string]: {
-                  columnName: string;
-                  columnType: string;
-                  columnComment: string;
+                expanded: boolean;
+                columnList: {
+                  [key: string]: {
+                    name: string;
+                    dataType: string;
+                    isNullable: boolean;
+                    defaultValue: string;
+                    isPrimaryKey: boolean;
+                    isUnique: boolean;
+                    isForeignKey: boolean;
+                  };
                 };
               };
             };
@@ -160,6 +168,33 @@ export type IInitialState = {
     activeTabId: string | null;
   };
 
+  arangoDbServerContext: {
+    connectedDataseServer: {
+      connectionDetails: {
+        host: string;
+        port: number;
+        username: string;
+        password: string;
+      };
+      databases: string[];
+    };
+
+    selectedDatabase: {
+      databaseName: string;
+      collections: string[];
+    };
+
+    savedConnections: {
+      [key: string]: {
+        servername: string;
+        host: string;
+        port: number;
+        username: string;
+        password: string;
+      };
+    };
+  };
+
   dispatch: (
     cb: (state: IInitialState) => {
       [K in keyof IInitialState]?: IInitialState[K];
@@ -186,6 +221,31 @@ const INITIAL_STATE: Omit<IInitialState, 'dispatch'> = {
   selectedDatabaseContext: {
     databaseName: '',
     schemas: {}
+  },
+
+  arangoDbServerContext: {
+    connectedDataseServer: {
+      connectionDetails: {
+        host: '',
+        port: 0,
+        username: '',
+        password: ''
+      },
+      databases: []
+    },
+    selectedDatabase: {
+      databaseName: '',
+      collections: []
+    },
+    savedConnections: {
+      localhost: {
+        servername: 'localhost',
+        host: 'localhost',
+        port: 8529,
+        username: 'root',
+        password: ''
+      }
+    }
   },
 
   tabInterfaceContext: {

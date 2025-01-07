@@ -1,16 +1,16 @@
-import React from 'react'
-import { Alert, Block, Text } from '@cloudhub-ux/mui'
-import MonacoEditor from '@src/renderer/app/components/editor/MonacoSqlEditor'
-import useTabInterfaceContext from '@src/renderer/context/useTabInterfaceContext'
-import { MdiClock, MdiPlay, MdiSave } from '@cloudhub-ux-icons/mdi'
-import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button'
-import useSelectedDatabaseContext from '@src/renderer/app/database/context/useSelectedDatabaseContext'
+import React from 'react';
+import { Alert, Block, Text } from '@cloudhub-ux/mui';
+import MonacoEditor from '@src/renderer/app/components/editor/MonacoSqlEditor';
+import useTabInterfaceContext from '@src/renderer/context/useTabInterfaceContext';
+import { MdiClock, MdiPlay, MdiSave } from '@cloudhub-ux-icons/mdi';
+import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button';
+import useSelectedDatabaseContext from '@src/renderer/app/database/context/useSelectedDatabaseContext';
 
-import { format } from 'sql-formatter'
+import { format } from 'sql-formatter';
 
 function QueryComponent({ tabId }: { tabId: string }) {
-  const { tabs, dispatch } = useTabInterfaceContext()
-  const { dbQuery } = useSelectedDatabaseContext()
+  const { tabs, dispatch } = useTabInterfaceContext();
+  const { dbQuery, reload } = useSelectedDatabaseContext();
 
   const onChange = (value, event) => {
     dispatch((state) => {
@@ -28,25 +28,24 @@ function QueryComponent({ tabId }: { tabId: string }) {
             }
           }
         }
-      }
-    })
-  }
+      };
+    });
+  };
 
-  const { queryState } = tabs[tabId] || {}
+  const { queryState } = tabs[tabId] || {};
 
-  let sqlStatement = queryState?.query || ''
+  let sqlStatement = queryState?.query || '';
   try {
     sqlStatement = format(queryState?.query || '', {
       language: 'postgresql',
       tabWidth: 2,
       keywordCase: 'upper',
       linesBetweenQueries: 2
-    })
+    });
   } catch (error) {
     //
   }
 
-  console.log('queryState', queryState)
   return (
     <Block>
       <Block>
@@ -72,7 +71,7 @@ function QueryComponent({ tabId }: { tabId: string }) {
                   }
                 }
               }
-            }))
+            }));
           }}
         />
 
@@ -94,7 +93,7 @@ function QueryComponent({ tabId }: { tabId: string }) {
                   }
                 }
               }
-            }))
+            }));
           }}
         />
       </Block>
@@ -119,12 +118,12 @@ function QueryComponent({ tabId }: { tabId: string }) {
             onClick={async () => {
               const { data, error, timeCost, successMessage } = await dbQuery(
                 queryState?.query || ''
-              )
+              );
 
-              console.log('data', data)
-              console.log('error', error)
-              console.log('timeCost', timeCost)
-              console.log('successMessage', successMessage)
+              console.log('data', data);
+              console.log('error', error);
+              console.log('timeCost', timeCost);
+              console.log('successMessage', successMessage);
 
               if (data || error || successMessage) {
                 dispatch((state) => ({
@@ -148,7 +147,9 @@ function QueryComponent({ tabId }: { tabId: string }) {
                       }
                     }
                   }
-                }))
+                }));
+
+                reload();
               }
             }}
           >
@@ -157,7 +158,7 @@ function QueryComponent({ tabId }: { tabId: string }) {
         </Block>
       </Block>
     </Block>
-  )
+  );
 }
 
-export default QueryComponent
+export default QueryComponent;

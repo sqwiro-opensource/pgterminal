@@ -14,8 +14,10 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   SortingState,
+  VisibilityState,
   useReactTable,
-  VisibilityState
+  ColumnResizeMode,
+  ColumnResizeDirection
 } from '@tanstack/react-table';
 
 import {
@@ -34,28 +36,38 @@ import { useDataTableColumns } from '@src/renderer/app/components/results/datata
 import ExpandedRow from '@src/renderer/app/components/results/datatable/components/ExpandedRow';
 import MonacoJsonEditor from '@src/renderer/app/components/editor/MonacoJsonEditor';
 
+import './table.css';
+
 interface DataTableProps<TData, TValue> {
-  columns?: ColumnDef<TData, TValue>[];
+  samplerow?: any;
   data: TData[];
   tabId: string;
   allowFiltering?: boolean;
   schema: string;
   tableName?: string;
+  editRowComponent?: React.ReactNode;
+  onEdit?: (row: any) => void;
 }
 
 export function DataTable<TData, TValue>({
+  samplerow,
   data,
   tabId,
   allowFiltering = true,
   schema,
-  tableName
+  tableName,
+  editRowComponent,
+  onEdit = () => {}
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
-  const { columns, expandedRows } = useDataTableColumns({ sampleRow: (data || [])[0] as any });
+  const { columns, expandedRows } = useDataTableColumns({
+    sampleRow: samplerow || ((data || [])[0] as any),
+    onEdit
+  });
 
   const { tabs, dispatch } = useTabInterfaceContext();
 
@@ -96,6 +108,8 @@ export function DataTable<TData, TValue>({
       columnFilters,
       pagination
     },
+    columnResizeMode: 'onChange',
+    columnResizeDirection: 'ltr',
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
@@ -117,6 +131,7 @@ export function DataTable<TData, TValue>({
           table={table}
           view={view}
           allowFiltering={allowFiltering}
+          editRowComponent={editRowComponent}
           onChangeView={(view) => {
             if (view) {
               dispatch((state) => ({
@@ -149,8 +164,6 @@ export function DataTable<TData, TValue>({
         >
           <Block
             flex={false}
-            // color="yellow"
-
             sx={{
               height: '100%',
               overflow: 'auto',
@@ -181,19 +194,55 @@ export function DataTable<TData, TValue>({
             }}
           >
             {view === 'table' ? (
-              <Table className="relative w-full">
+              <Table
+                {...{
+                  style: {
+                    width: table.getCenterTotalSize()
+                  }
+                }}
+                className="relative w-full"
+              >
                 <TableHeader
                   className="sticky top-0 bg-background w-full shadow-md"
-                  style={{ height: '32px', zIndex: 1000 }}
+                  style={{ height: '32px' }}
                 >
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
                       {headerGroup.headers.map((header) => {
                         return (
-                          <TableHead key={header.id} colSpan={header.colSpan} className="h-8 px-2">
+                          <TableHead
+                            key={header.id}
+                            {...{
+                              colSpan: header.colSpan,
+                              style: {
+                                width: header.getSize()
+                              },
+                              className: 'h-8 px-2'
+                            }}
+                          >
                             {header.isPlaceholder
                               ? null
                               : flexRender(header.column.columnDef.header, header.getContext())}
+                            <div
+                              {...{
+                                onDoubleClick: () => header.column.resetSize(),
+                                onMouseDown: header.getResizeHandler(),
+                                onTouchStart: header.getResizeHandler(),
+                                className: `resizer ${table.options.columnResizeDirection} ${
+                                  header.column.getIsResizing() ? 'isResizing' : ''
+                                }`,
+                                style: {
+                                  transform:
+                                    table.options.columnResizeMode === 'onEnd' &&
+                                    header.column.getIsResizing()
+                                      ? `translateX(${
+                                          (table.options.columnResizeDirection === 'rtl' ? -1 : 1) *
+                                          (table.getState().columnSizingInfo.deltaOffset ?? 0)
+                                        }px)`
+                                      : ''
+                                }
+                              }}
+                            />
                           </TableHead>
                         );
                       })}
@@ -207,7 +256,15 @@ export function DataTable<TData, TValue>({
                       <React.Fragment key={row.id}>
                         <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                           {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id} className="h-8 py-1 px-2">
+                            <TableCell
+                              key={cell.id}
+                              {...{
+                                style: {
+                                  width: cell.column.getSize()
+                                }
+                              }}
+                              className="h-8 py-1 px-2 tru"
+                            >
                               {flexRender(cell.column.columnDef.cell, cell.getContext())}
                             </TableCell>
                           ))}

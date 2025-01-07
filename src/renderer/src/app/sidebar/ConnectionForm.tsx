@@ -1,50 +1,50 @@
 // src/renderer/src/components/ConnectionForm.tsx
-import React, { useState } from 'react'
-import { Form, Field } from '@cloudhub-ux/mui/dist/form'
-import { Alert, Block, FieldBlock, Input, LoadingButton } from '@cloudhub-ux/mui'
-import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button'
-import { Database, ChevronRight, MoreVertical } from 'lucide-react'
+import React, { useState } from 'react';
+import { Form, Field } from '@cloudhub-ux/mui/dist/form';
+import { Alert, AsyncStorage, Block, FieldBlock, Input, LoadingButton } from '@cloudhub-ux/mui';
+import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button';
+import { Database, ChevronRight, MoreVertical } from 'lucide-react';
 import {
   Dialog,
   DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle
-} from '@cloudhub-ux/shadcn/esm/components/ui/dialog'
-import { MdiPlus } from '@cloudhub-ux-icons/mdi'
-import useDatabaseContext from '@src/renderer/context/useDatabaseContext'
+} from '@cloudhub-ux/shadcn/esm/components/ui/dialog';
+import { MdiPlus } from '@cloudhub-ux-icons/mdi';
+import useDatabaseContext from '@src/renderer/context/useDatabaseContext';
 
 interface SavedConnection {
-  name: string
-  host: string
-  port: number
-  database: string
-  user: string
-  password: string
+  name: string;
+  host: string;
+  port: number;
+  database: string;
+  user: string;
+  password: string;
 }
 
 export const ConnectionForm: React.FC<{
-  connection?: SavedConnection
-  anchorComponent?: React.ReactNode
+  connection?: SavedConnection;
+  anchorComponent?: React.ReactNode;
 }> = ({ connection = {}, anchorComponent }) => {
-  const [loading, setLoading] = useState(false)
-  const dlgRef = React.useRef<HTMLDialogElement>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false);
+  const dlgRef = React.useRef<HTMLDialogElement>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
 
-  const { selectedConnection, dispatch } = useDatabaseContext()
+  const { selectedConnection, savedConnections, dispatch } = useDatabaseContext();
 
   const handleSubmit = async (values, form) => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
       // First test the connection
-      const { databases, message } = await window.api.testConnection(values)
+      const { databases, message } = await window.api.testConnection(values);
 
       if (message) {
-        setError(message)
-        return
+        setError(message);
+        return;
       }
 
       if (Array.isArray(databases) && databases.length > 0) {
@@ -60,28 +60,33 @@ export const ConnectionForm: React.FC<{
               [values.name]: values
             }
           }
-        }))
+        }));
+
+        await AsyncStorage.setItem('savedConnections', {
+          ...savedConnections,
+          [values.name]: values
+        });
       }
 
-      setOpen(false)
+      setOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const getAnchor = () => {
     if (anchorComponent) {
       return React.cloneElement(anchorComponent, {
         onClick: () => setOpen(true)
-      })
+      });
     }
 
-    return null
-  }
+    return null;
+  };
 
-  const Anchor = getAnchor()
+  const Anchor = getAnchor();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -155,12 +160,12 @@ export const ConnectionForm: React.FC<{
                   </LoadingButton>
                 </Block>
               </>
-            )
+            );
           }}
         />
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
-export default ConnectionForm
+export default ConnectionForm;

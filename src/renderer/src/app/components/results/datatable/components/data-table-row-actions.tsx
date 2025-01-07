@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import { DotsHorizontalIcon } from '@radix-ui/react-icons'
-import { Row } from '@tanstack/react-table'
+import { DotsHorizontalIcon } from '@radix-ui/react-icons';
+import { Row } from '@tanstack/react-table';
 
-import { Button } from '@cloudhub-ux/shadcn/src/components/ui/button'
+import { Button } from '@cloudhub-ux/shadcn/src/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,14 +16,15 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger
-} from '@cloudhub-ux/shadcn/src/components/ui/dropdown-menu'
+} from '@cloudhub-ux/shadcn/src/components/ui/dropdown-menu';
 
 interface DataTableRowActionsProps<TData> {
-  row: Row<TData>
+  row: Row<TData>;
+  editRowComponent: React.ReactNode;
 }
 
-export function DataTableRowActions<TData>({ row }: DataTableRowActionsProps<TData>) {
-  const task = row.original
+export function DataTableRowActions<TData>({ row, onEdit }: DataTableRowActionsProps<TData>) {
+  const task = row.original;
 
   return (
     <DropdownMenu>
@@ -34,7 +35,7 @@ export function DataTableRowActions<TData>({ row }: DataTableRowActionsProps<TDa
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuItem>Edit</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onEdit(row.original)}>Edit</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           Delete
@@ -42,5 +43,5 @@ export function DataTableRowActions<TData>({ row }: DataTableRowActionsProps<TDa
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

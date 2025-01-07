@@ -21,6 +21,7 @@
     "build:linux": "electron-vite build && electron-builder --linux"
   },
   "dependencies": {
+    "@cloudhub-ux/reach-router": "^2.0.5",
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
     "electron-updater": "^6.1.7",
@@ -52,6 +53,7 @@
     "@types/react-dom": "^18.3.0",
     "@uiw/react-json-view": "^2.0.0-alpha.30",
     "@vitejs/plugin-react": "^4.3.1",
+    "arangojs": "^9.2.0",
     "babel-plugin-transform-imports": "^2.0.0",
     "electron": "^31.0.2",
     "electron-builder": "^24.13.3",

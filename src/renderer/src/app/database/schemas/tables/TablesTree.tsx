@@ -1,15 +1,15 @@
-import React from 'react'
-import { Block } from '@cloudhub-ux/mui'
-import useSelectedDatabaseContext from '@src/renderer/app/database/context/useSelectedDatabaseContext'
-import { cn } from '@src/renderer/utils/utils'
-import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button'
+import React from 'react';
+import { Block } from '@cloudhub-ux/mui';
+import useSelectedDatabaseContext from '@src/renderer/app/database/context/useSelectedDatabaseContext';
+import { cn } from '@src/renderer/utils/utils';
+import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button';
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuTrigger
-} from '@cloudhub-ux/shadcn/src/components/ui/context-menu'
+} from '@cloudhub-ux/shadcn/src/components/ui/context-menu';
 import {
   MdiBolt,
   MdiChevronDown,
@@ -17,7 +17,7 @@ import {
   MdiKeyAlert,
   MdiList,
   MdiRelationManyToMany
-} from '@cloudhub-ux-icons/mdi'
+} from '@cloudhub-ux-icons/mdi';
 
 import {
   ChevronRight,
@@ -28,18 +28,18 @@ import {
   ActivityIcon as Function,
   GitBranch,
   Eye
-} from 'lucide-react'
-import TableColumnsTree from '@src/renderer/app/database/schemas/tables/TableColumnsTree'
-import TableIndexesTree from '@src/renderer/app/database/schemas/tables/TableIndexesTree'
-import TableTriggersTree from '@src/renderer/app/database/schemas/tables/TableTriggersTree'
-import useTabInterfaceContext from '@src/renderer/context/useTabInterfaceContext'
-import TableRelationsTree from '@src/renderer/app/database/schemas/tables/TableRelationsTree'
-import QueryComponent from '@src/renderer/app/components/editor/QueryComponent'
-import { createTableSqlScript } from '@src/renderer/app/mainpage/scripts/scriptGenerator'
+} from 'lucide-react';
+import TableColumnsTree from '@src/renderer/app/database/schemas/tables/TableColumnsTree';
+import TableIndexesTree from '@src/renderer/app/database/schemas/tables/TableIndexesTree';
+import TableTriggersTree from '@src/renderer/app/database/schemas/tables/TableTriggersTree';
+import useTabInterfaceContext from '@src/renderer/context/useTabInterfaceContext';
+import TableRelationsTree from '@src/renderer/app/database/schemas/tables/TableRelationsTree';
+import QueryComponent from '@src/renderer/app/components/editor/QueryComponent';
+import { createTableSqlScript } from '@src/renderer/app/mainpage/scripts/scriptGenerator';
 
 type TreeItem = {
-  id: string
-  name: string
+  id: string;
+  name: string;
   type:
     | 'schema'
     | 'tables'
@@ -51,9 +51,9 @@ type TreeItem = {
     | 'function'
     | 'procedure'
     | 'trigger'
-    | 'view'
-  children?: TreeItem[]
-}
+    | 'view';
+  children?: TreeItem[];
+};
 
 const IconMap: Record<TreeItem['type'], React.ReactNode> = {
   schema: <Database className="h-4 w-4 shrink-0" />,
@@ -67,14 +67,14 @@ const IconMap: Record<TreeItem['type'], React.ReactNode> = {
   procedure: <GitBranch className="h-4 w-4 shrink-0" />,
   trigger: <GitBranch className="h-4 w-4 shrink-0" />,
   view: <Eye className="h-4 w-4 shrink-0" />
-}
+};
 
 function TablesTree({ schema }: { schema: string }) {
-  const { schemas, dispatch, dbQuery } = useSelectedDatabaseContext()
-  const { openTableData, openTableStructure, openNewTab } = useTabInterfaceContext()
+  const { schemas, dispatch, dbQuery } = useSelectedDatabaseContext();
+  const { openTableData, openTableStructure, openNewTab } = useTabInterfaceContext();
 
   if (!schema) {
-    return null
+    return null;
   }
 
   const toggleItem = (tableName: string) => {
@@ -100,8 +100,8 @@ function TablesTree({ schema }: { schema: string }) {
           }
         }
       }
-    }))
-  }
+    }));
+  };
 
   const toggleColumns = (tableName: string) => {
     dispatch((state) => ({
@@ -130,8 +130,8 @@ function TablesTree({ schema }: { schema: string }) {
           }
         }
       }
-    }))
-  }
+    }));
+  };
 
   const toggleIndexes = (tableName: string) => {
     dispatch((state) => ({
@@ -160,8 +160,8 @@ function TablesTree({ schema }: { schema: string }) {
           }
         }
       }
-    }))
-  }
+    }));
+  };
 
   const toggleTriggers = (tableName: string) => {
     dispatch((state) => ({
@@ -190,8 +190,8 @@ function TablesTree({ schema }: { schema: string }) {
           }
         }
       }
-    }))
-  }
+    }));
+  };
 
   const toggleRelations = (tableName: string) => {
     dispatch((state) => ({
@@ -220,12 +220,12 @@ function TablesTree({ schema }: { schema: string }) {
           }
         }
       }
-    }))
-  }
+    }));
+  };
 
-  const level = 1
+  const level = 1;
 
-  const tables = schemas[schema].tables.tableList
+  const tables = schemas[schema].tables.tableList;
 
   return (
     <Block flex={false}>
@@ -241,7 +241,7 @@ function TablesTree({ schema }: { schema: string }) {
                     className={cn('h-8 hover:bg-muted', item.expanded && 'bg-muted')}
                     onClick={() => toggleItem(item.tableName)}
                     onDoubleClick={() => {
-                      openTableData(schema, item.tableName)
+                      openTableData(schema, item.tableName);
                     }}
                   >
                     {item.expanded ? (
@@ -256,14 +256,14 @@ function TablesTree({ schema }: { schema: string }) {
                 <ContextMenuContent>
                   <ContextMenuItem
                     onSelect={() => {
-                      openTableData(schema, item.tableName)
+                      openTableData(schema, item.tableName);
                     }}
                   >
                     View Data
                   </ContextMenuItem>
                   <ContextMenuItem
                     onSelect={() => {
-                      openTableStructure(schema, item.tableName)
+                      openTableStructure(schema, item.tableName);
                     }}
                   >
                     View Structure
@@ -273,13 +273,13 @@ function TablesTree({ schema }: { schema: string }) {
                   <ContextMenuSeparator />
                   <ContextMenuItem
                     onSelect={async () => {
-                      const getTableCreateSql = createTableSqlScript(schema, item.tableName)
+                      const getTableCreateSql = createTableSqlScript(schema, item.tableName);
 
-                      const { data, timeCost, error } = await dbQuery(getTableCreateSql)
+                      const { data, timeCost, error } = await dbQuery(getTableCreateSql);
 
                       if (error) {
-                        console.error('Error getting table create SQL', error)
-                        return
+                        console.error('Error getting table create SQL', error);
+                        return;
                       }
 
                       openNewTab({
@@ -296,15 +296,56 @@ function TablesTree({ schema }: { schema: string }) {
                           <QueryComponent tabId={`create_sql/${schema}_${item.tableName}`} />
                         ),
                         resultsComponent: null
-                      })
+                      });
                     }}
                   >
                     SQL: Create
                   </ContextMenuItem>
                   <ContextMenuItem onSelect={() => {}}>Rename</ContextMenuItem>
-                  <ContextMenuItem onSelect={() => {}}>Drop</ContextMenuItem>
-                  <ContextMenuItem onSelect={() => {}}>Truncate</ContextMenuItem>
-                  <ContextMenuItem onSelect={() => {}}>Duplicate</ContextMenuItem>
+                  <ContextMenuItem
+                    onSelect={async () => {
+                      openNewTab({
+                        id: `drop/${schema}_${item.tableName}`,
+                        title: `Drop SQL: ${schema}.${item.tableName}`,
+                        type: 'query',
+                        queryState: {
+                          query: `
+                          DROP TABLE ${schema}."${item.tableName}"`
+                        },
+                        resultsState: {
+                          data: []
+                        },
+                        queryComponent: (
+                          <QueryComponent tabId={`drop/${schema}_${item.tableName}`} />
+                        ),
+                        resultsComponent: null
+                      });
+                    }}
+                  >
+                    Drop
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onSelect={async () => {
+                      openNewTab({
+                        id: `truncate/${schema}_${item.tableName}`,
+                        title: `Truncate SQL: ${schema}.${item.tableName}`,
+                        type: 'query',
+                        queryState: {
+                          query: `
+                          TRUNCATE TABLE ${schema}."${item.tableName}"`
+                        },
+                        resultsState: {
+                          data: []
+                        },
+                        queryComponent: (
+                          <QueryComponent tabId={`truncate/${schema}_${item.tableName}`} />
+                        ),
+                        resultsComponent: null
+                      });
+                    }}
+                  >
+                    Truncate
+                  </ContextMenuItem>
                 </ContextMenuContent>
               </ContextMenu>
             </div>
@@ -429,7 +470,7 @@ function TablesTree({ schema }: { schema: string }) {
         ))}
       </ul>
     </Block>
-  )
+  );
 }
 
-export default TablesTree
+export default TablesTree;

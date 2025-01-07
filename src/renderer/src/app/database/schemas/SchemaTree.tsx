@@ -1,91 +1,40 @@
-import React from 'react'
-import { Block } from '@cloudhub-ux/mui'
-import useSelectedDatabaseContext from '@src/renderer/app/database/context/useSelectedDatabaseContext'
-import { cn } from '@src/renderer/utils/utils'
-import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button'
+import React from 'react';
+import { Block } from '@cloudhub-ux/mui';
+import useSelectedDatabaseContext from '@src/renderer/app/database/context/useSelectedDatabaseContext';
+import { cn } from '@src/renderer/utils/utils';
+import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button';
 import {
   MdiChevronDown,
   MdiChevronRight,
   MdiDatasetSharp,
   MdiFunction,
+  MdiPlus,
   MdiTable,
   MdiTableViewOutline
-} from '@cloudhub-ux-icons/mdi'
+} from '@cloudhub-ux-icons/mdi';
 
+import TablesTree from '@src/renderer/app/database/schemas/tables/TablesTree';
+import FunctionsTree from '@src/renderer/app/database/schemas/functions/FunctionsTree';
+import ViewsTree from '@src/renderer/app/database/schemas/views/ViewsTree';
+import AddTableDialogButton from './tables/AddTableDialogButton';
+import CreateSchemaButton from './schema/CreateSchemaButton';
 import {
-  ChevronRight,
-  ChevronDown,
-  Folder,
-  Database,
-  Table,
-  ActivityIcon as Function,
-  GitBranch,
-  Eye
-} from 'lucide-react'
-import TablesTree from '@src/renderer/app/database/schemas/tables/TablesTree'
-import FunctionsTree from '@src/renderer/app/database/schemas/functions/FunctionsTree'
-import ViewsTree from '@src/renderer/app/database/schemas/views/ViewsTree'
-
-interface TreeViewProps {
-  schemas: {
-    [key: string]: {
-      schemaName: string
-      tables: {
-        [key: string]: string
-      }
-      functions: {
-        [key: string]: string
-      }
-      procedures: {
-        [key: string]: string
-      }
-      triggers: {
-        [key: string]: string
-      }
-      views: {
-        [key: string]: string
-      }
-    }
-  }
-}
-
-type TreeItem = {
-  id: string
-  name: string
-  type:
-    | 'schema'
-    | 'tables'
-    | 'functions'
-    | 'procedures'
-    | 'triggers'
-    | 'views'
-    | 'table'
-    | 'function'
-    | 'procedure'
-    | 'trigger'
-    | 'view'
-  children?: TreeItem[]
-}
-
-const IconMap: Record<TreeItem['type'], React.ReactNode> = {
-  schema: <Database className="h-4 w-4 shrink-0" />,
-  tables: <Folder className="h-4 w-4 shrink-0" />,
-  functions: <Folder className="h-4 w-4 shrink-0" />,
-  procedures: <Folder className="h-4 w-4 shrink-0" />,
-  triggers: <Folder className="h-4 w-4 shrink-0" />,
-  views: <Folder className="h-4 w-4 shrink-0" />,
-  table: <Table className="h-4 w-4 shrink-0" />,
-  function: <Function className="h-4 w-4 shrink-0" />,
-  procedure: <GitBranch className="h-4 w-4 shrink-0" />,
-  trigger: <GitBranch className="h-4 w-4 shrink-0" />,
-  view: <Eye className="h-4 w-4 shrink-0" />
-}
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger
+} from '@cloudhub-ux/shadcn/src/components/ui/context-menu';
+import QueryComponent from '../../components/editor/QueryComponent';
+import useTabInterfaceContext from '@src/renderer/context/useTabInterfaceContext';
+import { createSchemaSqlScript } from '../../mainpage/scripts/scriptGenerator';
 
 function SchemaTree() {
-  const { schemas, databaseName, dispatch } = useSelectedDatabaseContext()
+  const { schemas, databaseName, dispatch, dbQuery } = useSelectedDatabaseContext();
+
+  const { openNewTab } = useTabInterfaceContext();
 
   if (!databaseName) {
-    return null
+    return null;
   }
 
   const toggleSchema = (schemaName: string) => {
@@ -100,8 +49,8 @@ function SchemaTree() {
           }
         }
       }
-    }))
-  }
+    }));
+  };
 
   const toggleTables = (schemaName: string) => {
     dispatch((state) => ({
@@ -118,8 +67,8 @@ function SchemaTree() {
           }
         }
       }
-    }))
-  }
+    }));
+  };
 
   const toggleViews = (schemaName: string) => {
     dispatch((state) => ({
@@ -136,8 +85,8 @@ function SchemaTree() {
           }
         }
       }
-    }))
-  }
+    }));
+  };
 
   const toggleFunctions = (schemaName: string) => {
     dispatch((state) => ({
@@ -154,32 +103,125 @@ function SchemaTree() {
           }
         }
       }
-    }))
-  }
+    }));
+  };
 
-  const level = 0
+  const showCreateSql = async (item: { schemaName: string }) => {
+    const createSchemaSql = createSchemaSqlScript(item.schemaName);
+
+    const { data, error, timeCost, successMessage } = await dbQuery(createSchemaSql);
+
+    const dataObj: any = {};
+
+    console.log('====================================');
+    console.log('data', data);
+    console.log('====================================');
+
+    if (Array.isArray(data) && data.length > 0) {
+      dataObj.query = data[0].definition;
+    }
+
+    const tabId = `create_schema_sql/${item.schemaName}`;
+
+    if (data || error || successMessage) {
+      dispatch((state) => ({
+        tabInterfaceContext: {
+          ...state.tabInterfaceContext,
+          tabs: {
+            ...state.tabInterfaceContext.tabs,
+            [tabId]: {
+              ...(state.tabInterfaceContext.tabs[tabId] || {}),
+              queryState: {
+                query: typeof dataObj.query === 'string' ? dataObj.query : '',
+                error: error || '',
+                timeCost: timeCost || 0,
+                successMessage: successMessage || ''
+              }
+            }
+          }
+        }
+      }));
+    }
+
+    openNewTab({
+      id: tabId,
+      title: `Schema SQL: ${item.schemaName}`,
+      type: 'query',
+      queryState: {
+        query: typeof dataObj.query === 'string' ? dataObj.query : ''
+      },
+      resultsState: {
+        data: []
+      },
+      queryComponent: <QueryComponent tabId={tabId} />,
+      resultsComponent: null
+    });
+  };
+
+  const level = 0;
 
   return (
     <Block flex={false}>
       <ul className={cn('space-y-1', level > 0 && 'ml-4')}>
+        <li>
+          <Block flex={false} row right>
+            <Block></Block>
+            <Block flex={false}>
+              <CreateSchemaButton />
+            </Block>
+          </Block>
+        </li>
         {Object.values(schemas).map((item) => (
           <li key={item.schemaName}>
             <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn('h-8 hover:bg-muted', item.expanded && 'bg-muted')}
-                onClick={() => toggleSchema(item.schemaName)}
-              >
-                {item.expanded ? (
-                  <MdiChevronDown className="h-4 w-4 shrink-0 mr-1" />
-                ) : (
-                  <MdiChevronRight className="h-4 w-4 shrink-0 mr-1" />
-                )}
+              <ContextMenu>
+                <ContextMenuTrigger>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn('h-8 hover:bg-muted', item.expanded && 'bg-muted')}
+                    onClick={() => toggleSchema(item.schemaName)}
+                  >
+                    {item.expanded ? (
+                      <MdiChevronDown className="h-4 w-4 shrink-0 mr-1" />
+                    ) : (
+                      <MdiChevronRight className="h-4 w-4 shrink-0 mr-1" />
+                    )}
 
-                <MdiDatasetSharp className="shrink-0 mr-1 text-purple-500" height={24} width={24} />
-                <span className="ml-2">{item.schemaName}</span>
-              </Button>
+                    <MdiDatasetSharp
+                      className="shrink-0 mr-1 text-purple-500"
+                      height={24}
+                      width={24}
+                    />
+                    <span className="ml-2">{item.schemaName}</span>
+                  </Button>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem onSelect={() => showCreateSql(item)}>
+                    SQL: Create Script
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onSelect={async () => {
+                      openNewTab({
+                        id: `drop/${item.schemaName}`,
+                        title: `Drop SQL: ${item.schemaName}`,
+                        type: 'query',
+                        queryState: {
+                          query: `
+                            DROP SCHEMA IF EXISTS ${item.schemaName}`
+                        },
+                        resultsState: {
+                          data: []
+                        },
+                        queryComponent: <QueryComponent tabId={`drop/${item.schemaName}`} />,
+                        resultsComponent: null
+                      });
+                    }}
+                  >
+                    drop
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             </div>
             <div>
               {item.expanded && (
@@ -187,20 +229,26 @@ function SchemaTree() {
                   <ul className={cn('space-y-1', 'ml-4')}>
                     <li>
                       <div className="flex items-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={cn('h-8 hover:bg-muted', item.tables.expanded && 'bg-muted')}
-                          onClick={() => toggleTables(item.schemaName)}
-                        >
-                          {item.tables.expanded ? (
-                            <MdiChevronDown className="h-4 w-4 shrink-0 mr-1" />
-                          ) : (
-                            <MdiChevronRight className="h-4 w-4 shrink-0 mr-1" />
-                          )}
-                          <MdiTable className="h-4 w-4 shrink-0 mr-1 text-blue-500" />
-                          <span className="ml-2">Tables</span>
-                        </Button>
+                        <Block row left>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={cn('h-8 hover:bg-muted', item.tables.expanded && 'bg-muted')}
+                            onClick={() => toggleTables(item.schemaName)}
+                          >
+                            {item.tables.expanded ? (
+                              <MdiChevronDown className="h-4 w-4 shrink-0 mr-1" />
+                            ) : (
+                              <MdiChevronRight className="h-4 w-4 shrink-0 mr-1" />
+                            )}
+                            <MdiTable className="h-4 w-4 shrink-0 mr-1 text-blue-500" />
+                            <span className="ml-2">Tables</span>
+                          </Button>
+                        </Block>
+
+                        <Block flex={false}>
+                          <AddTableDialogButton schema={item.schemaName} />
+                        </Block>
                       </div>
                       <div>{item.tables.expanded && <TablesTree schema={item.schemaName} />}</div>
                     </li>
@@ -255,7 +303,7 @@ function SchemaTree() {
         ))}
       </ul>
     </Block>
-  )
+  );
 }
 
-export default SchemaTree
+export default SchemaTree;

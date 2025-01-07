@@ -295,57 +295,148 @@ function useSelectedDatabaseContext() {
     return await window.api.dbQuery(query, params);
   }, []);
 
-  React.useEffect(() => {
-    async function getSchemas() {
-      const schemas = await window.api.changeDatabase(databaseContext.selectedDatabase);
+  const getSchemas = React.useCallback(async () => {
+    const schemas = await window.api.changeDatabase(databaseContext.selectedDatabase);
 
-      if (Array.isArray(schemas)) {
-        const { data, timeCost, error, successMessage } = await dbQuery(dbStructureSql);
+    const currentSchemas = selectedDatabaseContext.schemas;
 
-        if (error) {
-          console.error('Error getting database structure', error);
-        }
+    if (Array.isArray(schemas)) {
+      const { data, timeCost, error, successMessage } = await dbQuery(dbStructureSql);
 
-        if (Array.isArray(data)) {
-          const ds = data.reduce((acc, item) => {
-            const { schemas } = item.database_structure;
+      if (error) {
+        console.error('Error getting database structure', error);
+      }
 
-            const schemaNames = Object.keys(schemas);
+      if (Array.isArray(data)) {
+        const ds = data.reduce((acc, item) => {
+          const { schemas } = item.database_structure;
 
-            const schema = schemaNames.reduce((acc, schemaName) => {
-              const { tables, functions, procedures, triggers, views } = schemas[schemaName];
+          const schemaNames = Object.keys(schemas);
 
+          const schema = schemaNames.reduce((acc, schemaName) => {
+            const { tables, functions, procedures, triggers, views } = schemas[
+              schemaName
+            ] as (typeof currentSchemas)[keyof typeof currentSchemas];
+
+            if (currentSchemas[schemaName]) {
+              const currentSchema = currentSchemas[schemaName];
               return {
                 ...acc,
                 [schemaName]: {
                   schemaName,
-                  expanded: false,
-                  tables,
-                  functions,
-                  procedures,
-                  triggers,
-                  views
+                  expanded: currentSchema.expanded,
+                  tables: {
+                    expanded: currentSchema.tables.expanded,
+                    tableList: Object.values(tables.tableList).reduce(
+                      (acc: typeof currentSchema.tables.tableList, table) => {
+                        return {
+                          ...acc,
+                          [table.tableName]: {
+                            ...table,
+                            expanded: (currentSchema.tables.tableList[table.tableName] || {})
+                              .expanded,
+                            columns: {
+                              expanded: (
+                                (currentSchema.tables.tableList[table.tableName] || {}).columns ||
+                                {}
+                              ).expanded,
+                              columnList: tables.tableList[table.tableName].columns.columnList
+                            },
+                            indexes: {
+                              expanded: (
+                                (currentSchema.tables.tableList[table.tableName] || {}).indexes ||
+                                {}
+                              ).expanded,
+                              indexList: tables.tableList[table.tableName].indexes.indexList
+                            },
+                            triggers: {
+                              expanded: (
+                                (currentSchema.tables.tableList[table.tableName] || {}).triggers ||
+                                {}
+                              ).expanded,
+                              triggerList: tables.tableList[table.tableName].triggers.triggerList
+                            },
+                            relations: {
+                              expanded: (
+                                (currentSchema.tables.tableList[table.tableName] || {}).relations ||
+                                {}
+                              ).expanded,
+                              relationList: tables.tableList[table.tableName].relations.relationList
+                            }
+                          }
+                        };
+                      },
+                      {}
+                    )
+                  },
+                  functions: {
+                    expanded: currentSchema.functions.expanded,
+                    functionList: functions.functionList
+                  },
+                  procedures: {
+                    expanded: currentSchema.procedures.expanded,
+                    procedureList: procedures.procedureList
+                  },
+                  triggers: {
+                    expanded: currentSchema.triggers.expanded,
+                    triggerList: triggers.triggerList
+                  },
+                  views: {
+                    expanded: currentSchema.views.expanded,
+                    viewList: Object.values(views.viewList).reduce(
+                      (acc: typeof currentSchema.views.viewList, view) => {
+                        return {
+                          ...acc,
+                          [view.viewName]: {
+                            ...view,
+                            expanded: currentSchema.views.viewList[view.viewName].expanded,
+                            columns: {
+                              expanded:
+                                currentSchema.views.viewList[view.viewName].columns.expanded,
+                              columnList: views.viewList[view.viewName].columns.columnList
+                            }
+                          }
+                        };
+                      },
+                      {}
+                    )
+                  }
                 }
               };
-            }, {});
+            }
 
             return {
               ...acc,
-              ...schema
+              [schemaName]: {
+                schemaName,
+                expanded: false,
+                tables,
+                functions,
+                procedures,
+                triggers,
+                views
+              }
             };
           }, {});
 
-          dispatch((state) => ({
-            selectedDatabaseContext: {
-              ...state.selectedDatabaseContext,
-              databaseName: databaseContext.selectedDatabase,
-              schemas: ds
-            }
-          }));
-        }
+          return {
+            ...acc,
+            ...schema
+          };
+        }, {});
+
+        dispatch((state) => ({
+          selectedDatabaseContext: {
+            ...state.selectedDatabaseContext,
+            databaseName: databaseContext.selectedDatabase,
+            schemas: ds
+          }
+        }));
       }
     }
+  }, [dbQuery, selectedDatabaseContext.schemas]);
 
+  React.useEffect(() => {
     if (
       databaseContext.selectedDatabase &&
       selectedDatabaseContext.databaseName !== databaseContext.selectedDatabase
@@ -356,6 +447,7 @@ function useSelectedDatabaseContext() {
 
   return {
     ...selectedDatabaseContext,
+    reload: getSchemas,
     dbQuery,
     dispatch
   };
