@@ -5,19 +5,21 @@ import useTabInterfaceContext from '@src/renderer/context/useTabInterfaceContext
 import EmptySpace from '@src/renderer/app/mainpage/EmptySpace';
 import { getTableColumnsSqlScript } from '../../mainpage/scripts/scriptGenerator';
 import useSelectedDatabaseContext from '../../database/context/useSelectedDatabaseContext';
-import EditColumnButton from './datatable/table/EditColumnButton';
-import AddColumnButton from './datatable/table/AddColumnButton';
+import AddColumnButton from './datatable/table/AddRowButton';
+import QueryComponent from '../editor/QueryComponent';
 
 function ResultsDataTable({
   tabId,
   schema,
-  tableName
+  tableName,
+  onRowAdded = () => {}
 }: {
   tabId: string;
   schema: string;
   tableName?: string;
+  onRowAdded?: (row: any) => void;
 }) {
-  const { tabs } = useTabInterfaceContext();
+  const { tabs, openNewTab } = useTabInterfaceContext();
   const { dbQuery } = useSelectedDatabaseContext();
 
   const { data } = (tabs[tabId] || {}).resultsState || {};
@@ -32,11 +34,12 @@ function ResultsDataTable({
       isPrimaryKey: boolean;
     };
   }>({});
+
   const [editingRow, setEditingRow] = React.useState<any>(null);
 
   React.useEffect(() => {
     const getTableColumns = async () => {
-      const tableColulmsSql = getTableColumnsSqlScript(schema, tableName);
+      const tableColulmsSql = getTableColumnsSqlScript(schema, tableName as string);
 
       const { data } = await dbQuery(tableColulmsSql);
 
@@ -82,17 +85,33 @@ function ResultsDataTable({
 
   return (
     <Block>
-      <EditColumnButton
-        editingRow={editingRow}
-        tableStructure={tableStructure}
-        schema={schema}
-        tableName={tableName}
-      />
       <DataTable
         samplerow={samplerow}
-        onEdit={setEditingRow}
+        onDelete={async ({ row, pk }: { row: any; pk: string }) => {
+          openNewTab({
+            id: `drop/${schema}_${row[pk]}`,
+            title: `Drop SQL: ${schema}.${row[pk]}`,
+            type: 'query',
+            queryState: {
+              query: `
+              DELETE FROM ${schema}."${tableName}"
+              WHERE ${pk} = '${row[pk]}'`
+            },
+            resultsState: {
+              data: []
+            },
+            queryComponent: <QueryComponent tabId={`drop/${schema}_${row[pk]}`} />,
+            resultsComponent: null
+          });
+        }}
+        tableStructure={tableStructure}
         editRowComponent={
-          <AddColumnButton editingRow={samplerow} schema={schema} tableName={tableName} />
+          <AddColumnButton
+            editingRow={samplerow}
+            schema={schema}
+            tableName={tableName}
+            onRowAdded={onRowAdded}
+          />
         }
         data={data}
         tabId={tabId}

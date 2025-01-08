@@ -46,7 +46,16 @@ interface DataTableProps<TData, TValue> {
   schema: string;
   tableName?: string;
   editRowComponent?: React.ReactNode;
-  onEdit?: (row: any) => void;
+  onDelete?: (params: { row: any; pk: string }) => void;
+  tableStructure?: {
+    [key: string]: {
+      name: string;
+      type: string;
+      defaultValue: string;
+      isNullable: boolean;
+      isPrimaryKey: boolean;
+    };
+  };
 }
 
 export function DataTable<TData, TValue>({
@@ -57,7 +66,8 @@ export function DataTable<TData, TValue>({
   schema,
   tableName,
   editRowComponent,
-  onEdit = () => {}
+  onDelete = () => {},
+  tableStructure
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -66,7 +76,10 @@ export function DataTable<TData, TValue>({
 
   const { columns, expandedRows } = useDataTableColumns({
     sampleRow: samplerow || ((data || [])[0] as any),
-    onEdit
+    onDelete,
+    tableStructure,
+    schema,
+    tableName: tableName as string
   });
 
   const { tabs, dispatch } = useTabInterfaceContext();

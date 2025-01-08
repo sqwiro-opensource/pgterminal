@@ -20,10 +20,10 @@ import {
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
-  editRowComponent: React.ReactNode;
+  onDelete: (row: TData) => void;
 }
 
-export function DataTableRowActions<TData>({ row, onEdit }: DataTableRowActionsProps<TData>) {
+export function DataTableRowActions<TData>({ row, onDelete }: DataTableRowActionsProps<TData>) {
   const task = row.original;
 
   return (
@@ -35,9 +35,8 @@ export function DataTableRowActions<TData>({ row, onEdit }: DataTableRowActionsP
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuItem onClick={() => onEdit(row.original)}>Edit</DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        {/* <DropdownMenuSeparator /> */}
+        <DropdownMenuItem onClick={() => onDelete(row.original)}>
           Delete
           <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
         </DropdownMenuItem>

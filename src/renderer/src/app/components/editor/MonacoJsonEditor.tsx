@@ -12,6 +12,7 @@ import {
 import { Block, useMuiThemeContext } from '@cloudhub-ux/mui';
 import useSelectedDatabaseContext from '@src/renderer/app/database/context/useSelectedDatabaseContext';
 import useTabInterfaceContext from '@src/renderer/context/useTabInterfaceContext';
+import { BlockProps } from '@cloudhub-ux/mui/dist/Block';
 
 loader.config({ monaco });
 
@@ -26,7 +27,11 @@ interface DBSchema {
   }[];
 }
 
-export default function MonacoJsonEditor({ options, ...props }: EditorProps) {
+export default function MonacoJsonEditor({
+  options,
+  containerProps = {},
+  ...props
+}: EditorProps & { containerProps?: BlockProps }) {
   const monacoRef = React.useRef<any>(null);
   const editorRef = React.useRef<any>(null);
   const { openDocumentTab } = useTabInterfaceContext();
@@ -168,13 +173,13 @@ export default function MonacoJsonEditor({ options, ...props }: EditorProps) {
     <Block
       absolute
       sx={{
-        flex: 1,
         '& .monaco-json-link': {
           textDecoration: 'underline',
           color: '#0066cc',
           cursor: 'pointer'
         }
       }}
+      {...containerProps}
     >
       <Editor
         defaultLanguage="json"

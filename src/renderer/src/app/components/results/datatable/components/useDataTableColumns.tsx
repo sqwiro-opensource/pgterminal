@@ -10,6 +10,7 @@ import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button';
 import { MdiChevronDown, MdiChevronRight } from '@cloudhub-ux-icons/mdi';
 import React from 'react';
 import useTabInterfaceContext from '@src/renderer/context/useTabInterfaceContext';
+import { toastr } from '@cloudhub-ux/mui';
 
 type FileData = {
   createdAt: number;
@@ -27,10 +28,20 @@ const TableCell = ({ children }: { children: React.ReactNode }) => {
   return <div className="flex items-center truncate">{children}</div>;
 };
 
-const Row_IdCell = ({ value, row }: { value: string; row: FileData }) => {
+const Row_IdCell = ({
+  value,
+  row,
+  schema,
+  tableName,
+  pk
+}: {
+  value: string;
+  row: FileData;
+  schema: string;
+  tableName: string;
+  pk: string;
+}) => {
   const { openDocumentTab } = useTabInterfaceContext();
-
-  console.log(value);
 
   if (`${value}`.includes('/')) {
     const [tableName, document_id] = `${value}`.split('/');
@@ -46,7 +57,7 @@ const Row_IdCell = ({ value, row }: { value: string; row: FileData }) => {
             openDocumentTab({
               schema,
               tableName,
-              pk: '_id',
+              pk,
               value: `${value}`,
               document: row || {}
             });
@@ -56,6 +67,24 @@ const Row_IdCell = ({ value, row }: { value: string; row: FileData }) => {
         </Button>
       );
     }
+  } else if (tableName && schema) {
+    return (
+      <Button
+        variant="link"
+        className="p-0 m-0"
+        onClick={() => {
+          openDocumentTab({
+            schema,
+            tableName,
+            pk,
+            value: `${value}`,
+            document: row || {}
+          });
+        }}
+      >
+        <span>{value}</span>
+      </Button>
+    );
   }
 
   return <span>{value}</span>;
@@ -63,10 +92,24 @@ const Row_IdCell = ({ value, row }: { value: string; row: FileData }) => {
 
 export const useDataTableColumns = ({
   sampleRow,
-  onEdit = () => {}
+  onDelete = () => {},
+  tableStructure,
+  schema,
+  tableName
 }: {
   sampleRow: FileData;
-  onEdit: (row?: any) => void;
+  onDelete: (params: { row: FileData; pk: string }) => void;
+  tableStructure?: {
+    [key: string]: {
+      name: string;
+      type: string;
+      defaultValue: string;
+      isNullable: boolean;
+      isPrimaryKey: boolean;
+    };
+  };
+  schema: string;
+  tableName: string;
 }) => {
   const columnNames = Object.keys(sampleRow || {}).map((key) => ({
     name: key,
@@ -83,6 +126,14 @@ export const useDataTableColumns = ({
       [rowId]: !prev[rowId]
     }));
   };
+
+  const pkColumn = Object.keys(tableStructure || {}).find(
+    (key) => (tableStructure || {})[key].isPrimaryKey
+  );
+
+  console.log('====================================');
+  console.log(pkColumn);
+  console.log('====================================');
 
   const columns: ColumnDef<FileData>[] = [
     {
@@ -144,9 +195,17 @@ export const useDataTableColumns = ({
       },
       cell: ({ row, column }) => (
         <TableCell style={{ width: column.getSize() }} className="w-96 truncate">
-          {dataColumn.name === '_id' ? (
+          {tableStructure &&
+          tableStructure[dataColumn.name] &&
+          tableStructure[dataColumn.name].isPrimaryKey ? (
             <div style={{ width: column.getSize() }}>
-              <Row_IdCell value={row.getValue(dataColumn.name)} row={row.original} />
+              <Row_IdCell
+                schema={schema}
+                tableName={tableName}
+                value={row.getValue(dataColumn.name)}
+                row={row.original}
+                pk={dataColumn.name}
+              />
             </div>
           ) : (
             <div style={{ width: column.getSize() }}>
@@ -164,7 +223,22 @@ export const useDataTableColumns = ({
     {
       id: 'actions',
 
-      cell: ({ row }) => <DataTableRowActions row={row} onEdit={onEdit} />
+      cell: ({ row }) => (
+        <DataTableRowActions
+          row={row}
+          onDelete={() => {
+            if (!pkColumn) {
+              toastr.error('No primary key found');
+              return;
+            } else {
+              onDelete({
+                row: row.original,
+                pk: pkColumn
+              });
+            }
+          }}
+        />
+      )
     }
   ];
 
