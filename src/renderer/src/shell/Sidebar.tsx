@@ -34,7 +34,8 @@ export function Sidebar({ onNewConnection, onManage, onEditConnection }: Sidebar
         )}
       </label>
 
-      <div className="min-h-0 flex-1">
+      {/* flex column so the tree's `flex-1 overflow-auto` gets a bounded height and scrolls */}
+      <div className="flex min-h-0 flex-1 flex-col">
         <CatalogTree onEditConnection={onEditConnection} onNewConnection={onNewConnection} />
       </div>
 
