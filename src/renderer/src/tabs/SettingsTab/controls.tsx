@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
+import { Switch } from '@renderer/components/ui/Switch';
 
 /** One labelled setting row: title, optional description, control on the right. */
 export function Row({
@@ -39,26 +40,6 @@ export function PaneHeader({ title, saved }: { title: string; saved: boolean }):
       </span>
       <span className="ml-auto text-[11px] text-muted-foreground">every field autosaves · no Save button</span>
     </div>
-  );
-}
-
-export function Switch({ checked, onChange, label }: { checked: boolean; onChange(v: boolean): void; label: string }): JSX.Element {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className={cn('relative h-4 w-[30px] flex-none rounded-full transition-colors', checked ? 'bg-primary' : 'bg-input')}
-    >
-      <span
-        className={cn(
-          'absolute top-0.5 h-3 w-3 rounded-full bg-white transition-transform',
-          checked ? 'translate-x-[15px]' : 'translate-x-0.5'
-        )}
-      />
-    </button>
   );
 }
 
@@ -236,3 +217,5 @@ export function Button({
     </button>
   );
 }
+
+export { Switch };

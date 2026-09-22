@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
-import { Switch } from '@cloudhub-ux/shadcn/esm/components/ui/switch';
+import { Switch } from '@renderer/components/ui/Switch';
 import { Checkbox } from '@cloudhub-ux/shadcn/esm/components/ui/checkbox';
 import type { EnvLabel, SslMode } from '@shared/ipc';
 import { ENV_LABELS, SSL_MODES, type ConnectionForm, type FormErrors } from './connectionForm';
@@ -106,7 +106,7 @@ export function ConnectionFormFields({ form, errors, groups, onChange }: Connect
         </select>
       </Field>
       <Field label="Read-only" hint="Opens sessions with default_transaction_read_only=on">
-        <Switch checked={form.readOnly} onCheckedChange={(v) => onChange('readOnly', v)} />
+        <Switch checked={form.readOnly} onChange={(v) => onChange('readOnly', v)} label="Read-only connection" />
       </Field>
       <button type="button" onClick={() => setAdvanced((v) => !v)} className="mb-2 inline-flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground">
         <ChevronRight size={14} strokeWidth={1.75} className={cn('transition-transform', advanced && 'rotate-90')} /> Advanced
