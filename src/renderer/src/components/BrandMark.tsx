@@ -4,12 +4,13 @@ import { useId } from 'react';
  * The PgTerminal mark: the elephant from the app icon, flattened to one colour.
  *
  * The eyes are punched through with a mask rather than painted, so the mark sits on any
- * background. It needs about 20px to read as an elephant; below that use the name instead.
+ * background. The viewBox is cropped to the drawing, so `size` is the elephant itself rather than
+ * a box around it. It needs about 20px to read as an elephant; below that use the name instead.
  */
 export function BrandMark({ size = 22, className }: { size?: number; className?: string }): JSX.Element {
   const id = useId();
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden>
+    <svg width={size} height={size} viewBox="1.8 2.02 20.4 20.4" className={className} aria-hidden>
       <mask id={id} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
         <rect width="24" height="24" fill="#fff" />
         <circle cx="10.2" cy="8.8" r="0.95" fill="#000" />
