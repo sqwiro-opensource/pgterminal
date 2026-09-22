@@ -6,6 +6,8 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Check, X } from 'lucide-react';
 import { DEFAULT_SENTINEL, isDefaultSentinel, type CellValue, type JsonValue } from '@shared/types/query';
 import { classifyType } from '@renderer/lib/format';
+import { useResizableBox } from './useResizableBox';
+import { ResizeGrip } from './ResizeGrip';
 
 const MonacoJsonEditor = lazy(() => import('@renderer/features/editor/MonacoJsonEditor'));
 
@@ -114,9 +116,14 @@ function JsonEditor(p: CellEditorProps) {
       setError(err instanceof Error ? err.message : 'Invalid JSON');
     }
   };
+  const box = useResizableBox('jsonEditorWidth', 'jsonEditorHeight', { minW: 320, minH: 140 });
   return (
-    <div className="absolute left-0 top-0 z-20 flex w-[480px] flex-col rounded-md border border-border bg-popover shadow-md" onKeyDown={(e) => e.stopPropagation()}>
-      <div className="h-[220px]">
+    <div
+      className="absolute left-0 top-0 z-20 flex flex-col overflow-hidden rounded-md border border-border bg-popover shadow-md"
+      style={{ width: box.width }}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
+      <div style={{ height: box.height }}>
         <Suspense fallback={<textarea className="h-full w-full bg-background p-2 font-mono text-[12px]" value={text} onChange={(e) => setText(e.target.value)} />}>
           <MonacoJsonEditor modelKey={key} value={text} onChange={setText} />
         </Suspense>
@@ -131,6 +138,7 @@ function JsonEditor(p: CellEditorProps) {
           <Check size={12} strokeWidth={1.75} /> Save
         </button>
       </div>
+      <ResizeGrip onPointerDown={box.onGripPointerDown} />
     </div>
   );
 }

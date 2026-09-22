@@ -8,6 +8,8 @@ import { fkChipRaw } from '@renderer/features/doclink/fkChips';
 import { useStore } from '@renderer/store';
 import { JsonTree } from '../JsonTree';
 import { JsonRaw, JsonViewToggle, type JsonView } from '../JsonViewToggle';
+import { useResizableBox } from '../useResizableBox';
+import { ResizeGrip } from '../ResizeGrip';
 import { useGridLinkContext } from './linkContext';
 
 interface CellProps {
@@ -133,6 +135,7 @@ export const JsonCell = memo(function JsonCell({ f, raw, onOpenLink }: CellProps
   const [open, setOpen] = useState(false);
   const view = useStore((st) => st.settings.jsonCellView);
   const setView = (v: JsonView): void => void useStore.getState().updateSettings({ jsonCellView: v });
+  const box = useResizableBox('jsonCellWidth', 'jsonCellHeight', { minW: 320, minH: 160 });
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -151,8 +154,12 @@ export const JsonCell = memo(function JsonCell({ f, raw, onOpenLink }: CellProps
         side="bottom"
         sideOffset={4}
         collisionPadding={8}
-        className="flex w-[min(680px,92vw)] flex-col p-0"
-        style={{ maxHeight: 'var(--radix-popover-content-available-height)' }}
+        className="relative flex flex-col overflow-hidden p-0"
+        style={{
+          width: Math.min(box.width, window.innerWidth - 24),
+          height: box.height,
+          maxHeight: 'var(--radix-popover-content-available-height)'
+        }}
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <div className="flex h-8 flex-none items-center gap-2 border-b border-border px-2 text-[12px] font-semibold">
@@ -171,6 +178,7 @@ export const JsonCell = memo(function JsonCell({ f, raw, onOpenLink }: CellProps
         <div className="min-h-0 flex-1 overflow-auto p-2">
           {view === 'tree' ? <JsonTree value={raw as JsonValue} onOpenLink={onOpenLink} /> : <JsonRaw value={raw} />}
         </div>
+        <ResizeGrip onPointerDown={box.onGripPointerDown} />
       </PopoverContent>
     </Popover>
   );
