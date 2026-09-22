@@ -183,7 +183,7 @@ export const JsonCell = memo(function JsonCell({ f, raw, onOpenLink }: CellProps
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-2">
-          {view === 'tree' ? <JsonTree value={raw as JsonValue} onOpenLink={onOpenLink} /> : <JsonRaw value={raw} />}
+          {view === 'tree' ? <JsonTree value={raw as JsonValue} onOpenLink={onOpenLink} /> : <JsonRaw value={raw} onOpenLink={onOpenLink} />}
         </div>
         <ResizeGrip onPointerDown={box.onGripPointerDown} />
       </PopoverContent>

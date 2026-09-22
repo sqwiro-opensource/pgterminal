@@ -4,6 +4,7 @@ import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import type { CellValue, FieldInfo, JsonValue } from '@shared/types/query';
 import { JsonTree } from './JsonTree';
 import { JsonRaw, JsonViewToggle } from './JsonViewToggle';
+import { GridLinkContext, type GridLinkContextValue } from './cells/linkContext';
 import { rowToJson } from './gridModel';
 
 export type RowDetailView = 'tree' | 'json';
@@ -20,6 +21,8 @@ export interface RowDetailProps {
   onFieldsOpenChange(v: boolean): void;
   onClose?: () => void;
   onOpenLink?: (value: string) => void;
+  /** Connection context, so references in the row are navigable here too. */
+  linkCtx?: GridLinkContextValue;
 }
 
 /** Selected row as a collapsible tree or raw JSON. Host it inside a resizable panel. */
@@ -32,10 +35,12 @@ export const RowDetail = memo(function RowDetail({
   fieldsOpen,
   onFieldsOpenChange,
   onClose,
-  onOpenLink
+  onOpenLink,
+  linkCtx
 }: RowDetailProps) {
   const json = row ? rowToJson(row, fields) : null;
   return (
+    <GridLinkContext.Provider value={linkCtx ?? EMPTY_CTX}>
     <div className="flex h-full min-h-0 flex-col bg-sidebar">
       <div className="flex h-8 flex-none items-center gap-2 border-b border-border px-2 text-[12px] font-semibold">
         <Braces size={14} strokeWidth={1.75} className="flex-none text-muted-foreground" />
@@ -87,13 +92,16 @@ export const RowDetail = memo(function RowDetail({
           {view === 'tree' ? (
             <JsonTree value={json as JsonValue} expandDepth={3} onOpenLink={onOpenLink} />
           ) : (
-            <JsonRaw value={json} />
+            <JsonRaw value={json} onOpenLink={onOpenLink} />
           )}
         </div>
       )}
     </div>
+    </GridLinkContext.Provider>
   );
 });
+
+const EMPTY_CTX: GridLinkContextValue = {};
 
 function FieldType({ f }: { f: FieldInfo }) {
   return (

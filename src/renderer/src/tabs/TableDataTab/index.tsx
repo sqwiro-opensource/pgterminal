@@ -224,6 +224,7 @@ export default function TableDataTab({ tab: anyTab }: { tab: Tab }) {
                 fieldsOpen={detail.fields}
                 onFieldsOpenChange={detail.setFields}
                 onClose={() => detail.setOpen(false)}
+                linkCtx={{ connectionId, database, fromTabId: tab.id }}
               />
             </Panel>
           </>

@@ -155,6 +155,7 @@ export function ResultsPanel(p: ResultsPanelProps): JSX.Element {
                     fieldsOpen={detail.fields}
                     onFieldsOpenChange={detail.setFields}
                     onClose={() => detail.setOpen(false)}
+                    linkCtx={p.linkCtx}
                   />
                 </Panel>
               </>

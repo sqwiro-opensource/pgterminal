@@ -1,4 +1,9 @@
+import { useMemo } from 'react';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
+import { isLinkShaped } from '@renderer/lib/format';
+import { docLinks } from '@renderer/features/doclink/docLinksService';
+import { useGridLinkContext } from './cells/linkContext';
+import { stringTokenValue, tokenizeJson, type JsonToken } from './jsonTokens';
 
 export type JsonView = 'tree' | 'json';
 
@@ -20,11 +25,53 @@ export function JsonViewToggle({ view, onChange }: { view: JsonView; onChange(v:
   );
 }
 
-/** Raw pretty-printed JSON, used wherever the JSON view is selected. */
-export function JsonRaw({ value }: { value: unknown }): JSX.Element {
+/** Raw pretty-printed JSON, coloured with the same palette as the tree. */
+export function JsonRaw({ value, onOpenLink }: { value: unknown; onOpenLink?: (v: string) => void }): JSX.Element {
+  const tokens = useMemo(() => tokenizeJson(JSON.stringify(value, null, 2) ?? 'null'), [value]);
+  const ctx = useGridLinkContext();
+  // Same reference handling as the tree: prefer an explicit handler, else open through the
+  // grid's connection context. Without either, a ref is just coloured text.
+  const open =
+    onOpenLink ??
+    (ctx.connectionId && ctx.database && !ctx.editing
+      ? (raw: string): void => {
+          const ref = docLinks.isRef(raw);
+          if (ref) void docLinks.open(ref, { connectionId: ctx.connectionId as string, database: ctx.database as string, fromTabId: ctx.fromTabId });
+        }
+      : undefined);
   return (
-    <pre className="whitespace-pre-wrap break-words font-mono text-[12px] leading-relaxed text-foreground">
-      {JSON.stringify(value, null, 2)}
+    <pre className="whitespace-pre-wrap break-words font-mono text-[12px] leading-relaxed text-foreground/80">
+      {tokens.map((t, i) => {
+        const str = stringTokenValue(t);
+        // A link-shaped string stays clickable here, as it is in the tree.
+        if (str !== null && open && isLinkShaped(str)) {
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => open(str)}
+              className="text-link underline decoration-dotted underline-offset-2 hover:decoration-solid"
+            >
+              {t.text}
+            </button>
+          );
+        }
+        return (
+          <span key={i} className={CLASS[t.kind]}>
+            {t.text}
+          </span>
+        );
+      })}
     </pre>
   );
 }
+
+const CLASS: Record<JsonToken['kind'], string> = {
+  key: 'text-muted-foreground',
+  string: 'text-str',
+  number: 'text-num',
+  boolean: 'text-bool',
+  null: 'italic text-muted-foreground/70',
+  punct: 'text-foreground/60',
+  space: ''
+};
