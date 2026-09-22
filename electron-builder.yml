@@ -38,9 +38,10 @@ mac:
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
-  # Signing and notarization are left off: set CSC_LINK/CSC_KEY_PASSWORD and flip notarize
-  # to publish outside a trusted machine. See README "Building and releasing".
-  notarize: false
+  # Signed with the Developer ID in the login keychain and notarized with an App Store Connect
+  # API key taken from the environment. See README "Building and releasing" for the variables.
+  identity: Cloud Hub Limited (Q8B63F2ZRC)
+  notarize: true
   target:
     - target: dmg
       arch:
@@ -61,7 +62,11 @@ linux:
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
-# Update host on the product domain; publish latest-mac.yml + artifacts there (see README).
+# Releases and the update feed both live in the GitHub repo.
 publish:
-  provider: generic
-  url: https://updates.pgterminal.com/
+  provider: github
+  owner: sqwiro-opensource
+  repo: pgterminal
+  # Published, not draft: the updater reads the latest published release, so a draft would ship
+  # nothing to anyone already running the app.
+  releaseType: release

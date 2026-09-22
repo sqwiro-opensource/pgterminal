@@ -1,5 +1,6 @@
-# Local update-server target for `PGT_FORCE_UPDATE_CHECK=1` runs.
-# Serve a directory containing latest-mac.yml and the built artifacts on this port.
-provider: generic
-url: http://127.0.0.1:8788/
+# Update feed for `PGT_FORCE_UPDATE_CHECK=1` runs, so "Check for Updates" can be exercised
+# outside a packaged build. Points at the same releases the packaged app reads.
+provider: github
+owner: sqwiro-opensource
+repo: pgterminal
 updaterCacheDirName: pgterminal-updater

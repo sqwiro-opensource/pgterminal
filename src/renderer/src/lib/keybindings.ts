@@ -376,6 +376,17 @@ export function findBinding(e: KeyboardEvent, scope: Scope, bindings: Binding[] 
   });
 }
 
+/**
+ * Runs a binding by id, for the application menu. Returns false when the id is unknown or the
+ * binding is documentation-only, so a caller can report a menu item that no longer maps to anything.
+ */
+export function runBindingById(id: string, bindings: Binding[] = BINDINGS): boolean {
+  const binding = bindings.find((b) => b.id === id);
+  if (!binding?.run) return false;
+  binding.run();
+  return true;
+}
+
 /** Installs the single window-level dispatcher. Returns an unsubscribe function. */
 export function installKeybindings(): () => void {
   const onKeyDown = (e: KeyboardEvent): void => {

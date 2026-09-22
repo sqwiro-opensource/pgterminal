@@ -11,9 +11,21 @@ export interface ExportRequest {
 
 /** Push payload on app:updateEvent. */
 export interface UpdateEvent {
-  type: 'available' | 'downloaded' | 'error' | 'none';
+  type: 'checking' | 'available' | 'downloaded' | 'error' | 'none';
   version?: string;
   message?: string;
+  /**
+   * True when a person asked for the check (menu or Settings). Automatic checks stay silent
+   * unless there is something to say; a manual one always answers, including "you are current".
+   */
+  manual?: boolean;
+  /** Set on `none` when the build cannot update itself, e.g. a dev run. */
+  unsupported?: boolean;
+}
+
+/** Push payload on app:menuCommand: the id of a renderer keybinding to run. */
+export interface MenuCommand {
+  command: string;
 }
 
 /** Response of app:info. */

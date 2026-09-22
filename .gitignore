@@ -5,3 +5,11 @@ out
 *.log*
 .playwright-mcp
 coverage
+
+# Signing material never belongs in the repo: it lives outside it and is read from the environment.
+*.p8
+*.p12
+*.cer
+*.certSigningRequest
+*.key
+signing-certificates/

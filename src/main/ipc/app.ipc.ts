@@ -24,7 +24,7 @@ export function registerAppIpc(): void {
   });
 
   handle('app:checkForUpdates', async () => {
-    await checkForUpdates();
+    await checkForUpdates({ manual: true });
   });
 
   handle('app:quitAndInstall', () => {

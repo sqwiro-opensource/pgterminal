@@ -22,6 +22,7 @@ import type {
   ExportRequest,
   FetchRowsRequest,
   HistoryEntry,
+  MenuCommand,
   MutateRowsRequest,
   MutateRowsResult,
   QueryEvent,
@@ -88,6 +89,7 @@ export interface IpcPushMap {
   'connections:event': ConnectionEvent;
   'catalog:invalidated': CatalogInvalidatedEvent;
   'app:updateEvent': UpdateEvent;
+  'app:menuCommand': MenuCommand;
 }
 
 /** Invoke channel name. */
@@ -139,7 +141,8 @@ export const PUSH_CHANNELS = [
   'doclink:backlinksEvent',
   'connections:event',
   'catalog:invalidated',
-  'app:updateEvent'
+  'app:updateEvent',
+  'app:menuCommand'
 ] as const satisfies readonly PushChannel[];
 
 type MissingInvoke = Exclude<InvokeChannel, (typeof INVOKE_CHANNELS)[number]>;

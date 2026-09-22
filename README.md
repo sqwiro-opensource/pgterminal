@@ -119,20 +119,34 @@ bun run typecheck && bun run test && bun run build
 
 ```bash
 bun run build          # compile main, preload and renderer into out/
-bun run build:mac      # or build:win / build:linux → dist/
+bun run build:mac      # or build:win / build:linux → dist/, unpublished
+bun run release:mac    # build, sign, notarize and publish a GitHub release
 ```
 
-Before shipping:
+Releases and the update feed both live in this repo's GitHub releases, so publishing a release is
+what makes the update available.
 
-1. **Replace the update URL.** `electron-builder.yml` publishes to
-   `https://updates.pgterminal.com/`. Serve `latest-mac.yml` and the artifacts there before shipping.
-2. **Code signing.** macOS builds use the hardened runtime with
-   `build/entitlements.mac.plist` (JIT and unsigned-memory entitlements only — no camera or
-   microphone). Set `CSC_LINK` and `CSC_KEY_PASSWORD`, and set `mac.notarize` to your notarization
-   config, to distribute outside your own machine.
-3. Auto-update is silent: the app downloads in the background and shows a toast with a **Restart**
-   action. There are no modal dialogs. Update checks are skipped in development unless you set
-   `PGT_FORCE_UPDATE_CHECK=1`, which uses `dev-app-update.yml` (a local server on port 8788).
+**macOS signing and notarization.** Builds use the hardened runtime with
+`build/entitlements.mac.plist` (JIT and unsigned-memory entitlements only, no camera or
+microphone). Signing uses the *Developer ID Application: Cloud Hub Limited* identity from the login
+keychain. Notarization uses an App Store Connect API key, read from the environment and never from
+this repo:
+
+```bash
+export APPLE_API_KEY="…/signing-certificates/apple/Team Keys/AuthKey_XXXXXXXXXX.p8"
+export APPLE_API_KEY_ID=…      # both values are in key_info.json beside the key
+export APPLE_API_ISSUER=…
+export GH_TOKEN=…              # a token that can create releases in this repo
+bun run release:mac
+```
+
+Windows builds are unsigned until a certificate is added; the installer will warn on download.
+
+**Updates.** The app checks on launch and installs in the background, then shows a toast with a
+**Restart** action. Nothing blocks the window. *Check for Updates…* in the application menu (and in
+Settings) forces a check and always answers, including "you're up to date". Checks are skipped in
+development unless you set `PGT_FORCE_UPDATE_CHECK=1`, which reads `dev-app-update.yml` and points
+at the same releases as a packaged build.
 
 ## Architecture
 

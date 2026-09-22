@@ -5,6 +5,7 @@ import { join } from 'path';
 import { registerIpc } from './ipc/register';
 import { getMainWindow } from './ipc/handle';
 import { createMainWindow } from './window';
+import { installMenu } from './menu';
 import { shutdown } from './lifecycle';
 import { initStores } from './store/stores';
 import { installShutdownHook } from './db/ConnectionRegistry';
@@ -38,6 +39,7 @@ if (!app.requestSingleInstanceLock()) {
     initStores({ cwd: app.getPath('userData'), projectVersion: app.getVersion() });
     installShutdownHook();
     registerIpc();
+    installMenu();
     const win = createMainWindow();
     installSmokeHooks(win);
     installAutoUpdate();

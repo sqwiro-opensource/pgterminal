@@ -16,6 +16,8 @@
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:win": "electron-vite build && electron-builder --win",
     "build:linux": "electron-vite build && electron-builder --linux",
+    "release:mac": "electron-vite build && electron-builder --mac --publish always",
+    "release:win": "electron-vite build && electron-builder --win --publish always",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
@@ -73,5 +75,12 @@
     "vite": "^5.3.1",
     "vitest": "^2.1.1",
     "zustand": "^4.5.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sqwiro-opensource/pgterminal.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sqwiro-opensource/pgterminal/issues"
   }
 }
