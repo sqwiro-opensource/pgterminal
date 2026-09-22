@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pgui · Connections</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="assets/pgui.css">
+<style>
+  .conn{flex:1;display:grid;grid-template-columns:260px 1fr;min-height:0;position:relative}
+  .cl{border-right:1px solid hsl(var(--border));display:flex;flex-direction:column;min-height:0;background:hsl(var(--sidebar))}
+  .cl-tools{display:flex;gap:6px;padding:8px;border-bottom:1px solid hsl(var(--border))}
+  .cl-tools .sb-filter{margin:0;flex:1;min-width:0}
+  .cl-tools .btn{flex:none;padding:0 7px}
+  .cl{overflow:hidden}
+  .cl-list{flex:1;overflow:auto;padding:4px 0}
+  .cl-g{height:24px;display:flex;align-items:center;padding:0 10px;color:hsl(var(--muted-foreground))}
+  .cl-row{height:28px;display:flex;align-items:center;gap:8px;padding:0 10px 0 18px;cursor:default}
+  .cl-row:hover{background:hsl(var(--accent))}
+  .cl-row.sel{background:hsl(var(--accent));box-shadow:inset 2px 0 0 hsl(var(--primary))}
+  .cl-row .lbl{flex:1}
+  .cf{flex:1;overflow:auto;padding:16px 28px 60px;position:relative}
+  .cf-h{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .cf-h h2{margin:0;font-size:18px;font-weight:600;letter-spacing:-.01em}
+  .cf-h .muted{font-size:12px}
+  .form{max-width:520px}
+  .hr{border:0;border-top:1px solid hsl(var(--border));margin:10px 0}
+  .field{grid-template-columns:104px 1fr;margin-bottom:7px}
+  .row2{display:grid;grid-template-columns:1fr 100px;gap:8px}
+  .envseg{display:inline-flex;gap:6px}
+  .envseg button{height:26px;padding:0 10px;border-radius:5px;border:1px solid hsl(var(--border));font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;color:hsl(var(--muted-foreground))}
+  .envseg button.on.prod{background:hsl(var(--env-prod-bg));color:hsl(var(--env-prod-fg));border-color:hsl(var(--env-prod-bar)/.5)}
+  .sw{width:14px;height:14px;border-radius:50%;display:inline-block;border:1px solid hsl(var(--foreground)/.15)}
+  .swatches{display:inline-flex;gap:5px;margin-left:10px;vertical-align:middle}
+  .swatches .sw.on{outline:2px solid hsl(var(--ring));outline-offset:1px}
+  details summary{cursor:pointer;color:hsl(var(--muted-foreground));font-size:12.5px;list-style:none;display:flex;align-items:center;gap:6px;margin:6px 0 10px}
+  details summary::before{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);margin-left:4px}
+  details[open] summary::before{transform:rotate(45deg)}
+  .testline{display:flex;align-items:center;gap:8px;font-size:12.5px;margin:6px 0}
+  .testline.ok{color:hsl(var(--success))}
+  .testline .mono{color:hsl(var(--muted-foreground))}
+  .actions{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .actions .grow{flex:1}
+  .variant{position:absolute;right:24px;top:296px;width:300px;padding:12px 14px;border-radius:8px;border:1px dashed hsl(var(--warning));background:hsl(var(--card));font-size:12.5px;box-shadow:var(--shadow-md)}
+  .variant .lab{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:hsl(var(--env-staging-fg));margin-bottom:6px}
+  .errline{display:flex;gap:8px;align-items:flex-start;color:hsl(var(--destructive))}
+  .errline .det{font-family:var(--font-mono);font-size:11.5px;color:hsl(var(--muted-foreground));margin-top:4px;white-space:pre-wrap}
+  .uripop{right:24px;top:112px;width:300px;padding:10px}
+  .uripop .t{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:hsl(var(--muted-foreground));margin-bottom:6px}
+  .uripop .input{width:100%;margin-bottom:8px}
+  .dialog .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12px;margin:8px 0;color:hsl(var(--muted-foreground))}
+  .dialog .kv b{color:hsl(var(--foreground));font-weight:500}
+  .stage{position:absolute;right:24px;bottom:18px;width:520px;height:246px;border-radius:10px;background:hsl(222 20% 6%/.45);display:grid;place-items:center;overflow:hidden}
+  .stage .dialog{width:470px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ic-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="ic-chevd" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="ic-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></symbol>
+  <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="ic-plug" viewBox="0 0 24 24"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a6 6 0 0 1-12 0V8Z"/></symbol>
+  <symbol id="ic-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></symbol>
+  <symbol id="ic-panel-l" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></symbol>
+  <symbol id="ic-panel-r" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></symbol>
+  <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+  <symbol id="ic-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="ic-power" viewBox="0 0 24 24"><path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.77.04"/></symbol>
+  <symbol id="ic-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="ic-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="ic-down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+  <symbol id="ic-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+  <symbol id="ic-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
+  <symbol id="ic-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="ic-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></symbol>
+</svg>
+
+<div class="app">
+  <header class="titlebar">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <div class="crumb"><svg class="i"><use href="#ic-plug"/></svg><b>Connections</b></div>
+    <div class="palette-pill"><svg class="i"><use href="#ic-search"/></svg><span>Search objects or run a command</span><kbd>⌘K</kbd></div>
+    <div class="tb-actions">
+      <button class="iconbtn"><svg class="i lg"><use href="#ic-panel-l"/></svg></button>
+      <button class="iconbtn"><svg class="i lg"><use href="#ic-panel-r"/></svg></button>
+      <button class="iconbtn"><svg class="i lg"><use href="#ic-sun"/></svg></button>
+      <button class="iconbtn"><svg class="i lg"><use href="#ic-settings"/></svg></button>
+    </div>
+  </header>
+
+  <div class="body">
+    <aside class="sidebar">
+      <div class="sb-filter"><svg class="i"><use href="#ic-search"/></svg><input placeholder="Filter connections &amp; objects"></div>
+      <div class="tree">
+        <div class="tree-group" style="--env-bar:var(--env-prod-bar)"><span class="chev"><svg class="i sm" style="transform:rotate(90deg)"><use href="#ic-chev"/></svg></span><span class="caps">Production</span></div>
+        <div class="node d1 active"><span class="chev open"><svg class="i sm"><use href="#ic-chev"/></svg></span><span class="dot on"></span><span class="lbl" style="font-weight:500">adminserver</span><span class="env prod">prod</span></div>
+        <div class="node d2 db"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-db"/></svg><span class="lbl">sqwiro</span><span class="meta">12.4 GB</span></div>
+        <div class="node d2 dim"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-db"/></svg><span class="lbl">analytics</span><span class="meta">6.1 GB</span></div>
+        <div class="node d2 dim" style="padding-left:44px;color:hsl(var(--muted-foreground));font-style:italic;font-size:11.5px">… 29 more databases</div>
+        <div class="node d1"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><span class="dot off"></span><span class="lbl">cloudhubserver</span><span class="env prod">prod</span></div>
+        <div class="tree-group" style="--env-bar:var(--env-prod-bar)"><span class="chev"><svg class="i sm" style="transform:rotate(90deg)"><use href="#ic-chev"/></svg></span><span class="caps">Trading</span></div>
+        <div class="node d1"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><span class="dot on"></span><span class="lbl">tradingserver</span><svg class="i sm" style="color:hsl(var(--muted-foreground))"><use href="#ic-lock"/></svg><span class="env prod">prod</span></div>
+        <div class="tree-group" style="--env-bar:var(--env-local-bar)"><span class="chev"><svg class="i sm" style="transform:rotate(90deg)"><use href="#ic-chev"/></svg></span><span class="caps">Ungrouped (1)</span></div>
+        <div class="node d1"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><span class="dot off"></span><span class="lbl">local</span><span class="env local">local</span></div>
+      </div>
+      <div class="sb-footer">
+        <button class="btn sm ghost"><svg class="i"><use href="#ic-plus"/></svg>New connection</button>
+        <button class="btn sm ghost" style="background:hsl(var(--accent))"><svg class="i"><use href="#ic-settings"/></svg>Manage</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="tabstrip">
+        <div class="tab pinned on"><svg class="i ic"><use href="#ic-plug"/></svg></div>
+        <div class="tab prod"><svg class="i ic"><use href="#ic-db"/></svg><span class="t">sales_customer</span><span class="x"><svg class="i sm"><use href="#ic-x"/></svg></span></div>
+        <div class="tab prod"><svg class="i ic"><use href="#ic-search"/></svg><span class="t">Query 2 · sqwiro</span><span class="dirty"></span></div>
+        <button class="tab-add"><svg class="i"><use href="#ic-plus"/></svg></button>
+      </div>
+
+      <div class="content">
+        <div class="conn">
+          <!-- master list -->
+          <div class="cl">
+            <div class="cl-tools">
+              <div class="sb-filter"><svg class="i"><use href="#ic-search"/></svg><input placeholder="Filter"></div>
+              <button class="btn sm"><svg class="i"><use href="#ic-plus"/></svg>New</button>
+              <button class="btn sm" title="Import from URI"><svg class="i"><use href="#ic-down"/></svg>URI</button>
+            </div>
+            <div class="cl-list">
+              <div class="cl-g"><span class="caps">Production</span></div>
+              <div class="cl-row sel"><span class="dot on"></span><span class="lbl">adminserver</span><span class="env prod">prod</span></div>
+              <div class="cl-row"><span class="dot off"></span><span class="lbl">cloudhubserver</span><span class="env prod">prod</span></div>
+              <div class="cl-g"><span class="caps">Trading</span></div>
+              <div class="cl-row"><span class="dot on"></span><span class="lbl">tradingserver</span><svg class="i sm" style="color:hsl(var(--muted-foreground))"><use href="#ic-lock"/></svg><span class="env prod">prod</span></div>
+              <div class="cl-g"><span class="caps">Ungrouped</span></div>
+              <div class="cl-row"><span class="dot off"></span><span class="lbl">local</span><span class="env local">local</span></div>
+              <div class="cl-row"><span class="dot off"></span><span class="lbl">staging-replica</span><span class="env staging">staging</span></div>
+            </div>
+          </div>
+
+          <!-- form -->
+          <div class="cf">
+            <div class="cf-h">
+              <h2>adminserver</h2>
+              <span class="env prod">prod</span>
+              <span class="dot on"></span><span class="muted">connected · 41 ms</span>
+            </div>
+            <div class="muted small" style="margin-bottom:10px">Saved 2026-09-14 · last connected 2 h ago · password in macOS Keychain</div>
+
+            <div class="form">
+              <div class="field"><label>Name</label><div class="input"><input value="adminserver"></div></div>
+              <div class="field"><label>Group</label><div style="display:flex;gap:8px"><div class="select" style="width:220px"><span>Production</span><svg class="i sm"><use href="#ic-chevd"/></svg></div><button class="btn sm ghost"><svg class="i"><use href="#ic-plus"/></svg>new group</button></div></div>
+              <div class="field"><label>Environment</label><div>
+                <span class="envseg">
+                  <button class="on prod"><span class="sw" style="background:hsl(var(--env-prod-bar))"></span>Prod</button>
+                  <button><span class="sw" style="background:hsl(var(--env-staging-bar))"></span>Staging</button>
+                  <button><span class="sw" style="background:hsl(var(--env-dev-bar))"></span>Dev</button>
+                  <button><span class="sw" style="background:hsl(var(--env-local-bar))"></span>Local</button>
+                </span>
+                <span class="swatches" title="Colour override">
+                  <span class="sw on" style="background:hsl(0 72% 51%)"></span><span class="sw" style="background:hsl(20 90% 55%)"></span><span class="sw" style="background:hsl(38 92% 50%)"></span><span class="sw" style="background:hsl(142 71% 40%)"></span><span class="sw" style="background:hsl(190 80% 42%)"></span><span class="sw" style="background:hsl(226 70% 50%)"></span><span class="sw" style="background:hsl(280 60% 55%)"></span><span class="sw" style="background:hsl(220 9% 60%)"></span>
+                </span>
+              </div></div>
+              <hr class="hr">
+              <div class="field"><label>Host</label><div class="row2"><div class="input"><input value="adminserver.tail1234.ts.net"></div><div class="input"><span class="muted small">Port</span><input value="5432" style="text-align:right"></div></div></div>
+              <div class="field"><label>Database</label><div class="input"><input value="postgres"><span class="muted small">default db to open</span></div></div>
+              <div class="field"><label>User</label><div class="input"><input value="postgres"></div></div>
+              <div class="field"><label>Password</label><div style="display:flex;gap:10px;align-items:center"><div class="input" style="width:260px"><input type="password" value="••••••••••••"><button class="iconbtn sm" title="Show"><svg class="i sm"><use href="#ic-eye"/></svg></button></div><span class="check"><i></i>Ask every time</span></div></div>
+              <div class="field"><label>SSL mode</label><div style="display:flex;gap:10px;align-items:center"><div class="select" style="width:180px"><span>verify-full</span><svg class="i sm"><use href="#ic-chevd"/></svg></div><span class="muted small">CA cert</span><button class="btn sm">choose…</button><span class="mono small muted">~/.pg/tailnet-ca.pem</span></div></div>
+              <div class="field"><label></label><span class="check"><i></i>Read-only connection <span class="muted">(default_transaction_read_only = on)</span></span></div>
+
+              <details>
+                <summary>Advanced</summary>
+                <div class="field"><label>Connect timeout</label><div class="input" style="width:120px"><input value="10"><span class="muted small">s</span></div></div>
+                <div class="field"><label>Statement timeout</label><div class="input" style="width:120px"><input value="0"><span class="muted small">0 = none</span></div></div>
+                <div class="field"><label>application_name</label><div class="input" style="width:220px"><input value="pgui"></div></div>
+                <div class="field"><label>search_path</label><div class="input" style="width:220px"><input placeholder="server default"></div></div>
+                <div class="field"><label>Pool size</label><div class="input" style="width:120px"><input value="4"></div></div>
+              </details>
+
+              <hr class="hr">
+              <div class="testline ok"><svg class="i"><use href="#ic-check"/></svg><span>PostgreSQL 16.3 on x86_64-linux · <b>42 ms</b> · 31 databases · superuser</span><span class="mono small">tested 10:24:07</span></div>
+              <div class="actions">
+                <button class="btn"><svg class="i"><use href="#ic-plug"/></svg>Test</button>
+                <span class="grow"></span>
+                <button class="btn"><svg class="i"><use href="#ic-copy"/></svg>Duplicate</button>
+                <button class="btn" style="color:hsl(var(--destructive))"><svg class="i"><use href="#ic-trash"/></svg>Delete</button>
+                <button class="btn">Save</button>
+                <button class="btn primary">Save &amp; Connect</button>
+              </div>
+            </div>
+
+            <!-- error variant -->
+            <div class="variant">
+              <div class="lab">Variant · Test failed</div>
+              <div class="errline"><svg class="i" style="margin-top:2px"><use href="#ic-alert"/></svg><div><b>Could not reach 100.64.0.5:5432 — is Tailscale up?</b><div class="det">connect ECONNREFUSED 100.64.0.5:5432
+errno -61 · syscall connect · after 10 003 ms</div><div style="margin-top:6px;display:flex;gap:6px"><button class="btn sm">Copy</button><button class="btn sm ghost">Details</button><button class="btn sm ghost">Retry</button></div></div></div>
+            </div>
+
+            <!-- uri import popover -->
+            <div class="popover uripop">
+              <div class="t">Import from URI</div>
+              <div class="input"><input value="postgresql://postgres:s3cr3t@adminserver.tail1234.ts.net:5432/postgres?sslmode=verify-full"></div>
+              <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><span class="muted small">Paste into Host → offers to parse. Fills host, port, db, user, password, sslmode; malformed → inline error.</span><span style="flex:1"></span><button class="btn sm primary">Parse</button></div>
+            </div>
+          </div>
+
+          <!-- delete confirm -->
+          <div class="stage">
+            <div class="dialog" style="width:480px">
+              <div class="dh"><svg class="i lg" style="color:hsl(var(--destructive))"><use href="#ic-trash"/></svg>Delete connection “cloudhubserver”?<span style="flex:1"></span><span class="env prod">prod</span></div>
+              <div class="db">
+                <p style="margin:0 0 8px">This removes the saved password from the macOS Keychain. Open tabs on this connection will be closed.</p>
+                <div class="kv"><span>Host</span><b class="mono">cloudhubserver.tail1234.ts.net:5432</b><span>Open tabs</span><b>2 (Query 3, billing.invoice)</b><span>Group</span><b>Production</b></div>
+                <div class="muted small">The server itself is not touched.</div>
+              </div>
+              <div class="df"><button class="btn">Cancel</button><button class="btn danger"><svg class="i"><use href="#ic-trash"/></svg>Delete connection</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer class="statusbar">
+    <span class="chip"><span class="dot on"></span>adminserver <span class="env prod">prod</span></span>
+    <span>sqwiro</span>
+    <span>Autocommit</span>
+    <span class="grow"></span>
+    <span class="mono">PostgreSQL 16.3</span>
+  </footer>
+</div>
+
+<div class="mock-note" style="left:296px;top:400px;max-width:230px">Connections is a pinned tab (icon only), not a modal. Selecting a row loads the form; dirty form + row switch prompts Save/Discard.</div>
+<div class="mock-note" style="left:296px;top:470px;max-width:230px">Env picker sets badge text + default colour; swatches override colour only — the label always stays.</div>
+<div class="mock-note" style="left:296px;top:680px;max-width:230px">“Ask every time” = never store; prompt on connect. Stored passwords go to safeStorage vault, never in connections.json.</div>
+<div class="mock-note" style="left:296px;top:762px;max-width:230px">SSL modes: disable / allow / prefer / require / verify-ca / verify-full. CA picker appears for verify-*.</div>
+<div class="mock-note" style="left:296px;top:600px;max-width:230px">Test is independent of Save: spinner + Cancel link → success (version, latency, db count) or error. It never persists.</div>
+<div class="mock-note" style="left:570px;top:720px;max-width:300px">Delete = CF dialog (light: no typed name — it is reversible by re-adding). Shows exactly what is lost.</div>
+
+<script src="assets/pgui.js"></script>
+</body>
+</html>

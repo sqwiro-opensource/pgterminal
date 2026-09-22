@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pgui · Dialogs, palette, settings</title>
+<link rel="stylesheet" href="assets/pgui.css">
+<style>
+  .settings{display:grid;grid-template-columns:180px 1fr;min-height:0}
+  .snav{border-right:1px solid hsl(var(--border));padding:10px 8px;display:flex;flex-direction:column;gap:2px;background:hsl(var(--sidebar))}
+  .snav a{height:28px;display:flex;align-items:center;padding:0 10px;border-radius:5px;font-size:12.5px;color:hsl(var(--muted-foreground));cursor:pointer}
+  .snav a:hover{background:hsl(var(--accent))}
+  .snav a.on{background:hsl(var(--accent));color:hsl(var(--foreground));font-weight:500}
+  .sbody{overflow:auto;padding:18px 28px 40px;max-width:900px}
+  .sbody h2{font-size:15px;font-weight:600;margin:0}
+  .sh{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .srow{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;padding:12px 0;border-bottom:1px solid hsl(var(--border));font-size:12.5px}
+  .srow b{font-weight:500}
+  .srow .muted{font-size:12px;margin-top:2px;max-width:60ch}
+  .envchecks{display:flex;gap:12px}
+  .secgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+  .secgrid .card{padding:10px 12px}
+  .secgrid .card h3{margin-bottom:4px;color:hsl(var(--foreground))}
+  .deps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+  .deps li{display:flex;align-items:center;gap:8px;font-size:12.5px}
+  .sqlbox{position:relative;font-family:var(--font-mono);font-size:12.5px;line-height:1.55;white-space:pre;border:1px solid hsl(var(--border));border-radius:6px;padding:10px 12px;background:hsl(var(--grid-header));margin:6px 0 10px;overflow:auto}
+  .sqlbox .kw{color:hsl(var(--primary));font-weight:600}.sqlbox .nu{color:hsl(var(--num))}
+  .typed{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:12.5px}
+  .errcard{margin-top:10px;border:1px solid hsl(var(--destructive)/.4);background:hsl(var(--destructive)/.08);border-radius:6px;padding:8px 10px;font-size:12.5px;display:flex;flex-direction:column;gap:3px}
+  .errcard .eh{display:flex;align-items:center;gap:8px}
+  .palette{width:640px;height:420px;background:hsl(var(--popover));border:1px solid hsl(var(--border));border-radius:10px;box-shadow:var(--shadow-xl);display:grid;grid-template-rows:44px 1fr 30px;overflow:hidden;animation:fadeUp .2s ease-out}
+  .palette .pin{display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid hsl(var(--border))}
+  .palette .pl{overflow:auto;padding:6px}
+  .palette .pg{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:hsl(var(--muted-foreground));font-weight:600;padding:8px 8px 4px}
+  .palette .pg b{color:hsl(var(--foreground));font-weight:600;text-transform:none;letter-spacing:0;font-size:11px}
+  .palette .pi{height:30px;display:flex;align-items:center;gap:10px;padding:0 8px;border-radius:5px;font-size:12.5px}
+  .palette .pi:hover,.palette .pi.on{background:hsl(var(--accent))}
+  .palette .pi .lab{color:hsl(var(--muted-foreground));font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .palette .pi .r{margin-left:auto;font-size:11px;color:hsl(var(--muted-foreground));white-space:nowrap}
+  .palette .pf{display:flex;gap:16px;align-items:center;padding:0 14px;border-top:1px solid hsl(var(--border));font-size:11px;color:hsl(var(--muted-foreground))}
+  .modes{border-collapse:collapse;font-size:12px;width:100%}
+  .modes td{padding:4px 4px;vertical-align:top;border-bottom:1px solid hsl(var(--grid-line))}
+  .keys{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+  .keys h4{margin:12px 0 4px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:hsl(var(--muted-foreground))}
+  .keys h4:first-child{margin-top:0}
+  .kr{display:grid;grid-template-columns:1fr 132px 132px;align-items:center;gap:8px;min-height:24px;padding:2px 0;font-size:12px;border-bottom:1px solid hsl(var(--grid-line))}
+  .kr span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kr kbd{justify-self:start;white-space:normal;line-height:1.3}
+  .region{position:absolute;inset:0}
+  .regions{position:fixed;top:41px;right:12px;z-index:60;display:flex;gap:4px;align-items:center;padding:4px 8px;border-radius:999px;background:hsl(var(--popover)/.92);border:1px solid hsl(var(--border));box-shadow:var(--shadow-md);backdrop-filter:blur(8px)}
+  .regions button{height:22px;padding:0 10px;border-radius:999px;font-size:11.5px;color:hsl(var(--muted-foreground))}
+  .regions button.on,.regions button:hover{background:hsl(var(--accent));color:hsl(var(--foreground))}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></symbol>
+  <symbol id="i-braces" viewBox="0 0 24 24"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1M16 21h1a2 2 0 0 0 2-2v-5a2 2 0 0 1 2-2 2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01M6 18h.01"/></symbol>
+  <symbol id="i-schema" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-panel-l" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></symbol>
+  <symbol id="i-panel-r" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><path d="m21 2-2 2m-7.6 7.6a5.5 5.5 0 1 1-7.8 7.8 5.5 5.5 0 0 1 7.8-7.8zm0 0L19 6l2-2-3-3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M3 21v-5h5"/></symbol>
+  <symbol id="i-fn" viewBox="0 0 24 24"><path d="M9 4h6M12 4v16M8 20h8"/></symbol>
+  <symbol id="i-cols" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="m6 3 14 9-14 9V3z"/></symbol>
+</svg>
+<div class="app">
+  <div class="titlebar">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <div class="crumb"><svg class="i sm"><use href="#i-settings"/></svg><b>Settings</b></div>
+    <div class="palette-pill"><svg class="i sm"><use href="#i-search"/></svg>Search objects or run a command<kbd>⌘K</kbd></div>
+    <div class="tb-actions">
+      <button class="iconbtn"><svg class="i"><use href="#i-panel-l"/></svg></button>
+      <button class="iconbtn"><svg class="i"><use href="#i-panel-r"/></svg></button>
+      <button class="iconbtn"><svg class="i"><use href="#i-sun"/></svg></button>
+      <button class="iconbtn"><svg class="i"><use href="#i-settings"/></svg></button>
+    </div>
+  </div>
+  <div class="body" style="grid-template-columns:240px 1fr">
+    <aside class="sidebar">
+      <div class="sb-filter"><svg class="i sm"><use href="#i-search"/></svg><input placeholder="Filter connections & objects"><kbd>⌘⇧F</kbd></div>
+      <div class="tree">
+        <div class="tree-group" style="--env-bar:var(--env-prod-bar)"><span class="chev"><svg class="i sm" style="transform:rotate(90deg)"><use href="#i-chev"/></svg></span><span class="caps">Production</span></div>
+        <div class="node d1 active"><span class="chev open"><svg class="i sm"><use href="#i-chev"/></svg></span><span class="dot on"></span><span class="lbl">adminserver</span><span class="env prod">prod</span></div>
+        <div class="node d2 db"><span class="chev open"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-db"/></svg><span class="lbl">sqwiro</span><span class="meta">12 GB</span></div>
+        <div class="node d3"><span class="chev open"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-schema"/></svg><span class="lbl">sales</span></div>
+        <div class="node d4"><span class="chev open"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-table"/></svg><span class="lbl">Tables</span><span class="meta">14</span></div>
+        <div class="node d5 sel"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-table"/></svg><span class="lbl">sales_customer</span><span class="meta">1.2M</span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-table"/></svg><span class="lbl">sales_order</span><span class="meta">98k</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-schema"/></svg><span class="lbl">billing</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-schema"/></svg><span class="lbl">crm</span></div>
+        <div class="node d1"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><span class="dot off"></span><span class="lbl">cloudhubserver</span><span class="env prod">prod</span></div>
+        <div class="tree-group" style="--env-bar:var(--env-prod-bar)"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><span class="caps">Trading</span></div>
+        <div class="node d1"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><span class="dot off"></span><span class="lbl">tradingserver</span><span class="env prod">prod</span></div>
+        <div class="tree-group"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><span class="caps">Ungrouped</span></div>
+        <div class="node d1"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><span class="dot on"></span><span class="lbl">local</span><span class="env local">local</span></div>
+      </div>
+      <div class="sb-footer"><button class="btn ghost sm"><svg class="i sm"><use href="#i-plus"/></svg>New connection</button><button class="btn ghost sm"><svg class="i sm"><use href="#i-settings"/></svg>Manage</button></div>
+    </aside>
+
+    <div class="main" style="position:relative">
+      <div class="tabstrip">
+        <div class="tab prod"><svg class="i ic"><use href="#i-table"/></svg><span class="t">sales_customer</span><span class="x"><svg class="i sm"><use href="#i-x"/></svg></span></div>
+        <div class="tab prod"><svg class="i ic"><use href="#i-code"/></svg><span class="t">Query 2 · sqwiro</span><span class="dirty"></span></div>
+        <div class="tab on"><svg class="i ic"><use href="#i-settings"/></svg><span class="t">Settings</span><span class="x"><svg class="i sm"><use href="#i-x"/></svg></span></div>
+        <div class="tab-add"><svg class="i"><use href="#i-plus"/></svg></div>
+      </div>
+
+      <!-- ===== (c) SETTINGS TAB (base content) ===== -->
+      <div class="content settings">
+        <nav class="snav">
+          <a>Appearance</a><a>Editor</a><a>Query</a><a class="on">Safety</a><a>Data</a><a>Links</a><a>History</a><a>Connections</a><a>About</a>
+        </nav>
+        <div class="sbody">
+          <div class="sh"><h2>Safety</h2><span class="pill ok"><svg class="i sm"><use href="#i-check"/></svg>Saved</span><span class="muted small">every field autosaves · no Save button</span></div>
+          <div class="srow"><div><b>Confirm destructive actions on</b><div class="muted">DROP, TRUNCATE, DELETE of more than 10 rows, terminate backend, drop database.</div></div>
+            <div class="envchecks">
+              <span class="check on"><i><svg class="i sm"><use href="#i-check"/></svg></i><span class="env prod">prod</span></span>
+              <span class="check"><i></i><span class="env staging">staging</span></span>
+              <span class="check"><i></i><span class="env dev">dev</span></span>
+              <span class="check"><i></i><span class="env local">local</span></span>
+            </div></div>
+          <div class="srow"><div><b>Require typed confirmation on prod</b><div class="muted">The object name (or pid / row count) must be typed before the destructive button enables.</div></div><span class="switch on"></span></div>
+          <div class="srow"><div><b>Warn on UPDATE / DELETE without WHERE</b><div class="muted">Blocks Run with a confirm dialog showing the statement and the table's row estimate.</div></div><span class="switch on"></span></div>
+          <div class="srow"><div><b>Ask for all destructive actions</b><div class="muted">Force typed confirmation on every environment, not only the ones ticked above.</div></div><span class="switch"></span></div>
+          <div class="srow"><div><b>Read-only badge colour</b><div class="muted">Shown on the server row and every tab of a read-only connection.</div></div><span class="select" style="width:150px"><span class="dot" style="background:hsl(var(--warning))"></span>Amber<svg class="i sm" style="transform:rotate(90deg)"><use href="#i-chev"/></svg></span></div>
+          <div class="srow"><div><b>Statement timeout for destructive DDL</b><div class="muted">Applied with <code class="mono">SET LOCAL lock_timeout</code> so a DROP waiting on a lock fails instead of queueing behind traffic.</div></div><span class="input" style="width:150px"><input value="5000"><span class="muted small">ms</span></span></div>
+          <div class="srow"><div><b>Preview SQL before Apply</b><div class="muted">Grid Apply always shows the generated UPDATE/INSERT/DELETE statements first.</div></div><span class="switch on"></span></div>
+
+          <h2 style="margin-top:28px">Other sections <span class="muted small" style="font-weight:400">(collapsed preview)</span></h2>
+          <div class="secgrid">
+            <div class="card"><h3>Appearance</h3><div class="muted small">Theme System/Light/Dark · Density Compact/Default/Comfortable · UI font size 12/13/14 · Accent colour</div></div>
+            <div class="card"><h3>Editor</h3><div class="muted small">Font family (JetBrains Mono) · size 11–18 · tab size · insert spaces · word wrap · minimap · autocomplete · uppercase keywords on format</div></div>
+            <div class="card"><h3>Query</h3><div class="muted small">Default row limit 500 · Statement timeout 0 · Autocommit on · Continue on error off · Cancel → Terminate after 5 s</div></div>
+            <div class="card"><h3>Data</h3><div class="muted small">NULL text · Date/time format ISO/locale · Show timestamps in server tz/local · Page size 100 · Estimate counts above 100k · jsonb preview length</div></div>
+            <div class="card"><h3>Links</h3><div class="muted small">FK columns as links on · Link unresolved <span class="mono">table/id</span> strings off · Hover preview delay 400 ms · Backlink default scope FK + jsonb same schema · jsonb scan cap 5 s/table</div></div>
+            <div class="card"><h3>History</h3><div class="muted small">Retention 30 days · max 5,000 entries · exclude connections ▸ · Clear history</div></div>
+            <div class="card"><h3>Connections</h3><div class="muted small">Password storage: Keychain (safeStorage) · Export connections (no passwords) · Import</div></div>
+            <div class="card"><h3>About</h3><div class="muted small">pgui 2.0.0 · Electron 31 · Check for updates · Open logs folder</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== (a) DESTRUCTIVE CONFIRM DIALOG ===== -->
+      <div class="backdrop region" id="r-drop">
+        <div class="dialog" style="width:580px">
+          <div class="dh" style="color:hsl(var(--destructive))"><svg class="i"><use href="#i-warn"/></svg><span style="color:hsl(var(--foreground))">Drop table <span class="mono">sales.sales_customer</span></span><span style="flex:1"></span><span class="chip" style="pointer-events:none"><span class="dot on"></span>adminserver</span><span class="env prod">prod</span></div>
+          <div class="db">
+            <p style="margin:0 0 8px">This permanently deletes <b class="mono">1,203,441</b> rows (<b class="mono">12.4 GB</b>). <b>3 objects depend on it:</b></p>
+            <ul class="deps">
+              <li><svg class="i sm"><use href="#i-eye"/></svg><span class="mono">sales.v_customer_summary</span><span class="muted">view</span></li>
+              <li><svg class="i sm"><use href="#i-link"/></svg><span class="mono">billing.invoice</span><span class="muted">FK customer_id</span></li>
+              <li><svg class="i sm"><use href="#i-link"/></svg><span class="mono">crm.note</span><span class="muted">FK customer_id</span></li>
+            </ul>
+            <div style="display:flex;gap:16px;margin:10px 0"><span class="check on"><i><svg class="i sm"><use href="#i-check"/></svg></i>CASCADE (drop dependents)</span><span class="check"><i></i>IF EXISTS</span></div>
+            <div class="sqlbox"><span class="kw">DROP TABLE</span> sales.sales_customer <span class="kw">CASCADE</span>;<button class="btn ghost sm" style="position:absolute;right:6px;top:6px"><svg class="i sm"><use href="#i-copy"/></svg>Copy</button></div>
+            <div class="typed"><label>Type <b class="mono">sales_customer</b> to confirm:</label><span class="input" style="width:220px"><input value="sales_cust"><span style="border-left:1.5px solid hsl(var(--foreground));height:14px"></span></span></div>
+          </div>
+          <div class="df"><button class="btn">Cancel <kbd>esc</kbd></button><button class="btn"><svg class="i sm"><use href="#i-code"/></svg>Open in editor</button><button class="btn danger" disabled><svg class="i sm"><use href="#i-trash"/></svg>Drop table</button></div>
+        </div>
+        <div class="mock-note" style="top:96px;left:290px;max-width:250px;white-space:normal">destructive variant: red verb button stays disabled until the typed name matches (prod only, per Safety settings)</div>
+        <div class="mock-note" style="bottom:120px;left:290px;max-width:250px;white-space:normal">body always has concrete numbers + dependants; "Open in editor" moves the SQL to a query tab</div>
+      </div>
+
+      <!-- ===== (a2) LIGHT CONFIRM + ERROR STATE ===== -->
+      <div class="backdrop region hidden" id="r-light">
+        <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;justify-content:center">
+          <div class="dialog" style="width:440px">
+            <div class="dh"><svg class="i" style="color:hsl(var(--warning))"><use href="#i-warn"/></svg>Apply 3 changes to <span class="mono">sales.sales_customer</span>?<span style="flex:1"></span><span class="env prod">prod</span></div>
+            <div class="db">
+              <p style="margin:0 0 8px" class="muted">2 rows updated in one transaction. No typing required for row edits.</p>
+              <div class="sqlbox" style="font-size:11.5px"><span class="kw">UPDATE</span> sales.sales_customer <span class="kw">SET</span> name = $1 <span class="kw">WHERE</span> id = $2;
+<span class="kw">UPDATE</span> sales.sales_customer <span class="kw">SET</span> country = $1, meta = $2::jsonb <span class="kw">WHERE</span> id = $3;</div>
+            </div>
+            <div class="df"><button class="btn">Cancel</button><button class="btn warn"><svg class="i sm"><use href="#i-check"/></svg>Apply 3 changes <kbd style="background:transparent;border-color:hsl(0 0% 0%/.2);color:inherit">↵</kbd></button></div>
+          </div>
+          <div class="dialog" style="width:460px">
+            <div class="dh"><svg class="i" style="color:hsl(var(--destructive))"><use href="#i-warn"/></svg>Terminate backend <span class="mono">4390</span><span style="flex:1"></span><span class="env prod">prod</span></div>
+            <div class="db">
+              <p style="margin:0 0 8px">Session <span class="mono">app@sqwiro</span> from <span class="mono">100.90.157.12</span>, running 41 s, blocking 2 sessions.</p>
+              <div class="sqlbox"><span class="kw">SELECT</span> pg_terminate_backend(<span class="nu">4390</span>);</div>
+              <div class="errcard"><div class="eh"><span class="pill bad">ERROR</span><span class="mono">SQLSTATE 42501</span></div><div>permission denied to terminate process</div><div class="muted small">DETAIL: Only roles with the SUPERUSER attribute may terminate processes of roles with the SUPERUSER attribute.</div><div class="muted small">HINT: connect as postgres or grant pg_signal_backend.</div><div style="display:flex;gap:6px;margin-top:6px"><button class="btn sm">Copy error</button><button class="btn sm">Retry</button></div></div>
+            </div>
+            <div class="df"><button class="btn">Cancel</button><button class="btn"><svg class="i sm"><use href="#i-code"/></svg>Open in editor</button><button class="btn danger"><svg class="i sm"><use href="#i-x"/></svg>Terminate</button></div>
+          </div>
+        </div>
+        <div class="mock-note" style="top:96px;left:290px;max-width:230px;white-space:normal">light variant: amber, one click, Enter confirms · used for Apply, cancel backend, refresh matview</div>
+        <div class="mock-note" style="bottom:110px;right:30px;max-width:260px;white-space:normal">error state: dialog stays open; the pg error is a structured card (code · message · detail · hint)</div>
+      </div>
+
+      <!-- ===== (b) COMMAND PALETTE ===== -->
+      <div class="backdrop region hidden" id="r-palette" style="align-items:flex-start;padding-top:80px">
+        <div style="display:flex;gap:18px;align-items:flex-start">
+          <div class="palette">
+            <div class="pin"><svg class="i"><use href="#i-search"/></svg><span class="mono" style="font-size:14px"><span style="color:hsl(var(--link))">#</span>customer/42<span style="border-left:1.5px solid hsl(var(--foreground));margin-left:1px"></span></span><span style="flex:1"></span><span class="pill info">Go to document</span></div>
+            <div class="pl">
+              <div class="pg">Resolved in <b>adminserver › sqwiro</b> (rank 3 · search_path)</div>
+              <div class="pi on"><svg class="i"><use href="#i-braces"/></svg><span class="chip" style="pointer-events:none"><span class="pre">public.</span>customer/42</span><span class="lab">Acme Ltd · public.customer</span><span class="r"><kbd>↵</kbd> open</span></div>
+              <div class="pg">Also matches (rank 4 · other schemas)</div>
+              <div class="pi"><svg class="i"><use href="#i-braces"/></svg><span class="chip" style="pointer-events:none"><span class="pre">sales.</span>customer/42</span><span class="lab">sales.customer — view</span><span class="r"><kbd>⌘↵</kbd> new tab</span></div>
+              <div class="pg">Did you mean</div>
+              <div class="pi"><svg class="i"><use href="#i-braces"/></svg><span class="chip" style="pointer-events:none"><span class="pre">sales_</span>customer/42</span><span class="lab">Acme Ltd · sales.sales_customer (via _id)</span><span class="r muted">rank 1</span></div>
+              <div class="pg">Recent</div>
+              <div class="pi"><svg class="i"><use href="#i-table"/></svg><span>sales.sales_order</span><span class="lab">adminserver › sqwiro</span><span class="r muted">Open data</span></div>
+              <div class="pi"><svg class="i"><use href="#i-braces"/></svg><span>order/9001</span><span class="lab">adminserver › sqwiro</span><span class="r muted">Document</span></div>
+            </div>
+            <div class="pf"><span><kbd>↑↓</kbd> navigate</span><span><kbd>↵</kbd> open</span><span><kbd>⌘↵</kbd> new tab</span><span><kbd>esc</kbd> close</span></div>
+          </div>
+          <div class="card" style="width:300px">
+            <h3>Palette modes</h3>
+            <table class="modes">
+              <tr><td><kbd>&nbsp;</kbd></td><td>mixed: objects, actions, tabs</td></tr>
+              <tr><td><kbd>@</kbd></td><td>tables/views only · <kbd>↵</kbd> data, <kbd>⌘↵</kbd> structure (⌘P)</td></tr>
+              <tr><td><kbd>#</kbd></td><td>go to document: <span class="mono">table/id</span> resolved like a link (⌘⇧D)</td></tr>
+              <tr><td><kbd>:</kbd></td><td>open tabs</td></tr>
+              <tr><td><kbd>&gt;</kbd></td><td>actions only (connect, toggle inspector, …)</td></tr>
+            </table>
+            <div class="muted small" style="margin-top:8px">Index = loaded tree nodes + background <span class="mono">pg_class</span> fetch per open database, cached 5 min. Right column shows connection path and shortcut.</div>
+          </div>
+        </div>
+        <div class="mock-note" style="top:96px;left:290px;max-width:220px;white-space:normal">⌘K · 640×420 · 80 px from top · fuzzy over schema.table with connection scope chips</div>
+      </div>
+
+      <!-- ===== (d) SHORTCUT SHEET ===== -->
+      <div class="backdrop region hidden" id="r-keys">
+        <div class="dialog" style="width:940px;max-height:88%;display:flex;flex-direction:column">
+          <div class="dh"><svg class="i"><use href="#i-code"/></svg>Keyboard shortcuts<span style="flex:1"></span><span class="input" style="width:220px"><svg class="i sm"><use href="#i-search"/></svg><input placeholder="Filter shortcuts"></span><span class="muted small">⌘/</span></div>
+          <div class="db keys" style="overflow:auto">
+            <div class="kcol">
+              <h4>Global</h4>
+              <div class="kr"><span>Command palette</span><kbd>⌘K</kbd><kbd>Ctrl+K</kbd></div>
+              <div class="kr"><span>Open table (palette @)</span><kbd>⌘P</kbd><kbd>Ctrl+P</kbd></div>
+              <div class="kr"><span>Go to document (palette #)</span><kbd>⌘⇧D</kbd><kbd>Ctrl+Shift+D</kbd></div>
+              <div class="kr"><span>Shortcut list</span><kbd>⌘/</kbd><kbd>Ctrl+/</kbd></div>
+              <div class="kr"><span>New query tab</span><kbd>⌘N</kbd><kbd>Ctrl+N</kbd></div>
+              <div class="kr"><span>Close tab</span><kbd>⌘W</kbd><kbd>Ctrl+W</kbd></div>
+              <div class="kr"><span>Reopen closed tab</span><kbd>⌘⇧T</kbd><kbd>Ctrl+Shift+T</kbd></div>
+              <div class="kr"><span>Next / previous tab</span><kbd>⌃Tab / ⌃⇧Tab</kbd><kbd>Ctrl+Tab</kbd></div>
+              <div class="kr"><span>Go to tab 1–9</span><kbd>⌘1–9</kbd><kbd>Alt+1–9</kbd></div>
+              <div class="kr"><span>Toggle sidebar</span><kbd>⌘B</kbd><kbd>Ctrl+B</kbd></div>
+              <div class="kr"><span>Toggle inspector</span><kbd>⌘I</kbd><kbd>Ctrl+I</kbd></div>
+              <div class="kr"><span>Focus tree filter</span><kbd>⌘⇧F</kbd><kbd>Ctrl+Shift+F</kbd></div>
+              <div class="kr"><span>Focus tree</span><kbd>⌘0</kbd><kbd>Ctrl+0</kbd></div>
+              <div class="kr"><span>Refresh current tab</span><kbd>⌘R</kbd><kbd>F5</kbd></div>
+              <div class="kr"><span>Connect / disconnect selected</span><kbd>⌘⇧C</kbd><kbd>Ctrl+Shift+C</kbd></div>
+              <div class="kr"><span>Settings</span><kbd>⌘,</kbd><kbd>Ctrl+,</kbd></div>
+              <div class="kr"><span>Toggle theme</span><kbd>⌘⇧L</kbd><kbd>Ctrl+Shift+L</kbd></div>
+              <div class="kr"><span>Zoom UI</span><kbd>⌘= / ⌘-</kbd><kbd>Ctrl+= / Ctrl+-</kbd></div>
+              <h4>Tree</h4>
+              <div class="kr"><span>Expand / collapse</span><kbd>→ / ←</kbd><kbd>Right / Left</kbd></div>
+              <div class="kr"><span>Open data · structure</span><kbd>↵ · ⌘↵</kbd><kbd>Enter · Ctrl+Enter</kbd></div>
+              <div class="kr"><span>Drop (confirm) · Rename</span><kbd>⌫ · F2</kbd><kbd>Delete · F2</kbd></div>
+            </div>
+            <div class="kcol">
+              <h4>Query editor</h4>
+              <div class="kr"><span>Run all</span><kbd>⌘↵</kbd><kbd>Ctrl+Enter</kbd></div>
+              <div class="kr"><span>Run selection / statement at cursor</span><kbd>⌘⇧↵</kbd><kbd>Ctrl+Shift+Enter</kbd></div>
+              <div class="kr"><span>Explain</span><kbd>⌘E</kbd><kbd>Ctrl+E</kbd></div>
+              <div class="kr"><span>Cancel query</span><kbd>⌘. / esc</kbd><kbd>Ctrl+.</kbd></div>
+              <div class="kr"><span>Format SQL (in editor)</span><kbd>⌘⇧F</kbd><kbd>Ctrl+Shift+F</kbd></div>
+              <div class="kr"><span>Toggle comment</span><kbd>⌘/</kbd><kbd>Ctrl+/</kbd></div>
+              <div class="kr"><span>Save query</span><kbd>⌘S</kbd><kbd>Ctrl+S</kbd></div>
+              <div class="kr"><span>Query history</span><kbd>⌘⇧H</kbd><kbd>Ctrl+Shift+H</kbd></div>
+              <div class="kr"><span>Focus editor / results</span><kbd>⌘1 / esc</kbd><kbd>Ctrl+1</kbd></div>
+              <h4>Data grid</h4>
+              <div class="kr"><span>Edit cell · commit · cancel</span><kbd>↵/F2 · ↵/Tab · esc</kbd><kbd>same</kbd></div>
+              <div class="kr"><span>Apply pending changes</span><kbd>⌘S</kbd><kbd>Ctrl+S</kbd></div>
+              <div class="kr"><span>Discard pending changes</span><kbd>⌘⇧Z</kbd><kbd>Ctrl+Shift+Z</kbd></div>
+              <div class="kr"><span>Set NULL</span><kbd>⌘⇧⌫</kbd><kbd>Ctrl+Shift+Del</kbd></div>
+              <div class="kr"><span>Copy cell · row as JSON</span><kbd>⌘C · ⌘⇧C</kbd><kbd>Ctrl+C · Ctrl+Shift+C</kbd></div>
+              <div class="kr"><span>Add row · delete selected</span><kbd>⌘⇧N · ⌘⌫</kbd><kbd>Ctrl+Shift+N · Ctrl+Del</kbd></div>
+              <div class="kr"><span>Next / previous page</span><kbd>⌘⌥↓ / ⌘⌥↑</kbd><kbd>Ctrl+Alt+↓/↑</kbd></div>
+              <div class="kr"><span>Go to filter bar</span><kbd>⌘F</kbd><kbd>Ctrl+F</kbd></div>
+              <h4>Document &amp; links</h4>
+              <div class="kr"><span>Back / forward</span><kbd>⌘[ / ⌘]</kbd><kbd>Alt+← / Alt+→</kbd></div>
+              <div class="kr"><span>Toggle Tree / JSON</span><kbd>⌘⇧J</kbd><kbd>Ctrl+Shift+J</kbd></div>
+              <div class="kr"><span>Open in table</span><kbd>⌘⇧O</kbd><kbd>Ctrl+Shift+O</kbd></div>
+              <div class="kr"><span>Link: open · new tab · peek</span><kbd>click · ⌘click · ⇧click</kbd><kbd>click · Ctrl+click · Shift+click</kbd></div>
+            </div>
+          </div>
+          <div class="df"><span class="muted small" style="margin-right:auto">Shortcuts are scoped by focus: editor › grid › tree › global. The palette shows the effective binding.</span><button class="btn">Close</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="statusbar">
+    <span class="chip"><span class="dot on"></span>adminserver<span class="env prod">prod</span></span>
+    <span>sqwiro</span><span>Autocommit</span>
+    <span class="grow"></span>
+    <span>Ln 1, Col 1</span>
+  </div>
+  <div class="mock-note" style="top:372px;left:262px;max-width:150px;white-space:normal">Settings is a tab, not a modal · left nav 180 px · Safety open</div>
+  <div class="mock-note" style="top:112px;right:8px;max-width:120px;white-space:normal">env checkboxes carry text badges — colour is never the only signal</div>
+</div>
+
+<!-- region switcher (mock chrome) -->
+<div class="regions">
+  <span class="caps muted" style="margin-right:6px">Region</span>
+  <button class="on" data-r="r-drop">Destructive dialog</button>
+  <button data-r="r-light">Light confirm · error</button>
+  <button data-r="r-palette">Command palette</button>
+  <button data-r="">Settings tab</button>
+  <button data-r="r-keys">Shortcut sheet</button>
+</div>
+<script src="assets/pgui.js"></script>
+<script>
+  document.querySelector('.regions').addEventListener('click',function(e){
+    var b=e.target.closest('button');if(!b)return;
+    document.querySelectorAll('.regions button').forEach(function(x){x.classList.toggle('on',x===b)});
+    document.querySelectorAll('.region').forEach(function(r){r.classList.toggle('hidden',r.id!==b.dataset.r)});
+  });
+  var rq=/[?&]region=([a-z-]+)/.exec(location.search);
+  if(rq){var rb=document.querySelector('.regions button[data-r="'+(rq[1]==='settings'?'':rq[1])+'"]');if(rb)rb.click();}
+  document.addEventListener('keydown',function(e){
+    if(e.target.matches('input,textarea'))return;
+    var n=parseInt(e.key,10);if(n>=1&&n<=5){document.querySelectorAll('.regions button')[n-1].click()}
+  });
+</script>
+</body>
+</html>

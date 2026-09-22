@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* pgui v2 tokens — mirrors .claude/designs/assets/pgui.css. Light is :root, dark is .dark on <html>. */
+@layer base {
+  :root {
+    --background: 0 0% 100%; --foreground: 222 20% 12%;
+    --card: 0 0% 100%; --card-foreground: 222 20% 12%;
+    --popover: 0 0% 100%; --popover-foreground: 222 20% 12%;
+    --muted: 220 14% 96%; --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 93%; --accent-foreground: 222 20% 12%;
+    --secondary: 220 14% 96%; --secondary-foreground: 222 20% 12%;
+    --primary: 226 70% 50%; --primary-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%; --destructive-foreground: 0 0% 100%;
+    --warning: 38 92% 50%; --success: 142 71% 40%;
+    --border: 220 13% 89%; --input: 220 13% 86%; --ring: 226 70% 50%;
+    --sidebar: 220 14% 97%; --titlebar: 220 14% 95%; --statusbar: 220 14% 95%;
+    --grid-header: 220 14% 97%; --grid-row-alt: 220 14% 98.5%; --grid-line: 220 13% 92%;
+    --grid-selected: 226 70% 50%;
+    --pending: 38 92% 50%; --link: 226 70% 46%;
+    --num: 210 90% 38%; --bool: 142 60% 32%; --time: 280 50% 45%; --str: 142 50% 35%;
+    --env-prod-bg: 0 84% 95%; --env-prod-fg: 0 72% 40%; --env-prod-bar: 0 72% 51%;
+    --env-staging-bg: 38 92% 93%; --env-staging-fg: 30 80% 35%; --env-staging-bar: 38 92% 50%;
+    --env-dev-bg: 142 60% 93%; --env-dev-fg: 142 60% 28%; --env-dev-bar: 142 71% 40%;
+    --env-local-bg: 220 14% 93%; --env-local-fg: 220 9% 40%; --env-local-bar: 220 9% 60%;
+    --radius: 6px;
+    --row: 28px; --tree-row: 24px;
+    color-scheme: light;
+  }
+  .dark {
+    --background: 222 14% 9%; --foreground: 210 20% 92%;
+    --card: 222 14% 11%; --card-foreground: 210 20% 92%;
+    --popover: 222 14% 12%; --popover-foreground: 210 20% 92%;
+    --muted: 222 12% 15%; --muted-foreground: 218 10% 62%;
+    --accent: 222 12% 18%; --accent-foreground: 210 20% 92%;
+    --secondary: 222 12% 15%; --secondary-foreground: 210 20% 92%;
+    --primary: 222 85% 66%; --primary-foreground: 222 14% 9%;
+    --destructive: 0 70% 60%; --destructive-foreground: 0 0% 100%;
+    --warning: 40 95% 60%; --success: 142 60% 50%;
+    --border: 222 12% 20%; --input: 222 12% 24%; --ring: 222 85% 66%;
+    --sidebar: 222 14% 8%; --titlebar: 222 14% 7%; --statusbar: 222 14% 7%;
+    --grid-header: 222 14% 12%; --grid-row-alt: 222 14% 10%; --grid-line: 222 12% 17%;
+    --grid-selected: 222 85% 66%;
+    --pending: 40 95% 60%; --link: 222 90% 74%;
+    --num: 210 90% 72%; --bool: 142 60% 65%; --time: 280 60% 78%; --str: 142 55% 68%;
+    --env-prod-bg: 0 60% 18%; --env-prod-fg: 0 80% 78%; --env-prod-bar: 0 70% 60%;
+    --env-staging-bg: 38 60% 16%; --env-staging-fg: 40 90% 75%; --env-staging-bar: 40 95% 60%;
+    --env-dev-bg: 142 40% 14%; --env-dev-fg: 142 60% 70%; --env-dev-bar: 142 60% 50%;
+    --env-local-bg: 222 12% 18%; --env-local-fg: 218 10% 70%; --env-local-bar: 218 10% 55%;
+    color-scheme: dark;
+  }
+  * { @apply border-border; }
+  html, body, #root { height: 100%; }
+  body { @apply bg-background text-foreground font-sans text-[13px] leading-[1.4] antialiased overflow-hidden m-0; }
+  ::selection { background: hsl(var(--primary) / 0.25); }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.35); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.55); }
+}
+
+@layer components {
+  .env-badge { @apply inline-flex h-4 items-center rounded px-1.5 text-[9.5px] font-bold uppercase leading-none tracking-[.08em]; }
+  .env-badge.prod { background: hsl(var(--env-prod-bg)); color: hsl(var(--env-prod-fg)); }
+  .env-badge.staging { background: hsl(var(--env-staging-bg)); color: hsl(var(--env-staging-fg)); }
+  .env-badge.dev { background: hsl(var(--env-dev-bg)); color: hsl(var(--env-dev-fg)); }
+  .env-badge.local { background: hsl(var(--env-local-bg)); color: hsl(var(--env-local-fg)); }
+  .kbd { @apply inline-block rounded border border-border border-b-2 bg-muted px-[5px] py-[3px] font-mono text-[10.5px] leading-none text-muted-foreground; }
+  .drag { -webkit-app-region: drag; }
+  .no-drag { -webkit-app-region: no-drag; }
+}

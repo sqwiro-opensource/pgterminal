@@ -1,0 +1,1420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pgui v2 Implementation Plan</title>
+<link rel="stylesheet" href="spec.css">
+<style>
+  .task .tb .k{white-space:nowrap}
+  .legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-family:var(--sans);font-size:13px;margin:8px 0 14px}
+  .story-index td:first-child{font-family:var(--mono);font-size:12px;white-space:nowrap}
+  .exit{font-family:var(--sans);font-size:13px;margin:6px 0 10px;padding:8px 12px;border-left:3px solid hsl(var(--ok));background:hsl(var(--ok)/.06);border-radius:0 6px 6px 0}
+  .exit b{color:hsl(var(--ok))}
+  .phase-list .row{grid-template-columns:220px 1fr 70px}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle" type="button">Theme: auto</button>
+<div class="page">
+  <nav class="toc">
+    <div class="brand">pgui v2 · plan</div>
+    <a href="#dashboard"><span class="n">■</span>Status dashboard</a>
+    <a href="#howto"><span class="n">■</span>How to use this plan</a>
+    <a href="#stories"><span class="n">■</span>Story &amp; property index</a>
+    <a href="#prereq"><span class="n">■</span>Prerequisites</a>
+    <a href="#phases"><span class="n">■</span>Phases</a>
+    <div class="sub">
+      <a href="#p0">Phase 0 · Scaffold &amp; security</a>
+      <a href="#p1">Phase 1 · Connections &amp; catalog</a>
+      <a href="#p2">Phase 2 · Workspace &amp; tree actions</a>
+      <a href="#p3">Phase 3 · Query runner &amp; results</a>
+      <a href="#p4">Phase 4 · Document links</a>
+      <a href="#p5">Phase 5 · Table editing &amp; DDL</a>
+      <a href="#p6">Phase 6 · Server overview &amp; fleet</a>
+      <a href="#p7">Phase 7 · Polish</a>
+    </div>
+    <a href="#props"><span class="n">■</span>Property-based tests</a>
+    <a href="#seed"><span class="n">■</span>Seed schema</a>
+    <a href="#deps"><span class="n">■</span>Dependencies</a>
+    <a href="#risks"><span class="n">■</span>Risks &amp; mitigations</a>
+    <a href="#notes"><span class="n">■</span>Implementation notes</a>
+    <div class="links">
+      <a href="requirement.html">→ Requirements spec</a>
+      <a href="../designs/index.html">→ Design mockups</a>
+    </div>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <div class="kicker">Implementation plan · v2</div>
+      <h1>pgui v2 — Implementation Plan</h1>
+      <p>A clean rewrite of pgui as a secure, multi-connection PostgreSQL workbench with first-class document links. This plan turns the <a href="requirement.html">requirements spec</a> and the <a href="../designs/index.html">design mockups</a> into 53 ordered tasks across eight phases, each with files, acceptance criteria and a verification recipe.</p>
+      <div class="meta">
+        <span>Owner <b>Bernard Gaitho</b></span>
+        <span>Date <b>2026-09-22</b></span>
+        <span>Status <b>Not started</b></span>
+        <span>Approach <b>Clean rewrite in the same repo</b></span>
+        <span>Legacy <b>kept under <code>legacy/</code> until Phase 7</b></span>
+      </div>
+      <div class="progress" aria-label="Overall progress 0%"><i style="width:0%"></i></div>
+      <div class="meta"><span>Overall progress <b>0 %</b> · 0 of 53 tasks complete</span></div>
+    </header>
+
+    <!-- ============================ DASHBOARD ============================ -->
+    <section id="dashboard">
+      <div class="sec-h"><span class="num">00</span><h2>Status dashboard</h2></div>
+      <div class="dash">
+        <div class="metric"><div class="v">53</div><div class="l">Total tasks</div></div>
+        <div class="metric"><div class="v">0</div><div class="l">Completed</div></div>
+        <div class="metric"><div class="v">0</div><div class="l">In progress</div></div>
+        <div class="metric"><div class="v">0</div><div class="l">Blocked</div></div>
+        <div class="metric"><div class="v">8</div><div class="l">Phases</div></div>
+      </div>
+      <div class="phase-list">
+        <div class="row"><span><a href="#p0">Phase 0</a> · Scaffold</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 10</span></div>
+        <div class="row"><span><a href="#p1">Phase 1</a> · Connections</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 8</span></div>
+        <div class="row"><span><a href="#p2">Phase 2</a> · Workspace</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 6</span></div>
+        <div class="row"><span><a href="#p3">Phase 3</a> · Query runner</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 6</span></div>
+        <div class="row"><span><a href="#p4">Phase 4</a> · Doc links</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 7</span></div>
+        <div class="row"><span><a href="#p5">Phase 5</a> · Table editing</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 5</span></div>
+        <div class="row"><span><a href="#p6">Phase 6</a> · Overview &amp; fleet</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 4</span></div>
+        <div class="row"><span><a href="#p7">Phase 7</a> · Polish</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 7</span></div>
+      </div>
+      <div class="callout info"><span class="t">Update rule</span><span>When a task changes state, update its badge, the phase bar above, the metric tiles, and the hero progress bar in the same edit. Add the completion date to the task's Notes row.</span></div>
+    </section>
+
+    <!-- ============================ HOW TO ============================ -->
+    <section id="howto">
+      <div class="sec-h"><span class="num">01</span><h2>How to use this plan</h2></div>
+      <h3>Status badges</h3>
+      <div class="legend">
+        <span class="badge todo">TODO</span><span>not started</span>
+        <span class="badge prog">IN PROGRESS</span><span>being implemented</span>
+        <span class="badge done">COMPLETED</span><span>merged, verified, dated</span>
+        <span class="badge blocked">BLOCKED</span><span>waiting on a decision or an upstream task</span>
+      </div>
+      <h3>Verification vocabulary</h3>
+      <table>
+        <thead><tr><th>Code</th><th>Meaning</th><th>Command</th></tr></thead>
+        <tbody>
+          <tr><td><strong>TC</strong></td><td>Typecheck main, preload, renderer and tests</td><td><code>yarn typecheck</code></td></tr>
+          <tr><td><strong>UT</strong></td><td>Unit tests for pure modules (vitest, node environment)</td><td><code>yarn test:unit</code></td></tr>
+          <tr><td><strong>IT</strong></td><td>Integration tests against a disposable PostgreSQL 16 seeded with <code>tests/integration/seed.sql</code></td><td><code>docker compose -f docker-compose.test.yml up -d &amp;&amp; yarn test:integration</code></td></tr>
+          <tr><td><strong>MC</strong></td><td>Manual check in the running app</td><td><code>yarn dev</code>, then the steps listed on the task</td></tr>
+        </tbody>
+      </table>
+      <h3>Working rules</h3>
+      <ul>
+        <li>Execute tasks in order within a phase; phases are ordered by dependency. A phase's exit criteria must all hold before the next phase starts.</li>
+        <li>Mark a task <span class="badge done">COMPLETED</span> immediately when its Verify row passes, and write the date into its Notes row.</li>
+        <li>Every task lists the stories it covers (<code>US-xx</code>) and the correctness properties it must satisfy (<code>PROP-xx</code>). Story and property ids are defined in <a href="requirement.html">requirement.html</a>; the anchors there are <code>#us-01</code>… and <code>#prop-01</code>…, and the index below repeats the titles so this document is readable on its own.</li>
+        <li>Never edit files under <code>legacy/</code>. Port by reading, then rewriting in the new layout with parameterised SQL.</li>
+        <li>No git commands inside task executors; the owner commits per phase on branch <code>v2-rewrite</code>.</li>
+      </ul>
+      <h3>Traceability chain</h3>
+      <div class="flow"><span>Task P4.1</span><i>→</i><span>US-19 Follow a link</span><i>→</i><span>PROP-01 parseDocRef accepts</span><i>→</i><span>tests/unit/parseDocRef.test.ts</span></div>
+    </section>
+
+    <!-- ============================ STORY INDEX ============================ -->
+    <section id="stories">
+      <div class="sec-h"><span class="num">02</span><h2>Story &amp; property index</h2></div>
+      <p class="muted sans small">Titles only. Full EARS acceptance criteria live in the requirements spec. Group order matches requirement.html §5.</p>
+      <div class="tbl-wrap"><table class="story-index">
+        <thead><tr><th>Id</th><th>Story</th><th>Group</th><th>Phase</th></tr></thead>
+        <tbody>
+          <tr><td><a href="requirement.html#us-01">US-01</a> <span class="badge must">must</span></td><td>Save a connection with a stored password</td><td>Connections &amp; fleet</td><td>1</td></tr>
+          <tr><td><a href="requirement.html#us-02">US-02</a> <span class="badge must">must</span></td><td>Test a connection without saving</td><td>Connections &amp; fleet</td><td>1</td></tr>
+          <tr><td><a href="requirement.html#us-03">US-03</a> <span class="badge must">must</span></td><td>Several servers connected at once</td><td>Connections &amp; fleet</td><td>1</td></tr>
+          <tr><td><a href="requirement.html#us-04">US-04</a> <span class="badge should">should</span></td><td>Import from a URI, duplicate, delete</td><td>Connections &amp; fleet</td><td>1</td></tr>
+          <tr><td><a href="requirement.html#us-05">US-05</a> <span class="badge should">should</span></td><td>Read-only connections</td><td>Connections &amp; fleet</td><td>1, 3</td></tr>
+          <tr><td><a href="requirement.html#us-06">US-06</a> <span class="badge must">must</span></td><td>Lazy object tree</td><td>Catalog &amp; tree</td><td>1</td></tr>
+          <tr><td><a href="requirement.html#us-07">US-07</a> <span class="badge must">must</span></td><td>Complete object coverage</td><td>Catalog &amp; tree</td><td>1, 6</td></tr>
+          <tr><td><a href="requirement.html#us-08">US-08</a> <span class="badge should">should</span></td><td>Filter and refresh</td><td>Catalog &amp; tree</td><td>1, 3</td></tr>
+          <tr><td><a href="requirement.html#us-09">US-09</a> <span class="badge must">must</span></td><td>Run a script with multiple result sets</td><td>Query editor</td><td>0, 3</td></tr>
+          <tr><td><a href="requirement.html#us-10">US-10</a> <span class="badge must">must</span></td><td>Streaming results with a cap</td><td>Query editor</td><td>3</td></tr>
+          <tr><td><a href="requirement.html#us-11">US-11</a> <span class="badge must">must</span></td><td>Cancel a running query</td><td>Query editor</td><td>3</td></tr>
+          <tr><td><a href="requirement.html#us-12">US-12</a> <span class="badge must">must</span></td><td>Schema-aware completion</td><td>Query editor</td><td>1, 3</td></tr>
+          <tr><td><a href="requirement.html#us-13">US-13</a> <span class="badge should">should</span></td><td>Transactions, formatting, explain</td><td>Query editor</td><td>3, 7</td></tr>
+          <tr><td><a href="requirement.html#us-14">US-14</a> <span class="badge should">should</span></td><td>Query history and saved queries</td><td>Query editor</td><td>3, 7</td></tr>
+          <tr><td><a href="requirement.html#us-15">US-15</a> <span class="badge must">must</span></td><td>Browse a table with server-side paging, sort and filter</td><td>Results &amp; table data editing</td><td>5</td></tr>
+          <tr><td><a href="requirement.html#us-16">US-16</a> <span class="badge must">must</span></td><td>Typed cell rendering</td><td>Results &amp; table data editing</td><td>1, 3</td></tr>
+          <tr><td><a href="requirement.html#us-17">US-17</a> <span class="badge must">must</span></td><td>Inline editing with a pending buffer</td><td>Results &amp; table data editing</td><td>5</td></tr>
+          <tr><td><a href="requirement.html#us-18">US-18</a> <span class="badge should">should</span></td><td>Export and copy</td><td>Results &amp; table data editing</td><td>5, 7</td></tr>
+          <tr><td><a href="requirement.html#us-19">US-19</a> <span class="badge must">must</span></td><td>Every link-shaped value is clickable</td><td>Document links &amp; backlinks</td><td>4</td></tr>
+          <tr><td><a href="requirement.html#us-20">US-20</a> <span class="badge must">must</span></td><td>Catalog-validated resolution</td><td>Document links &amp; backlinks</td><td>4</td></tr>
+          <tr><td><a href="requirement.html#us-21">US-21</a> <span class="badge must">must</span></td><td>Document tab with history</td><td>Document links &amp; backlinks</td><td>2, 4</td></tr>
+          <tr><td><a href="requirement.html#us-22">US-22</a> <span class="badge must">must</span></td><td>Referenced by (backlinks)</td><td>Document links &amp; backlinks</td><td>4</td></tr>
+          <tr><td><a href="requirement.html#us-23">US-23</a> <span class="badge should">should</span></td><td>Hover preview and references panel</td><td>Document links &amp; backlinks</td><td>4</td></tr>
+          <tr><td><a href="requirement.html#us-24">US-24</a> <span class="badge must">must</span></td><td>Structure tab with DDL</td><td>Structure / DDL</td><td>2</td></tr>
+          <tr><td><a href="requirement.html#us-25">US-25</a> <span class="badge should">should</span></td><td>Create and alter via generated SQL</td><td>Structure / DDL</td><td>5</td></tr>
+          <tr><td><a href="requirement.html#us-26">US-26</a> <span class="badge must">must</span></td><td>Per-server overview</td><td>Server overview</td><td>6</td></tr>
+          <tr><td><a href="requirement.html#us-27">US-27</a> <span class="badge could">could</span></td><td>Fleet page</td><td>Server overview</td><td>6</td></tr>
+          <tr><td><a href="requirement.html#us-28">US-28</a> <span class="badge must">must</span></td><td>Serialisable, restorable workspace</td><td>Workspace, tabs &amp; shortcuts</td><td>2</td></tr>
+          <tr><td><a href="requirement.html#us-29">US-29</a> <span class="badge must">must</span></td><td>Keyboard-first</td><td>Workspace, tabs &amp; shortcuts</td><td>7</td></tr>
+          <tr><td><a href="requirement.html#us-30">US-30</a> <span class="badge should">should</span></td><td>Tab ergonomics</td><td>Workspace, tabs &amp; shortcuts</td><td>2</td></tr>
+          <tr><td><a href="requirement.html#us-31">US-31</a> <span class="badge should">should</span></td><td>Settings that autosave</td><td>Settings, history &amp; export</td><td>2, 7</td></tr>
+          <tr><td><a href="requirement.html#us-32">US-32</a> <span class="badge could">could</span></td><td>Auto-update without modal dialogs</td><td>Settings, history &amp; export</td><td>7</td></tr>
+          <tr><td><a href="requirement.html#us-33">US-33</a> <span class="badge must">must</span></td><td>Typed confirmation for destructive actions</td><td>Safety on prod</td><td>5, 6, 7</td></tr>
+          <tr><td><a href="requirement.html#us-34">US-34</a> <span class="badge must">must</span></td><td>Errors never crash, never vanish</td><td>Safety on prod</td><td>0, 1, 7</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Properties</h3>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Id</th><th>Property</th><th>Kind</th></tr></thead>
+        <tbody>
+          <tr><td><a href="requirement.html#prop-01">PROP-01</a></td><td><code>parseDocRef</code> accepts <code>sales_customer/42</code>, <code>users/42</code>, <code>sales.sales_customer/42</code> with the expected fields</td><td>UT</td></tr>
+          <tr><td><a href="requirement.html#prop-02">PROP-02</a></td><td><code>parseDocRef</code> rejects empty strings, multi-slash paths, URLs, whitespace, over-long identifiers/keys, non-strings</td><td>UT</td></tr>
+          <tr><td><a href="requirement.html#prop-03">PROP-03</a></td><td>Every accepted raw reconstructs from its parts</td><td>UT (property-based)</td></tr>
+          <tr><td><a href="requirement.html#prop-04">PROP-04</a></td><td><code>findDocRefs</code> finds refs at any depth, never in keys, with paths that index back</td><td>UT</td></tr>
+          <tr><td><a href="requirement.html#prop-05">PROP-05</a></td><td><code>rankCandidates</code> ordering, longest-prefix rule and ambiguity fixtures</td><td>UT</td></tr>
+          <tr><td><a href="requirement.html#prop-06">PROP-06</a></td><td>Identifiers appear in generated SQL only via <code>%I</code> quoting</td><td>UT</td></tr>
+          <tr><td><a href="requirement.html#prop-07">PROP-07</a></td><td>Values appear only as <code>$n</code> placeholders, numbered without gaps</td><td>UT</td></tr>
+          <tr><td><a href="requirement.html#prop-08">PROP-08</a></td><td><code>DEFAULT</code> sentinel consumes no parameter; <code>eq null</code> becomes <code>IS NULL</code></td><td>UT</td></tr>
+          <tr><td><a href="requirement.html#prop-09">PROP-09</a></td><td>Keyset paging renders tuple comparisons for single and composite keys, before/after</td><td>UT + IT</td></tr>
+          <tr><td><a href="requirement.html#prop-10">PROP-10</a></td><td>UPDATE/DELETE always target the full primary key; missing PK throws</td><td>UT</td></tr>
+          <tr><td><a href="requirement.html#prop-11">PROP-11</a></td><td>NULL, empty string and JSON null round-trip distinguishably</td><td>IT</td></tr>
+          <tr><td><a href="requirement.html#prop-12">PROP-12</a></td><td>int8 and numeric values are exact strings end to end, including export</td><td>IT + UT</td></tr>
+          <tr><td><a href="requirement.html#prop-13">PROP-13</a></td><td>Arrays of int8/numeric keep element strings</td><td>IT</td></tr>
+          <tr><td><a href="requirement.html#prop-14">PROP-14</a></td><td>Workspace snapshots survive JSON round-trip; document tabs reuse by key</td><td>UT</td></tr>
+          <tr><td><a href="requirement.html#prop-15">PROP-15</a></td><td>Connection registry: pool identity, disconnect ends backends, closeAll bounded, pool errors emit events</td><td>IT</td></tr>
+          <tr><td><a href="requirement.html#prop-16">PROP-16</a></td><td>A session's <code>BEGIN</code> persists across runs and is rolled back on close</td><td>IT</td></tr>
+          <tr><td><a href="requirement.html#prop-17">PROP-17</a></td><td>Query events are strictly ordered and rows never exceed the cap</td><td>IT</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ============================ PREREQ ============================ -->
+    <section id="prereq">
+      <div class="sec-h"><span class="num">03</span><h2>Prerequisites (before Phase 0)</h2></div>
+      <div class="callout warn"><span class="t">Set up once</span><span>
+        <ul style="margin:0">
+          <li>Create branch <code>v2-rewrite</code> from <code>master</code>; commit the design and spec documents first.</li>
+          <li>Node ≥ 20.14 and yarn 1.x (the repo already uses <code>yarn.lock</code>); Electron 31 stays.</li>
+          <li>Docker Desktop running for the integration database (<code>postgres:16</code>).</li>
+          <li>Tailscale up, with the three fleet connections (adminserver, cloudhubserver, tradingserver) reachable for the Phase 6 manual checks. Use a read-only role for those checks.</li>
+          <li>Decide the data directory name: <code>app.getPath('userData')</code> is <code>pgui</code>; the legacy <code>electron-dev-storage.json</code> is not migrated (owner will re-enter the three connections).</li>
+        </ul>
+      </span></div>
+    </section>
+
+    <!-- ============================ PHASES ============================ -->
+    <section id="phases">
+      <div class="sec-h"><span class="num">04</span><h2>Phases and tasks</h2></div>
+      <p>Eight phases. The first two produce a secure shell with connections and a lazy tree; the middle four build the editing surfaces; the last two add the fleet overview and polish. Each task names the files it creates, what it ports from <code>legacy/</code>, the stories and properties it covers, and how to verify it.</p>
+
+      <div class="timeline">
+
+        <!-- ---------------- PHASE 0 ---------------- -->
+        <div class="phase" id="p0">
+          <div class="ph"><h3>Phase 0 · Scaffold + security</h3><span class="badge todo">TODO</span><span class="goal">Empty but hardened shell, typed IPC contract, test harness. No database code yet.</span></div>
+          <div class="exit"><b>Exit criteria:</b> app opens a blank shell with zero CSP violations; <code>window.pgui</code> exists and <code>window.require</code>/<code>process</code> are undefined in the renderer; <code>yarn typecheck</code>, <code>yarn test:unit</code> and <code>yarn build</code> pass; Docker Postgres seeds successfully.</div>
+
+          <div class="task" id="p0-1">
+            <div class="th"><span class="tid">P0.1</span><h4>Move legacy code aside and reset TypeScript projects</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>legacy/src/**</code> (moved), <code>tsconfig.json</code>, <code>tsconfig.node.json</code>, <code>tsconfig.web.json</code>, <code>.eslintrc.cjs</code>, <code>.gitignore</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>git mv src legacy/src</code>; also move <code>src/main/db/pgserver__</code> out (delete, it is a dead backup)</li>
+                <li>Create empty <code>src/{shared,main,preload,renderer/src}</code></li>
+                <li>tsconfig projects include only the new <code>src/</code> and <code>tests/</code>; <code>strict: true</code>, <code>noUncheckedIndexedAccess: true</code></li>
+                <li>Add path aliases <code>@shared/*</code>, <code>@renderer/*</code> in both tsconfigs</li>
+                <li>Exclude <code>legacy/</code> from eslint and prettier</li>
+              </ul>
+              <span class="k">Covers</span><span>—</span>
+              <span class="k">Accept</span><span><code>yarn typecheck</code> passes on an empty tree; <code>legacy/</code> is untouched by tooling.</span>
+              <span class="k">Verify</span><span>TC</span>
+              <span class="k">Notes</span><span><code>legacy/src/renderer/src/app/database/schemas/tables/TableColumnsForm.tsx</code> is a syntax error; excluding <code>legacy/</code> is what makes the build green.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p0-2">
+            <div class="th"><span class="tid">P0.2</span><h4>Rewrite package.json dependencies and scripts</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>package.json</code>, <code>yarn.lock</code></span>
+              <span class="k">Port from</span><span><code>legacy</code> <code>package.json</code> (scripts <code>dev</code>, <code>build:*</code>)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Runtime main deps → <code>dependencies</code>: <code>pg</code>, <code>pg-cursor</code>, <code>pg-format</code>, <code>electron-store</code>, <code>electron-updater</code>, <code>@electron-toolkit/utils</code></li>
+                <li>Renderer deps: <code>react</code>, <code>react-dom</code>, <code>zustand</code>, <code>@tanstack/react-table</code>, <code>@tanstack/react-virtual</code>, <code>monaco-editor</code>, <code>sql-formatter</code>, <code>react-resizable-panels</code>, <code>lucide-react</code>, <code>sonner</code>, <code>@cloudhub-ux/shadcn</code>, <code>clsx</code>, <code>tailwind-merge</code>, <code>tailwindcss</code>, <code>tailwindcss-animate</code></li>
+                <li>Remove: <code>arangojs</code>, <code>sequelize</code>, <code>pg-hstore</code>, <code>@mui/*</code>, <code>@emotion/*</code>, <code>@cloudhub-ux/mui</code>, <code>@cloudhub-ux/min</code>, <code>@cloudhub-ux/zstore</code>, <code>@cloudhub-ux/reach-router</code>, <code>react-split-pane</code>, <code>babel-plugin-transform-imports</code>, <code>vite-plugin-babel</code>, <code>electron-reloader</code>, <code>@uiw/react-json-view</code>, <code>@monaco-editor/react</code>, icon packs other than lucide</li>
+                <li>Scripts: <code>test:unit</code>, <code>test:integration</code>, <code>test</code>, <code>typecheck</code>, <code>lint</code>, <code>build</code>, <code>build:mac|win|linux</code> all via <code>electron-vite build</code></li>
+                <li>Fill real <code>name</code>, <code>description</code>, <code>author</code>, <code>version 2.0.0-alpha.0</code></li>
+              </ul>
+              <span class="k">Covers</span><span>—</span>
+              <span class="k">Accept</span><span><code>yarn install</code> succeeds; no package is imported that is not declared (checked by <code>yarn dlx depcheck</code> or a grep).</span>
+              <span class="k">Verify</span><span>TC; <code>yarn build</code></span>
+              <span class="k">Notes</span><span>Today <code>lodash</code>, <code>@tanstack/react-table</code>, <code>simplebar-react</code> resolve only transitively; every import must be declared this time.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p0-3">
+            <div class="th"><span class="tid">P0.3</span><h4>electron-vite configuration</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>electron.vite.config.ts</code></span>
+              <span class="k">Port from</span><span><code>legacy</code> <code>electron.vite.config.ts</code> (entry points only)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Delete <code>define: {'process.env': process.env}</code></li>
+                <li>Remove the babel transform-imports plugin block; keep <code>@vitejs/plugin-react</code></li>
+                <li>Aliases <code>@shared</code>, <code>@renderer</code>; <code>externalizeDepsPlugin</code> for main and preload</li>
+                <li><code>build.watch</code> only when <code>process.env.NODE_ENV === 'development'</code></li>
+                <li>Renderer <code>manualChunks</code> for <code>monaco-editor</code>; Monaco workers via <code>?worker</code> imports</li>
+              </ul>
+              <span class="k">Covers</span><span>—</span>
+              <span class="k">Accept</span><span>Production bundle contains no build-machine environment strings (grep the <code>out/renderer</code> bundle for <code>HOME=</code> or the user name).</span>
+              <span class="k">Verify</span><span><code>yarn build</code> + grep</span>
+              <span class="k">Notes</span><span>The current config leaks every env var of the build machine into the shipped JS.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p0-4">
+            <div class="th"><span class="tid">P0.4</span><h4>Tailwind and shadcn theme wiring</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>tailwind.config.js</code>, <code>postcss.config.js</code>, <code>src/renderer/src/styles/globals.css</code></span>
+              <span class="k">Port from</span><span><code>legacy</code> <code>tailwind.config.js</code> (theme tokens)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Content globs: <code>./src/renderer/index.html</code>, <code>./src/renderer/src/**/*.{ts,tsx}</code>, <code>./node_modules/@cloudhub-ux/shadcn/esm/components/**/*.js</code>, <code>./node_modules/@cloudhub-ux/shadcn/esm/widgets/**/*.js</code></li>
+                <li>Define the HSL tokens from <code>../designs/tokens.html</code> in <code>globals.css</code> for <code>:root</code> and <code>.dark</code>, plus env and data-type tokens</li>
+                <li>Font stacks: UI sans and mono per the tokens page; no webfont loading</li>
+              </ul>
+              <span class="k">Covers</span><span>US-31 (theme)</span>
+              <span class="k">Accept</span><span>A shadcn <code>Dialog</code> and <code>ContextMenu</code> render fully styled in both themes.</span>
+              <span class="k">Verify</span><span>MC</span>
+              <span class="k">Notes</span><span>Today only <code>shadcn/esm/**</code> is scanned so <code>/src</code> components render unstyled; only <code>/esm</code> imports are allowed from now on.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p0-5">
+            <div class="th"><span class="tid">P0.5</span><h4>Shared IPC contract and domain types</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/shared/ipc.ts</code>, <code>src/shared/types/{connection,catalog,query,rows,doclink,workspace,settings,stats}.ts</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Transcribe <code>IpcInvokeMap</code> / <code>IpcPushMap</code> and every request/response type from requirement.html §7–8</li>
+                <li>Export <code>INVOKE_CHANNELS</code> and <code>PUSH_CHANNELS</code> arrays derived from the maps (used by preload for allow-listing)</li>
+                <li>Export <code>DEFAULT_SENTINEL</code> and the <code>CellValue</code> rules (null = SQL NULL; numeric/int8/dates are strings)</li>
+                <li>No imports from <code>electron</code>, <code>pg</code> or <code>react</code> anywhere under <code>src/shared</code> (eslint <code>no-restricted-imports</code>)</li>
+              </ul>
+              <span class="k">Covers</span><span>all</span>
+              <span class="k">Accept</span><span>Compiles; a type test asserts every key of <code>IpcInvokeMap</code> is in <code>INVOKE_CHANNELS</code>.</span>
+              <span class="k">Verify</span><span>TC; UT (<code>tests/unit/ipcContract.test.ts</code>)</span>
+              <span class="k">Notes</span><span><code>ConnectionMeta</code> has no password field by construction.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p0-6">
+            <div class="th"><span class="tid">P0.6</span><h4>Main process bootstrap and window security</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/index.ts</code>, <code>src/main/window.ts</code>, <code>src/main/ipc/handle.ts</code>, <code>src/main/ipc/register.ts</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/main/index.ts</code> (window creation, dev-tools toggling)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>webPreferences</code>: <code>contextIsolation: true</code>, <code>sandbox: true</code>, <code>nodeIntegration: false</code>, <code>webSecurity: true</code>; macOS <code>titleBarStyle: 'hiddenInset'</code>, others native frame + <code>autoHideMenuBar</code></li>
+                <li>Inject CSP header via <code>onHeadersReceived</code> for the dev URL; remove the CORS override headers</li>
+                <li><code>will-navigate</code> blocked; <code>setWindowOpenHandler</code> allows only <code>http(s):</code> through <code>shell.openExternal</code></li>
+                <li><code>app.requestSingleInstanceLock()</code>; second launch focuses the window</li>
+                <li>Typed <code>handle&lt;K&gt;(channel, fn)</code> and <code>push&lt;K&gt;(channel, payload)</code> that check <code>isDestroyed()</code> before <code>webContents.send</code></li>
+                <li><code>before-quit</code> calls a <code>shutdown()</code> hook (registry <code>closeAll</code> arrives in P1.3)</li>
+              </ul>
+              <span class="k">Covers</span><span>US-01 (no plaintext), US-32</span>
+              <span class="k">Accept</span><span>DevTools console shows no CSP errors; <code>typeof require === 'undefined'</code> in the renderer.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>Drop the custom minimize/maximize/close IPC and the <code>ping</code> handler; native traffic lights handle it.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p0-7">
+            <div class="th"><span class="tid">P0.7</span><h4>Preload: allow-listed <code>window.pgui</code> API</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/preload/index.ts</code>, <code>src/preload/api.ts</code>, <code>src/preload/index.d.ts</code></span>
+              <span class="k">Port from</span><span>— (the legacy preload re-exports the raw <code>ipcRenderer</code>; nothing to keep)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>createApi()</code> builds one <code>invoke</code> wrapper per entry of <code>INVOKE_CHANNELS</code></li>
+                <li><code>on(channel, cb)</code> rejects channels not in <code>PUSH_CHANNELS</code>; returns an unsubscribe function</li>
+                <li><code>contextBridge.exposeInMainWorld('pgui', api)</code> only; no <code>electron</code>, no <code>process</code></li>
+                <li><code>declare global { interface Window { pgui: PguiApi } }</code></li>
+              </ul>
+              <span class="k">Covers</span><span>all</span>
+              <span class="k">Accept</span><span>In the renderer console <code>Object.keys(window.pgui).length === INVOKE_CHANNELS.length + 1</code> and <code>window.electron === undefined</code>.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>Sandboxed preloads cannot use most Node modules; keep this file dependency-free.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p0-8">
+            <div class="th"><span class="tid">P0.8</span><h4>Renderer shell skeleton with strict CSP</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/index.html</code>, <code>src/renderer/src/main.tsx</code>, <code>App.tsx</code>, <code>shell/Shell.tsx</code>, <code>shell/TitleBar.tsx</code>, <code>shell/TabBar.tsx</code>, <code>shell/StatusBar.tsx</code>, <code>components/ErrorBoundary.tsx</code>, <code>lib/ipc.ts</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/renderer/src/App.tsx</code> (ShadcnThemeProvider usage)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>CSP meta: <code>default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-src 'none'</code></li>
+                <li>Providers: theme, <code>sonner</code> Toaster, app-level ErrorBoundary</li>
+                <li><code>react-resizable-panels</code> layout: sidebar | main | optional inspector; sizes persisted later (P2.1)</li>
+                <li><code>lib/ipc.ts</code>: <code>pgui</code> typed helper and <code>useIpcEvent(channel, cb)</code> hook</li>
+                <li>Title bar, tab bar and status bar as static shells matching <code>../designs/01-shell-welcome.html</code></li>
+              </ul>
+              <span class="k">Covers</span><span>US-28 · US-29 (shell)</span>
+              <span class="k">Accept</span><span>Window shows title bar, empty sidebar, empty tab strip, status bar in both themes; no console errors.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>No router. Tabs are the navigation.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p0-9">
+            <div class="th"><span class="tid">P0.9</span><h4>Test harness: vitest, Docker Postgres, seed</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>vitest.config.ts</code>, <code>docker-compose.test.yml</code>, <code>tests/integration/seed.sql</code>, <code>tests/integration/manyTables.sql</code>, <code>tests/integration/setup.ts</code>, <code>tests/unit/.gitkeep</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Two vitest projects: <code>unit</code> (node) and <code>integration</code> (node, skipped when <code>PG_TEST_URL</code> is unset)</li>
+                <li>Compose file: <code>postgres:16</code>, port 54329, <code>POSTGRES_PASSWORD=pgui</code>, seed mounted into <code>/docker-entrypoint-initdb.d</code></li>
+                <li>Seed as specified in <a href="#seed">Seed schema</a>; <code>public.big</code> generated with <code>generate_series</code></li>
+                <li><code>setup.ts</code> exports a <code>withTestPool()</code> helper and truncates mutable tables between tests</li>
+              </ul>
+              <span class="k">Covers</span><span>PROP-11…PROP-17 (infrastructure)</span>
+              <span class="k">Accept</span><span><code>yarn test:integration</code> connects and reads 1,000,000 rows from <code>public.big</code>.</span>
+              <span class="k">Verify</span><span>IT smoke test <code>tests/integration/smoke.test.ts</code></span>
+              <span class="k">Notes</span><span>Seeding 1M rows takes ~20 s; keep the container running between test runs.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p0-10">
+            <div class="th"><span class="tid">P0.10</span><h4>Statement splitter (pure)</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/shared/sql/statementSplitter.ts</code>, <code>tests/unit/statementSplitter.test.ts</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Handle <code>'…'</code> with <code>''</code> escapes, <code>"…"</code>, <code>E'…'</code>, <code>$$…$$</code> and <code>$tag$…$tag$</code>, <code>--</code> and nested <code>/* */</code> comments, <code>;</code> inside all of them</li>
+                <li>Return <code>{text, start, end}</code> per statement with original offsets (Monaco needs ranges)</li>
+                <li><code>statementAt(sql, offset)</code> helper for run-at-cursor</li>
+                <li>Tests: plpgsql function bodies, psql-style trailing comments, empty statements skipped</li>
+              </ul>
+              <span class="k">Covers</span><span>US-09</span>
+              <span class="k">Accept</span><span>All fixtures split as expected; a 10,000-statement script splits in &lt; 50 ms.</span>
+              <span class="k">Verify</span><span>UT</span>
+              <span class="k">Notes</span><span>No full SQL parser; boundaries only.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------- PHASE 1 ---------------- -->
+        <div class="phase" id="p1">
+          <div class="ph"><h3>Phase 1 · Connections, vault, registry, catalog</h3><span class="badge todo">TODO</span><span class="goal">Save encrypted connections, connect to several servers, browse a lazy catalog tree.</span></div>
+          <div class="exit"><b>Exit criteria:</b> three fleet connections saved with encrypted passwords (<code>vault.json</code> has no plaintext, <code>connections.json</code> has no <code>password</code> key); each connects and lists databases; expanding schema → tables → columns/indexes/constraints/triggers works lazily; disconnect ends all backends with <code>application_name='pgui'</code>.</div>
+
+          <div class="task" id="p1-1">
+            <div class="th"><span class="tid">P1.1</span><h4>Persistent stores (electron-store)</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/store/stores.ts</code></span>
+              <span class="k">Port from</span><span>— (replaces <code>legacy/src/main/localstorage/localStorage.ts</code>)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Five stores: <code>connections</code>, <code>settings</code>, <code>workspace</code>, <code>history</code>, <code>vault</code>, each with a JSON schema and defaults</li>
+                <li>Settings defaults from <code>AppSettings</code> (page size 200, row cap 10,000, bytes cap 64 MB, confirmDestructive on prod)</li>
+                <li>Migrations map with version 1</li>
+              </ul>
+              <span class="k">Covers</span><span>US-01 · US-28 · US-31 · US-14</span>
+              <span class="k">Accept</span><span>Files appear under <code>userData</code> with schema-validated content; writes are atomic.</span>
+              <span class="k">Verify</span><span>TC; UT with a temp <code>cwd</code></span>
+              <span class="k">Notes</span><span>Synchronous IPC to a hand-rolled JSON file goes away entirely.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p1-2">
+            <div class="th"><span class="tid">P1.2</span><h4>Credential vault with safeStorage</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/vault/CredentialVault.ts</code>, <code>tests/unit/credentialVault.test.ts</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>set(id, password)</code> → base64 of <code>safeStorage.encryptString</code> into the <code>vault</code> store; <code>get</code>, <code>delete</code></li>
+                <li>Refuse to store when <code>!isEncryptionAvailable()</code> or Linux backend is <code>basic_text</code>; return <code>{stored:false, reason}</code></li>
+                <li>Unit test with an injected fake <code>safeStorage</code></li>
+              </ul>
+              <span class="k">Covers</span><span>US-01</span>
+              <span class="k">Accept</span><span>A saved password is never present in plaintext in any file under <code>userData</code>.</span>
+              <span class="k">Verify</span><span>UT; MC (<code>grep -r &lt;password&gt; ~/Library/Application\ Support/pgui</code> → no hits)</span>
+              <span class="k">Notes</span><span>Passwords cross IPC exactly once (save/test/connect with an explicit password) and appear in no response.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p1-3">
+            <div class="th"><span class="tid">P1.3</span><h4>Type parsers, structured errors, pool factory, connection registry</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/db/typeParsers.ts</code>, <code>pgError.ts</code>, <code>poolFactory.ts</code>, <code>ConnectionRegistry.ts</code>, <code>tests/unit/pgError.test.ts</code>, <code>tests/integration/registry.test.ts</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/main/db/PostgresServer.ts</code> (only the idea; the global <code>types.setTypeParser</code> is not ported)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Per-pool <code>types</code> object: int8/numeric/money/date/time/timestamp(tz)/interval → identity strings; their array oids via <code>postgres-array</code> with identity elements; bytea → <code>\x</code> hex</li>
+                <li><code>toPgErrorInfo(err, statementText, statementIndex)</code> copies code/severity/detail/hint/position/…/constraint and computes line/col</li>
+                <li>Pool config: <code>max 4</code>, <code>idleTimeoutMillis 30000</code>, <code>connectionTimeoutMillis 5000</code>, <code>application_name 'pgui'</code>, <code>keepAlive</code>, ssl by mode, <code>options: '-c statement_timeout=…'</code></li>
+                <li>Registry: <code>getPool(connectionId, database)</code> lazy; <code>pool.on('error')</code> → <code>push('connections:event')</code>; idle reaper (10 min); <code>disconnect</code>; <code>closeAll()</code> with 2 s race</li>
+                <li>IT: same pool identity, disconnect ends backends within 1 s, closeAll bounded, error event does not throw</li>
+              </ul>
+              <span class="k">Covers</span><span>US-03, PROP-12, PROP-13, PROP-15</span>
+              <span class="k">Accept</span><span>Killing a pooled backend from psql emits an event and the app keeps running.</span>
+              <span class="k">Verify</span><span>UT (pgError); IT (registry); MC (<code>SELECT pg_terminate_backend(pid)</code> on an idle pgui backend)</span>
+              <span class="k">Notes</span><span><code>pool.on('error')</code> is mandatory: the legacy app crashes main on idle-client errors. Type parsers must be per pool, never <code>pg.types.setTypeParser</code>.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p1-4">
+            <div class="th"><span class="tid">P1.4</span><h4>Connections IPC handlers</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/ipc/connections.ipc.ts</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/main/db/PgConnectionHandlers.ts</code> (channel intent only)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>connections:list|save|delete|test|connect|disconnect|listDatabases</code></li>
+                <li><code>save</code> writes meta + vault; <code>test</code> accepts a full input or a saved id and returns <code>TestResult</code> with latency and <code>ServerInfo</code></li>
+                <li><code>connect</code> returns server info, <code>pg_database</code> list with sizes guarded by <code>has_database_privilege</code>, and <code>search_path</code></li>
+                <li>Read-only connections open pools with <code>default_transaction_read_only=on</code></li>
+              </ul>
+              <span class="k">Covers</span><span>US-01 · US-02 · US-03 · US-05</span>
+              <span class="k">Accept</span><span>Bad host returns a <code>TestResult</code> with <code>ok:false</code> and a readable error; never <code>undefined</code>, never a thrown class instance.</span>
+              <span class="k">Verify</span><span>TC; IT (<code>tests/integration/connections.test.ts</code>)</span>
+              <span class="k">Notes</span><span>Legacy returned a <code>PostgresServer</code> instance over IPC on reconnect ("object could not be cloned").</span>
+            </div>
+          </div>
+
+          <div class="task" id="p1-5">
+            <div class="th"><span class="tid">P1.5</span><h4>Catalog SQL split into per-node parameterised queries</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/catalog/sql/{database,schema,relation,function,index,trigger,constraint,sequence,type,extension}.sql.ts</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/database/context/useSelectedDatabaseContext.tsx:4-286</code> (the CTE), <code>legacy/src/renderer/src/app/mainpage/scripts/scriptGenerator.ts</code> (information_schema patterns)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Each query scoped by <code>$1</code>/<code>$2</code> (schema, name) and returning <code>jsonb_build_object</code> payloads</li>
+                <li>Relations: relkinds <code>r, p, v, m, f</code>; <code>reltuples</code>, <code>pg_total_relation_size</code>, comment, hypertable flag when timescaledb is installed</li>
+                <li>Columns with <code>attgenerated</code>, <code>attidentity</code>, PK/FK/unique membership; constraints via <code>pg_get_constraintdef</code>; indexes via <code>pg_get_indexdef</code> + size; triggers via <code>pg_get_triggerdef</code> excluding <code>tgisinternal</code></li>
+                <li>Functions and procedures (<code>prokind</code>), sequences, enum/composite/domain types, extensions at db level</li>
+                <li>Hidden schemas <code>pg_*</code>, <code>information_schema</code>, <code>_timescaledb_*</code> unless <code>showInternalSchemas</code></li>
+              </ul>
+              <span class="k">Covers</span><span>US-06 · US-07</span>
+              <span class="k">Accept</span><span>For the seed, the schema node lists 2 tables + 1 view in <code>sales</code>; the relation node for <code>sales.sales_customer</code> shows the generated <code>_id</code> column.</span>
+              <span class="k">Verify</span><span>IT (<code>tests/integration/catalog.test.ts</code>)</span>
+              <span class="k">Notes</span><span>The legacy CTE only sees relkind <code>r</code> and hard-codes procedures to <code>{}</code>.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p1-6">
+            <div class="th"><span class="tid">P1.6</span><h4>CatalogService, CompletionIndex, nodeId codec</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/catalog/CatalogService.ts</code>, <code>CompletionIndex.ts</code>, <code>src/shared/catalog/nodeId.ts</code>, <code>src/main/ipc/catalog.ipc.ts</code>, <code>tests/unit/nodeId.test.ts</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>getNode({connectionId, database, nodeId, refresh})</code> with a cache keyed by <code>conn/db</code> then nodeId, <code>loadedAt</code></li>
+                <li><code>invalidate(connectionId, database?, nodeIdPrefix?)</code>; pushes <code>catalog:invalidated</code></li>
+                <li><code>CompletionIndex</code>: one query over <code>pg_class ⨝ pg_namespace ⨝ pg_attribute</code> → relations + columns + searchPath; cached per db</li>
+                <li><code>encodeNodeId/decodeNodeId/parentNodeId</code> with URL-safe segments; round-trip tests incl. names with <code>/</code> and <code>.</code></li>
+              </ul>
+              <span class="k">Covers</span><span>US-06 · US-08 · US-12</span>
+              <span class="k">Accept</span><span>Expanding the same node twice issues one query; <code>refresh</code> issues another; 2,000-table db index builds in &lt; 2 s locally.</span>
+              <span class="k">Verify</span><span>UT (nodeId); IT (<code>manyTables.sql</code> timing)</span>
+              <span class="k">Notes</span><span>The index is also the source for document-link candidate ranking in Phase 4.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p1-7">
+            <div class="th"><span class="tid">P1.7</span><h4>Renderer store slices and connection UI</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/store/index.ts</code>, <code>connections.slice.ts</code>, <code>catalog.slice.ts</code>, <code>settings.slice.ts</code>, <code>features/connections/ConnectionsTab.tsx</code>, <code>ConnectionForm.tsx</code>, <code>ConnectionList.tsx</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/sidebar/ConnectionForm.tsx</code> (field list only)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>zustand store with <code>StateCreator</code> slices and <code>useShallow</code> selectors</li>
+                <li>Connections tab as master–detail per <code>../designs/02-connections.html</code>: name, group, env, host, port (numeric), database, user, password + "ask every time", SSL mode, read-only, advanced timeouts, Test (separate), Save, Save &amp; Connect, Duplicate, Delete (confirm), Import from URI</li>
+                <li>Sidebar connection list: status dot, env badge, connect/disconnect, edit, delete</li>
+                <li>Connection error toast with "Edit connection" action</li>
+              </ul>
+              <span class="k">Covers</span><span>US-01 · US-02 · US-03 · US-05</span>
+              <span class="k">Accept</span><span>Test shows version + latency without saving; Save with duplicate name is rejected inline; all three fleet servers can be connected simultaneously.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>Fix the legacy label typo "Connection Nane". Port must be numeric.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p1-8">
+            <div class="th"><span class="tid">P1.8</span><h4>Virtualised lazy catalog tree</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/features/tree/CatalogTree.tsx</code>, <code>TreeNode.tsx</code>, <code>useTreeKeyboard.ts</code>, <code>treeFilter.ts</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/database/schemas/SchemaTree.tsx</code>, <code>TablesTree.tsx</code> (icons and labels only)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Flatten <code>catalog.nodes</code> + <code>expanded</code> into rows; <code>@tanstack/react-virtual</code> rows of 24 px</li>
+                <li>Expand triggers <code>loadNode</code>; spinner in the chevron slot; error icon with Retry</li>
+                <li>Hierarchy per <code>../designs/01-shell-welcome.html</code>: group → server → database → schema → folders → objects → sub-folders</li>
+                <li>Keyboard: arrows, Enter, Space, ⌘Enter, type-ahead; <code>role="tree"</code> semantics</li>
+                <li>Filter box with ancestor auto-expand and match highlight</li>
+              </ul>
+              <span class="k">Covers</span><span>US-06 · US-07 · US-08</span>
+              <span class="k">Accept</span><span>adminserver (31 dbs) tree scrolls smoothly with every schema expanded; expanding a table shows four sub-folders lazily.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>Node expansion state is UI state in <code>catalog.slice</code>, never baked into SQL as in legacy.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------- PHASE 2 ---------------- -->
+        <div class="phase" id="p2">
+          <div class="ph"><h3>Phase 2 · Workspace, tabs, tree actions, structure, DDL</h3><span class="badge todo">TODO</span><span class="goal">Serializable tabs that survive restart, tree context menus, structure tab and DDL preview.</span></div>
+          <div class="exit"><b>Exit criteria:</b> tabs (positions, active, params) survive restart; opening the same table twice focuses the existing tab; persisted JSON contains no React elements; DDL preview shows a correct <code>CREATE TABLE</code> for the seed.</div>
+
+          <div class="task" id="p2-1">
+            <div class="th"><span class="tid">P2.1</span><h4>Workspace and UI slices with persistence</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/store/workspace.slice.ts</code>, <code>ui.slice.ts</code>, <code>persist.ts</code>, <code>tests/unit/workspace.test.ts</code></span>
+              <span class="k">Port from</span><span>— (replaces <code>legacy/src/renderer/src/context/useTabInterfaceContext.tsx</code>)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>Tab&lt;K&gt; = {id, kind, title, params, dirty, pinned, createdAt}</code>; <code>TabParamsByKind</code> for query, table-data, table-structure, document, server-overview, ddl-preview, function, connections, settings</li>
+                <li>Deterministic ids: <code>table-data:{conn}/{db}/{schema}/{table}</code>, <code>document:{conn}/{db}/{schema}/{table}/{key}</code>, …; <code>openTab({reuse:true})</code> focuses</li>
+                <li>Actions: open, close, closeOthers, closeRight, setActive, updateParams, setDirty, reorder, pin, reopenClosed</li>
+                <li><code>ui.slice</code>: sidebar width/collapsed, inspector, palette open, <code>tabRuntime</code> (transient)</li>
+                <li><code>persist.ts</code>: debounced 500 ms <code>workspace:save</code> of <code>{tabs, activeTabId, sidebar}</code>; tests for JSON round-trip and reuse-by-id</li>
+              </ul>
+              <span class="k">Covers</span><span>US-28 · US-30, PROP-14</span>
+              <span class="k">Accept</span><span><code>JSON.parse(JSON.stringify(snapshot))</code> deep-equals the snapshot; document key 42 twice → one tab, key 43 → second.</span>
+              <span class="k">Verify</span><span>UT</span>
+              <span class="k">Notes</span><span>Legacy stored <code>&lt;QueryComponent/&gt;</code> elements in the store; the document tab id lacked the row key, so a second row replaced the first.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p2-2">
+            <div class="th"><span class="tid">P2.2</span><h4>Tab registry, tab bar, empty workspace</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/tabs/registry.tsx</code>, <code>shell/TabBar.tsx</code>, <code>shell/EmptyWorkspace.tsx</code>, <code>tabs/HibernatedTab.tsx</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/mainpage/EmptySpace.tsx</code> (shortcut list; make it true in P7.1)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>TAB_COMPONENTS: Record&lt;TabKind, LazyExoticComponent&gt;</code>; unknown kind renders an error tab, not a crash</li>
+                <li>Tab bar per design: icon, title, dirty dot, always-visible ×, middle-click close, drag reorder, pinned, PROD top border, overflow list</li>
+                <li>Tab context menu: Close, Close others, Close to the right, Close all, Pin, Duplicate, Copy tab path, Reveal in tree</li>
+                <li>Hibernated tab placeholder when the tab's connection is disconnected: "Connect" / "Close tab"</li>
+                <li>Per-tab ErrorBoundary ("This tab crashed · Reload · Copy error")</li>
+              </ul>
+              <span class="k">Covers</span><span>US-28 · US-30</span>
+              <span class="k">Accept</span><span>Close active tab activates its neighbour (not the last tab); reopen-closed restores params.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>Do not stub Radix <code>onValueChange</code>; keyboard tab activation must work.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p2-3">
+            <div class="th"><span class="tid">P2.3</span><h4>Workspace and settings IPC; boot sequence</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/ipc/workspace.ipc.ts</code>, <code>settings.ipc.ts</code>, <code>src/renderer/src/boot.ts</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>workspace:load|save</code>, <code>settings:get|set</code></li>
+                <li>Boot: settings → workspace → render shell → tabs hibernated; connections with stored passwords auto-connect when <code>reconnectOnLaunch</code></li>
+                <li>Window visible &lt; 1 s, interactive &lt; 2 s (log timestamps in dev)</li>
+              </ul>
+              <span class="k">Covers</span><span>US-28 · US-31</span>
+              <span class="k">Accept</span><span>Restart restores tabs and the active tab; query tabs restore text and never auto-run.</span>
+              <span class="k">Verify</span><span>TC; MC (restart twice)</span>
+              <span class="k">Notes</span><span>Monaco is lazy-loaded on the first query tab to protect startup time.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p2-4">
+            <div class="th"><span class="tid">P2.4</span><h4>Tree context menus and primary actions</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/features/tree/contextMenus.tsx</code>, <code>features/tree/actions.ts</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/database/schemas/tables/TablesTree.tsx</code> (menu intent; the six copy-pasted "show create SQL" blocks are replaced by <code>ddl:get</code>)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Menus per node level exactly as listed in requirement.html §10 (group, server, database, schema, folder, table, view, matview, function, sequence, type, extension, column)</li>
+                <li>Action classes: DX direct-execute, DDL open-in-query-tab, CF confirm dialog (dialog itself in P5.4)</li>
+                <li>Double-click table → table-data; ⌘Enter → structure; "New query" seeds connection/db/search_path</li>
+                <li>Disabled items with tooltip on read-only connections</li>
+              </ul>
+              <span class="k">Covers</span><span>US-08 · US-24 · US-05</span>
+              <span class="k">Accept</span><span>Every menu item does something or is disabled with a reason; no empty <code>onSelect</code>.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>Legacy had View/Delete/Export/Import/Rename/Open items with no handler and a relation "Drop" that emitted <code>DROP TRIGGER</code>.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p2-5">
+            <div class="th"><span class="tid">P2.5</span><h4>Table structure tab</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/tabs/TableStructureTab/{index,Columns,Indexes,Constraints,Triggers,Relations,Partitions,Ddl}.tsx</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/database/schemas/structures/TableStructure.tsx</code> and siblings (layout only)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Sub-tabs per <code>../designs/06-table-structure.html</code>; data from <code>catalog:getNode</code></li>
+                <li>Relations: "References" and "Referenced by" lists with open-structure / open-data-filtered actions</li>
+                <li>Partitions sub-tab hidden for non-partitioned tables; Timescale chunks section in P6.4</li>
+                <li>Read-only in this phase; pending-edit grid arrives in P5.4</li>
+              </ul>
+              <span class="k">Covers</span><span>US-24</span>
+              <span class="k">Accept</span><span>Seed <code>sales.sales_order</code> shows its FK to <code>sales_customer</code> under Constraints and Relations.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>Each sub-tab has its own loading/error state; no shared pagination between them.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p2-6">
+            <div class="th"><span class="tid">P2.6</span><h4>DDL service and DDL preview tab</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/ddl/DdlService.ts</code>, <code>src/main/ipc/ddl.ipc.ts</code>, <code>src/renderer/src/tabs/DdlPreviewTab/index.tsx</code>, <code>tests/integration/ddl.test.ts</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/mainpage/scripts/scriptGenerator.ts</code> (8 builders, rewritten with <code>$n</code> params and server-side <code>format('%I')</code>)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Kinds: table, view, matview, index, trigger, column, function, schema, constraint</li>
+                <li>Table DDL includes columns with generated/identity, constraints, indexes, comments</li>
+                <li>Preview tab: read-only Monaco (lazy), Copy, "Open in query tab"</li>
+                <li>IT asserts the seed table DDL contains <code>GENERATED ALWAYS AS</code> and <code>PRIMARY KEY</code></li>
+              </ul>
+              <span class="k">Covers</span><span>US-24, PROP-06</span>
+              <span class="k">Accept</span><span>No <code>'${schema}'</code>-style interpolation remains; names with quotes render correctly.</span>
+              <span class="k">Verify</span><span>IT</span>
+              <span class="k">Notes</span><span>Monaco setup lands in P3.3; until then the preview may use a <code>&lt;pre&gt;</code>.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------- PHASE 3 ---------------- -->
+        <div class="phase" id="p3">
+          <div class="ph"><h3>Phase 3 · Query runner and results grid</h3><span class="badge todo">TODO</span><span class="goal">Stream any query, cancel it, see structured errors, edit SQL with schema-aware completion.</span></div>
+          <div class="exit"><b>Exit criteria:</b> a 1M-row <code>SELECT *</code> streams without freezing and stops at the cap; cancel is observed in &lt; 500 ms; errors show line/col markers; <code>1.10::numeric</code> displays as <code>1.10</code>.</div>
+
+          <div class="task" id="p3-1">
+            <div class="th"><span class="tid">P3.1</span><h4>SessionManager, QueryRunner, cancel</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/db/SessionManager.ts</code>, <code>QueryRunner.ts</code>, <code>cancel.ts</code>, <code>tests/integration/queryRunner.test.ts</code></span>
+              <span class="k">Port from</span><span>— (replaces <code>PostgresServer.dbQuery</code> and <code>getPgTransaction</code>)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Session per query tab: dedicated <code>PoolClient</code>, pid recorded, command-tag tracking for BEGIN/COMMIT/ROLLBACK, ROLLBACK on close, transparent reopen on death</li>
+                <li>Runner: split → classify → cursor path (<code>pg-cursor</code>, 500-row pages, row cap, 64 MB cap) or simple path; <code>rowMode:'array'</code>; notices; DDL command tags invalidate catalog</li>
+                <li>Events: start, fields, rows, statementDone, notice, error, cancelled, done — strictly ordered</li>
+                <li>Cancel: <code>pg_cancel_backend(pid)</code> on a separate client; SQLSTATE <code>57014</code> → cancelled</li>
+                <li>IT cases: (a) 1M rows with cap 10,000 → 10,000 rows, truncated, &lt; 3 s; (b) <code>pg_sleep(30)</code> cancelled &lt; 500 ms; (c) 4-statement script → 4 statementDone, catalog invalidated; (d) syntax error → code 42601 with position; (e) <code>SELECT 1, 1</code> → two <code>?column?</code> fields; (f) <code>9007199254740993::int8</code> and <code>1.10::numeric</code> arrive as strings</li>
+              </ul>
+              <span class="k">Covers</span><span>US-09 · US-11 · US-34 · US-13, PROP-12, PROP-16, PROP-17</span>
+              <span class="k">Accept</span><span>All six IT cases pass; a multi-statement script never loses a result set.</span>
+              <span class="k">Verify</span><span>IT</span>
+              <span class="k">Notes</span><span>Legacy kept only the first SELECT of a script and shape-shifted single <code>?column?</code> rows into a scalar.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p3-2">
+            <div class="th"><span class="tid">P3.2</span><h4>Query IPC and query history store</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/ipc/query.ipc.ts</code>, <code>session.ipc.ts</code>, <code>history.ipc.ts</code>, <code>src/main/history/QueryHistory.ts</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>session:open|close</code>, <code>query:run</code> (returns <code>{accepted:true}</code>; results via <code>query:event</code>), <code>query:cancel</code></li>
+                <li>History: append on done/error/cancelled with connection, database, sql, duration, rowCount, status; cap by count and age from settings; <code>history:list|clear</code> with search</li>
+                <li>Read-only connections: reject DML/DDL statements by keyword before running with a clear <code>PgErrorInfo</code></li>
+              </ul>
+              <span class="k">Covers</span><span>US-14 · US-05</span>
+              <span class="k">Accept</span><span>History survives restart; search by substring works; clearing one connection leaves others.</span>
+              <span class="k">Verify</span><span>TC; IT (<code>tests/integration/history.test.ts</code>)</span>
+              <span class="k">Notes</span><span>—</span>
+            </div>
+          </div>
+
+          <div class="task" id="p3-3">
+            <div class="th"><span class="tid">P3.3</span><h4>Monaco setup, SQL editor, schema-aware completion</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/features/editor/monacoSetup.ts</code>, <code>MonacoSqlEditor.tsx</code>, <code>sqlCompletion.ts</code>, <code>sqlContext.ts</code>, <code>tests/unit/sqlContext.test.ts</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/components/editor/completion.ts</code> (keyword/function/snippet lists); <code>MonacoSqlEditor.tsx</code> (context ideas only)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>monaco-editor</code> direct with Vite <code>?worker</code>; built-in <code>pgsql</code> tokenizer; providers registered once at app start with disposables</li>
+                <li>Model per tab kept in a <code>Map&lt;tabId, ITextModel&gt;</code>; text mirrored to <code>tab.params.sql</code> with 150 ms debounce</li>
+                <li>Completion from <code>catalog.completionIndex</code>: schemas, tables (qualified and unqualified via search_path and the <code>schema_table</code> prefix rule), aliases from FROM/JOIN/UPDATE/INTO, <code>alias.</code> columns, keywords, functions, snippets</li>
+                <li>Commands: ⌘↵ run all, ⌘⇧↵ run selection/statement at cursor, ⌘⇧F format (sql-formatter, on demand only), ⌘E explain, Esc cancel</li>
+                <li>Markers from <code>PgErrorInfo.line/col</code>; hover shows column type</li>
+                <li>UT for the context parser: <code>FROM sales_customer c WHERE c.</code> → columns of <code>sales.sales_customer</code></li>
+              </ul>
+              <span class="k">Covers</span><span>US-09 · US-34 · US-12</span>
+              <span class="k">Accept</span><span>Switching tabs never rewrites SQL; opening 20 query tabs registers providers once (check <code>monaco.languages</code> listeners in devtools).</span>
+              <span class="k">Verify</span><span>TC; UT; MC</span>
+              <span class="k">Notes</span><span>Never format on render. Legacy ran <code>sql-formatter</code> into <code>defaultValue</code> on every render and rewrote the user's SQL on tab switch.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p3-4">
+            <div class="th"><span class="tid">P3.4</span><h4>Query tab</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/tabs/QueryTab/{index,Toolbar,ResultsPanel,MessagesPanel,useQueryRun}.tsx</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/components/editor/QueryComponent.tsx</code> (nothing structural; the run-then-reload-catalog pattern is dropped)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Toolbar per <code>../designs/04-query-editor.html</code>: Run, Run selection, Explain, Format, Cancel, Limit selector, Autocommit/Manual TX, target connection/database, ⋯ (save, history, export)</li>
+                <li>Runtime: <code>results[]</code> per statement with fields/rows/rowCount/truncated/duration/error/notices; result-set tabs; "Load more / Load all / exact count"</li>
+                <li>Messages pane: chronological notices and error cards (severity, SQLSTATE, message, detail, hint, "Show in editor", Copy)</li>
+                <li>Manual TX state in status bar with Commit/Rollback; prompt on close</li>
+                <li>Rows appended in batches with <code>startTransition</code>; tab icon spins while running</li>
+              </ul>
+              <span class="k">Covers</span><span>US-09 · US-11 · US-34 · US-13</span>
+              <span class="k">Accept</span><span>Running 5 statements produces 5 result/message entries in order; an error at statement 4 keeps results 1–3 and marks the line.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>Do not reload the catalog after every run; rely on <code>catalog:invalidated</code>.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p3-5">
+            <div class="th"><span class="tid">P3.5</span><h4>Results grid, cell renderers, row detail</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/features/grid/ResultsGrid.tsx</code>, <code>cells/{NumberCell,TextCell,NullCell,BoolCell,TimeCell,JsonCell,ByteaCell,ArrayCell}.tsx</code>, <code>RowDetail.tsx</code>, <code>lib/format.ts</code>, <code>tests/unit/format.test.ts</code></span>
+              <span class="k">Port from</span><span><code>legacy/.../results/datatable/components/data-table.tsx</code> (TanStack usage only)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>TanStack Table for column model/selection/visibility; <code>@tanstack/react-virtual</code> for rows and columns; fixed row height by density</li>
+                <li>Columns always from the result <code>fields</code>, never from the table catalog</li>
+                <li>Cell rendering per <code>../designs/tokens.html</code>: numeric right/mono, NULL badge distinct from <code>""</code>, booleans, timestamps, uuid, jsonb one-line preview with popover tree, bytea, arrays</li>
+                <li>Header: name, type label, PK/FK icons, sort indicator, header menu; column resize persisted per table</li>
+                <li>Row detail panel (JSON tree) via resizable panel; ⌘C copies cell, ⌘⇧C row as JSON</li>
+              </ul>
+              <span class="k">Covers</span><span>US-09 · US-15, PROP-12</span>
+              <span class="k">Accept</span><span>10,000 × 100 cells scroll at 60 fps; memory &lt; 600 MB in Activity Monitor.</span>
+              <span class="k">Verify</span><span>TC; UT (format); MC (React Profiler)</span>
+              <span class="k">Notes</span><span>Never classify a NULL sample as jsonb; use <code>FieldInfo.dataType</code>.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p3-6">
+            <div class="th"><span class="tid">P3.6</span><h4>History slice and panel</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/store/history.slice.ts</code>, <code>features/history/HistoryDrawer.tsx</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Drawer (⌘⇧H) listing last 500 entries with connection, duration, status; search; click inserts into current or new query tab</li>
+                <li>Welcome screen "Recent queries" uses the same slice</li>
+              </ul>
+              <span class="k">Covers</span><span>US-14</span>
+              <span class="k">Accept</span><span>A failed query appears with its SQLSTATE; clear-per-connection works.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------- PHASE 4 ---------------- -->
+        <div class="phase" id="p4">
+          <div class="ph"><h3>Phase 4 · Document links and backlinks</h3><span class="badge todo">TODO</span><span class="goal">The signature feature: every link-shaped value anywhere is navigable; every document shows who references it.</span></div>
+          <div class="exit"><b>Exit criteria:</b> from the <code>sales.sales_order</code> grid, clicking <code>sales_customer/42</code> in <code>customer_ref</code> and inside nested <code>payload</code> opens <code>document:…/sales/sales_customer/42</code>; a second customer opens a second tab; Backlinks lists orders via FK and via jsonb; Back/Forward works.</div>
+
+          <div class="task" id="p4-1">
+            <div class="th"><span class="tid">P4.1</span><h4>Pure doc-link modules: parse, find, rank</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/shared/doclink/parseDocRef.ts</code>, <code>findDocRefs.ts</code>, <code>rankCandidates.ts</code>, <code>tests/unit/{parseDocRef,findDocRefs,rankCandidates}.test.ts</code></span>
+              <span class="k">Port from</span><span>— (replaces the <code>split('_')</code> heuristics in <code>legacy/.../useDataTableColumns.tsx</code> and <code>MonacoJsonEditor.tsx</code>)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Grammar per requirement.html §9: optional <code>schema.</code>, identifier ≤ 63, one <code>/</code>, key in the Arango <code>_key</code> charset ≤ 254, no whitespace, string ≤ 320</li>
+                <li><code>findDocRefs(json, {maxDepth:32, maxRefs:500})</code> → <code>[{path, ref}]</code>; string leaves only, never keys</li>
+                <li><code>rankCandidates(ref, index)</code> ranks explicit (0) → prefixedName (1, longest schema first) → strippedName (2) → searchPath (3) → anySchema (4); dedupe; tie at best rank = ambiguous</li>
+                <li>Property-based test for raw reconstruction (fast-check optional)</li>
+              </ul>
+              <span class="k">Covers</span><span>US-19 · US-20, PROP-01…PROP-05</span>
+              <span class="k">Accept</span><span><code>users/42</code>, <code>sales_customer/42</code>, <code>sales.sales_customer/42</code> parse; <code>a/b/c</code>, <code>http://x/y</code>, <code>'a b/1'</code> do not; fixtures in PROP-05 hold.</span>
+              <span class="k">Verify</span><span>UT</span>
+              <span class="k">Notes</span><span>No underscore requirement. <code>sales_customer_order/42</code> must resolve by longest existing schema prefix, not the first underscore.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p4-2">
+            <div class="th"><span class="tid">P4.2</span><h4>DocLinkResolver and resolve IPC</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/doclink/DocLinkResolver.ts</code>, <code>src/main/ipc/doclink.ipc.ts</code>, <code>tests/integration/docLinkResolver.test.ts</code></span>
+              <span class="k">Port from</span><span>— (replaces <code>legacy/.../document/DocumentViewer.tsx:27</code> interpolated SELECT)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Key column rules: <code>_id</code> column → compare full raw; else single-column PK with type check; else <code>id</code>; composite → skip</li>
+                <li>Query <code>SELECT * FROM %I.%I WHERE %I::text = $1 LIMIT 2</code>; 1 row found, 2 rows data-level ambiguous, 0 rows try next candidate</li>
+                <li>Return <code>found | ambiguous | notFound | invalid</code> with candidates</li>
+                <li>IT: <code>sales_customer/1</code> via <code>_id</code>; <code>users/&lt;uuid&gt;</code> via search_path and <code>id::text</code>; <code>customer/1</code> → strippedName view; <code>nosuch/1</code> notFound; <code>dup/1</code> ambiguous</li>
+              </ul>
+              <span class="k">Covers</span><span>US-19 · US-20, PROP-06, PROP-07</span>
+              <span class="k">Accept</span><span>All IT fixtures pass; a key containing <code>'</code> never breaks the query.</span>
+              <span class="k">Verify</span><span>IT</span>
+              <span class="k">Notes</span><span>Cache found resolutions in the renderer per tab, not in main (rows change).</span>
+            </div>
+          </div>
+
+          <div class="task" id="p4-3">
+            <div class="th"><span class="tid">P4.3</span><h4>BacklinkFinder with FK index and jsonb path scans</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/doclink/BacklinkFinder.ts</code>, <code>src/main/catalog/fkIndex.ts</code>, <code>tests/integration/backlinks.test.ts</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>fkIndex(conn, db)</code>: one <code>pg_constraint</code> query cached per db; FK groups first</li>
+                <li>Value scan over text/varchar/citext/jsonb/json/text[] columns in scope: <code>col IN ($1,$2)</code>, <code>jsonb_path_exists(col, '$.** ? (@ == $ref)', jsonb_build_object('ref',$1::text))</code>, <code>$1 = ANY(col)</code></li>
+                <li>Stream: <code>plan</code> event first, then one <code>group</code> per (table, column) with count, sample rows, truncated; <code>SET LOCAL statement_timeout</code> per group; cancel via <code>doclink:cancelBacklinks</code></li>
+                <li>Scopes: sameSchema (default), wholeDb, explicit tables; per-table limit 50, timeout 5 s</li>
+                <li>IT: orders referencing customer 1 via FK, via <code>customer_ref</code> text and via <code>payload-&gt;'refs'</code> jsonb are all found; timeout respected; cancel works</li>
+              </ul>
+              <span class="k">Covers</span><span>US-22</span>
+              <span class="k">Accept</span><span>Whole-db scan of the seed finishes &lt; 3 s and never blocks other queries.</span>
+              <span class="k">Verify</span><span>IT</span>
+              <span class="k">Notes</span><span><code>@&gt;</code> alone cannot see nested refs; that is why <code>jsonb_path_exists</code> with <code>$.**</code> is used (PG 12+).</span>
+            </div>
+          </div>
+
+          <div class="task" id="p4-4">
+            <div class="th"><span class="tid">P4.4</span><h4>useDocLinks hook, link chip, hover preview, ambiguity picker</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/features/doclink/useDocLinks.ts</code>, <code>DocLinkChip.tsx</code>, <code>DocPreviewCard.tsx</code>, <code>AmbiguityPicker.tsx</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>useDocLinks()</code> → <code>isRef</code>, <code>candidates</code>, <code>open(ref, {fromTabId, preferred, newTab})</code>; memo per (conn, db, raw), cleared on <code>catalog:invalidated</code></li>
+                <li>Chip states normal / derived (FK) / broken per <code>../designs/tokens.html</code>; click, ⌘-click, middle-click, shift-click peek, Enter, context menu</li>
+                <li>Hover card after 400 ms: up to 8 fields (PK, name-like, then table order), FK-only "Referenced by" count, cached 30 s incl. negative</li>
+                <li>Picker (shadcn <code>command</code>) listing candidates with rank reason; remembers choice per (raw pattern, conn, db) for the session</li>
+              </ul>
+              <span class="k">Covers</span><span>US-19 · US-20</span>
+              <span class="k">Accept</span><span>Hovering a chip shows the row preview; an unresolvable chip renders broken with a tooltip.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>One implementation used by grid, tree, Monaco and palette; no second copy of the regex anywhere.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p4-5">
+            <div class="th"><span class="tid">P4.5</span><h4>Document tab</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/tabs/DocumentTab/{index,Header,JsonTree,JsonEditorView,ReferencesPanel,BacklinksPanel,SaveDiffSheet}.tsx</code>, <code>features/editor/MonacoJsonEditor.tsx</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/components/document/DocumentEditor.tsx</code> (nothing structural; the interpolated UPDATE and <code>formatValue</code> NULL bug are not ported)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Params <code>{history: DocTarget[], index}</code>; ‹ › navigation (⌘[ ⌘]); breadcrumb; title <code>table/key</code>; icon braces</li>
+                <li>Tree view (default) with type-coloured values, collapsible objects, inline edit; JSON view in Monaco with <code>_id</code> read-only decoration and column-type validation; toggle keeps edits</li>
+                <li>References panel: every ref in the row (path → chip → lazily resolved label)</li>
+                <li>Backlinks panel: scope selector, FK groups then jsonb/text groups, counts, <code>via</code> expression, progress and cancel, open filtered table-data tab</li>
+                <li>Save: diff sheet (Monaco diff of changed columns) + generated <code>UPDATE … WHERE pk = $n</code> via <code>rows:mutate</code>; conflict detection; Delete via CF with dependants count</li>
+              </ul>
+              <span class="k">Covers</span><span>US-19 · US-22 · US-21, PROP-10, PROP-11</span>
+              <span class="k">Accept</span><span>A three-hop link chain and Back works inside one tab; save of a jsonb edit round-trips; NULL stays NULL.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span><code>rows:mutate</code> lands in P5.2; until then the Save button may be disabled with a tooltip.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p4-6">
+            <div class="th"><span class="tid">P4.6</span><h4>Link chips everywhere in the grid and JSON trees</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/features/grid/cells/TextCell.tsx</code>, <code>cells/JsonCell.tsx</code>, <code>features/grid/JsonTree.tsx</code>, <code>features/grid/fkChips.ts</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Every string cell or string leaf accepted by <code>parseDocRef</code> and resolvable renders a chip (not only PK columns, not only table-data tabs)</li>
+                <li>Sole-column FK cells render derived chips <code>target_table/value</code> when the setting is on</li>
+                <li>Arrays of links: chip list with overflow badge in grid, full list in tree</li>
+                <li>Edit mode shows the raw string</li>
+              </ul>
+              <span class="k">Covers</span><span>US-19</span>
+              <span class="k">Accept</span><span>An ad-hoc query result shows chips for <code>customer_ref</code> and for nested <code>payload.refs[0]</code>.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>Legacy linked only the PK column of a table-data tab and only names containing <code>_</code>.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p4-7">
+            <div class="th"><span class="tid">P4.7</span><h4>Monaco link provider for JSON and SQL string literals</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/features/editor/jsonDocLinks.ts</code>, <code>sqlDocLinks.ts</code> (registered from <code>monacoSetup.ts</code>)</span>
+              <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/components/editor/MonacoJsonEditor.tsx</code> (replaced; its per-mount provider and accumulating decorations are not ported)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Scan string tokens, unescape, <code>parseDocRef</code>, resolvable → <code>ILink</code> with <code>pgui-doc://&lt;encoded raw&gt;</code></li>
+                <li><code>registerOpener</code> intercepts and calls <code>useDocLinks().open()</code>; F12 also opens</li>
+                <li>Hover widget renders the preview card</li>
+                <li>Dispose on app unload/HMR</li>
+              </ul>
+              <span class="k">Covers</span><span>US-19</span>
+              <span class="k">Accept</span><span>⌘-click on <code>"sales_customer/42"</code> in the document JSON view and in a SQL <code>WHERE</code> literal opens the document.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>Providers are registered once; legacy re-registered on every mount and never disposed.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------- PHASE 5 ---------------- -->
+        <div class="phase" id="p5">
+          <div class="ph"><h3>Phase 5 · Table data editing, filters, DDL actions, export</h3><span class="badge todo">TODO</span><span class="goal">Browse and edit real tables safely with generated, parameterised SQL.</span></div>
+          <div class="exit"><b>Exit criteria:</b> edit 3 cells + insert 1 + delete 1 → one transaction; a constraint violation rolls everything back and highlights the op; NULL and <code>''</code> round-trip distinguishably; <code>numeric(30,10)</code> edits keep every digit; a 10k-row CSV opens in a spreadsheet.</div>
+
+          <div class="task" id="p5-1">
+            <div class="th"><span class="tid">P5.1</span><h4>SQL builders: filters, select (keyset/offset), mutations</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/sql/filters.ts</code>, <code>selectBuilder.ts</code>, <code>mutationBuilder.ts</code>, <code>src/shared/sql/quote.ts</code>, <code>tests/unit/{filters,selectBuilder,mutationBuilder,quote}.test.ts</code>, <code>tests/integration/rowsFetch.test.ts</code></span>
+              <span class="k">Port from</span><span>— (replaces interpolated SQL in <code>legacy/.../AddRowButton.tsx</code>, <code>DocumentEditor.tsx</code>, <code>ResultsDataTable.tsx</code>)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Identifiers via <code>pg-format %I</code>; values via <code>$n</code>; typed filter ops incl. jsonb <code>@&gt;</code>, arrays, <code>IS NULL</code>; <code>raw</code> op flagged</li>
+                <li>Keyset when sort equals PK (tuple comparison, before/after), offset otherwise; default sort PK asc, <code>ctid</code> fallback</li>
+                <li>Insert/update/delete by full PK with <code>RETURNING *</code>; <code>DEFAULT_SENTINEL</code> → keyword; jsonb values cast <code>$n::jsonb</code></li>
+                <li><code>quote.ts</code> for clipboard/export only (INSERT text)</li>
+                <li>IT: keyset pages 1..3 then before on <code>public.big</code>; sort by non-PK uses offset; <code>ilike</code>, <code>in</code>, <code>contains</code></li>
+              </ul>
+              <span class="k">Covers</span><span>US-15 · US-17, PROP-06…PROP-10</span>
+              <span class="k">Accept</span><span>Names <code>a"b</code>, <code>Select</code>, <code>x y</code> render quoted; no user value ever appears in <code>text</code>.</span>
+              <span class="k">Verify</span><span>UT; IT</span>
+              <span class="k">Notes</span><span>Legacy <code>formatValue</code> turned NULL into the string <code>'null'</code>; this must be a property test, not a hope.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p5-2">
+            <div class="th"><span class="tid">P5.2</span><h4>Rows IPC: fetch, count, mutate</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/ipc/rows.ipc.ts</code>, <code>tests/integration/rowsMutate.test.ts</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>rows:fetch</code> returns <code>fields</code>, <code>rows</code>, <code>pkColumns</code>, <code>hasMore</code>, <code>sqlText</code>, duration</li>
+                <li><code>rows:count</code>: <code>reltuples</code> estimate immediately, exact <code>count(*)</code> on request with cancel</li>
+                <li><code>rows:mutate</code>: all ops in one transaction, <code>RETURNING *</code>, all-or-nothing, failing <code>opIndex</code> reported; <code>dryRun</code> returns SQL only</li>
+                <li>IT: NULL / <code>''</code> / JSON null round-trip (PROP-11); numeric(30,10) exact (PROP-12); int8[] (PROP-13)</li>
+              </ul>
+              <span class="k">Covers</span><span>US-15 · US-17, PROP-11…PROP-13</span>
+              <span class="k">Accept</span><span>A failing third op rolls back the first two.</span>
+              <span class="k">Verify</span><span>IT</span>
+              <span class="k">Notes</span><span>Mutations use <code>pool.query</code> on a dedicated client inside BEGIN/COMMIT with try/finally ROLLBACK.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p5-3">
+            <div class="th"><span class="tid">P5.3</span><h4>Table data tab with inline editing</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/tabs/TableDataTab/{index,FilterBar,Pager,EditFooter,AddRowRow,useEditBuffer,useTableData}.tsx</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Per <code>../designs/05-table-data.html</code>: filter chips + raw WHERE toggle, sort chips, page size, prev/next/go-to, estimate vs exact count, SQL preview, refresh</li>
+                <li><code>useEditBuffer</code>: updates/inserts/deletes keyed by PK; pending styling; ⌘Z revert cell; Set NULL/DEFAULT; type-aware cell editors incl. jsonb popover with validation</li>
+                <li>Apply (⌘S): Preview SQL sheet → <code>rows:mutate</code>; conflict rows marked; prompt on tab close with pending edits</li>
+                <li>Add row with defaults shown muted; Delete selected via confirm dialog listing PKs</li>
+                <li>Tables without PK: read-only banner</li>
+              </ul>
+              <span class="k">Covers</span><span>US-15 · US-17 · US-33</span>
+              <span class="k">Accept</span><span>Page 12,035 of <code>public.big</code> loads &lt; 300 ms with keyset; three edits apply as one transaction.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>No decorative client-side pagination; every page is a server round trip.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p5-4">
+            <div class="th"><span class="tid">P5.4</span><h4>Confirm dialog and structure-tab DDL actions</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/components/ConfirmSqlDialog.tsx</code>, <code>tabs/TableStructureTab/pendingAlters.ts</code>, <code>features/tree/ddlActions.ts</code>, <code>features/structure/CreateTableDialog.tsx</code></span>
+              <span class="k">Port from</span><span><code>legacy/.../tables/AddTableDialogButton.tsx</code>, <code>CreateSchemaButton.tsx</code> (column grid idea; header/checkbox swap and dropped defaults are fixed)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Dialog per <code>../designs/08-dialogs-palette-settings.html</code>: variants destructive / light / neutral; SQL block; options; typed name on prod for DROP/TRUNCATE/DELETE &gt; 10/terminate/drop db; executing and error states; "Open in editor"</li>
+                <li>Structure Columns grid edits → pending ALTERs → CF; add column, drop column, rename, create index, add constraint, validate constraint, enable/disable trigger</li>
+                <li>Tree CF actions: drop/truncate table (with dependants and row estimate), drop schema, drop view/function/sequence/type, refresh matview</li>
+                <li>Affected tabs close with a toast after a successful DROP; tree node refreshes</li>
+              </ul>
+              <span class="k">Covers</span><span>US-25 · US-33 · US-05</span>
+              <span class="k">Accept</span><span>Dropping a seed table on a prod-labelled connection requires typing its name; the generated DDL is exactly what runs.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>Nothing destructive ever executes silently; DX is only for refresh/connect/set read-only.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p5-5">
+            <div class="th"><span class="tid">P5.5</span><h4>Export and copy</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/export/Exporter.ts</code>, <code>src/main/ipc/export.ipc.ts</code>, <code>src/renderer/src/features/grid/exportMenu.tsx</code>, <code>tests/unit/exporter.test.ts</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>CSV (RFC 4180, NULL → empty, numeric strings unquoted), JSON (numeric fields as bare literals), SQL INSERT via <code>quote.ts</code>; save dialog</li>
+                <li>Copy cell / rows as TSV, JSON, INSERT, <code>_id</code>, WHERE clause</li>
+                <li>Export honours current filters for table-data tabs</li>
+              </ul>
+              <span class="k">Covers</span><span>US-18, PROP-12</span>
+              <span class="k">Accept</span><span><code>12345678901234567890.123456789</code> appears verbatim in CSV and JSON.</span>
+              <span class="k">Verify</span><span>UT; MC</span>
+              <span class="k">Notes</span><span>Legacy "Export to File" was a no-op menu item.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------- PHASE 6 ---------------- -->
+        <div class="phase" id="p6">
+          <div class="ph"><h3>Phase 6 · Server overview and fleet</h3><span class="badge todo">TODO</span><span class="goal">See each server's health and the whole fleet at a glance; kill runaway sessions.</span></div>
+          <div class="exit"><b>Exit criteria:</b> with the three fleet servers connected, the fleet page shows all three; adminserver's page lists 31 databases with sizes; cancelling a runaway query from the activity table works.</div>
+
+          <div class="task" id="p6-1">
+            <div class="th"><span class="tid">P6.1</span><h4>StatsService and stats IPC</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/stats/StatsService.ts</code>, <code>src/main/ipc/stats.ipc.ts</code>, <code>tests/integration/stats.test.ts</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>overview(connectionId)</code>: version, start time, max_connections, <code>pg_stat_database ⨝ pg_database</code> (size, backends, cache hit, deadlocks, temp), <code>pg_stat_activity</code> with <code>pg_blocking_pids</code>, <code>pg_locks</code>, <code>pg_stat_statements</code> top 20 if installed else null + hint, <code>pg_stat_replication</code>, extensions</li>
+                <li>Read-only transaction with <code>SET LOCAL statement_timeout = 5000</code> per sub-query</li>
+                <li><code>stats:cancelBackend</code> with <code>terminate</code> flag; own pid protected</li>
+                <li>IT: overview returns the seed db with size; activity includes the caller; <code>slowQueries</code> null without the extension; cancel ends a <code>pg_sleep</code> session</li>
+              </ul>
+              <span class="k">Covers</span><span>US-26</span>
+              <span class="k">Accept</span><span>Overview completes &lt; 2 s on adminserver over Tailscale.</span>
+              <span class="k">Verify</span><span>IT; MC</span>
+              <span class="k">Notes</span><span>Never terminate the app's own session.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p6-2">
+            <div class="th"><span class="tid">P6.2</span><h4>Server overview tab</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/tabs/ServerOverviewTab/{index,KpiCards,DatabasesPanel,ActivityPanel,LocksPanel,SlowQueriesPanel,ReplicationPanel}.tsx</code>, <code>features/overview/useOverviewPolling.ts</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Layout per <code>../designs/03-server-overview.html</code>; each panel loads independently with skeleton and error</li>
+                <li>Sessions: state pill, wait event, live duration, expandable query; Cancel (light CF) / Terminate (CF, typed pid on prod); "(you)" unkillable</li>
+                <li>Locks: blocker → blocked chains with View/Terminate</li>
+                <li>Slow queries: Explain and Open actions; enable-extension hint when missing</li>
+                <li>Auto-refresh 5–15 s only while the tab is visible and the window focused</li>
+              </ul>
+              <span class="k">Covers</span><span>US-26 · US-33</span>
+              <span class="k">Accept</span><span>Polling stops when the tab is hidden (verify in <code>pg_stat_activity</code>).</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>Open the overview automatically on connect when the setting is on.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p6-3">
+            <div class="th"><span class="tid">P6.3</span><h4>Fleet view</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/tabs/ServerOverviewTab/FleetView.tsx</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>server-overview:all</code>: one card per connection grouped by <code>group</code>, env badge, top numbers, Connect button for disconnected servers</li>
+                <li>Sidebar "Fleet overview" entry and welcome-screen link</li>
+              </ul>
+              <span class="k">Covers</span><span>US-27</span>
+              <span class="k">Accept</span><span>All three fleet servers appear with version, sessions and total size.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>—</span>
+            </div>
+          </div>
+
+          <div class="task" id="p6-4">
+            <div class="th"><span class="tid">P6.4</span><h4>TimescaleDB awareness</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/catalog/sql/timescale.sql.ts</code>, <code>src/renderer/src/tabs/TableStructureTab/Hypertable.tsx</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Hide <code>_timescaledb_*</code> schemas by default; hypertable badge in the tree</li>
+                <li>Structure section from <code>timescaledb_information.hypertables</code>: chunks, compression, retention policies</li>
+                <li>Overview card for tradingserver: hypertables, chunks, compressed ratio</li>
+              </ul>
+              <span class="k">Covers</span><span>US-07 · US-26</span>
+              <span class="k">Accept</span><span>tradingserver's hypertables show chunk counts; non-Timescale servers show nothing extra.</span>
+              <span class="k">Verify</span><span>MC on tradingserver</span>
+              <span class="k">Notes</span><span>Guard every query with an extension check.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---------------- PHASE 7 ---------------- -->
+        <div class="phase" id="p7">
+          <div class="ph"><h3>Phase 7 · Polish</h3><span class="badge todo">TODO</span><span class="goal">Shortcuts, palette, settings, updates, plan tree, resilience, cleanup.</span></div>
+          <div class="exit"><b>Exit criteria:</b> every shortcut on the welcome screen works; the palette opens any table in &lt; 100 ms with 2,000 tables; auto-update reaches "downloaded" against a local generic server; <code>legacy/</code> is deleted and lint is clean.</div>
+
+          <div class="task" id="p7-1">
+            <div class="th"><span class="tid">P7.1</span><h4>Keybindings</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/lib/keybindings.ts</code>, <code>components/ShortcutSheet.tsx</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Single keydown dispatcher scoped by focus (editor &gt; grid &gt; tree &gt; global) implementing the full table in requirement.html §10 (mac + win)</li>
+                <li>Shortcut sheet (⌘/) generated from the same table; welcome screen lists the real ones</li>
+              </ul>
+              <span class="k">Covers</span><span>US-29</span>
+              <span class="k">Accept</span><span>Every listed binding is exercised once manually; no binding fights Monaco's own.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>The legacy welcome screen advertised seven shortcuts and implemented none.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p7-2">
+            <div class="th"><span class="tid">P7.2</span><h4>Command palette</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/shell/CommandPalette.tsx</code>, <code>lib/fuzzy.ts</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Modes: mixed, <code>@</code> tables, <code>#</code> go to document (via <code>useDocLinks</code>), <code>:</code> tabs, <code>&gt;</code> actions</li>
+                <li>Object index from loaded tree nodes + <code>CompletionIndex</code> per open database, cached 5 min</li>
+                <li>Recent items first; connection path and shortcut shown at right</li>
+              </ul>
+              <span class="k">Covers</span><span>US-29 · US-19</span>
+              <span class="k">Accept</span><span><code>#sales_customer/42</code> opens the document; <code>@big</code> opens the table in &lt; 100 ms.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>—</span>
+            </div>
+          </div>
+
+          <div class="task" id="p7-3">
+            <div class="th"><span class="tid">P7.3</span><h4>Settings tab</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/tabs/SettingsTab/{index,Appearance,Editor,Query,Safety,Data,Links,History,Connections,About}.tsx</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Sections per <code>../designs/08-dialogs-palette-settings.html</code>; autosave with "Saved" pill</li>
+                <li>Safety: confirm on env labels, typed confirmation on prod, warn on UPDATE/DELETE without WHERE (blocks Run with CF)</li>
+                <li>Connections: export without passwords / import</li>
+              </ul>
+              <span class="k">Covers</span><span>US-31 · US-33</span>
+              <span class="k">Accept</span><span>Changing page size affects the next fetch; theme applies instantly.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>The legacy dark-mode toggle was wired to <code>onChange</code> on a button and did nothing.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p7-4">
+            <div class="th"><span class="tid">P7.4</span><h4>Auto-update and packaging</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/main/updates/autoUpdate.ts</code>, <code>src/main/ipc/app.ipc.ts</code>, <code>electron-builder.yml</code>, <code>dev-app-update.yml</code>, <code>build/entitlements.mac.plist</code></span>
+              <span class="k">Port from</span><span><code>legacy/src/main/updates/listenForUpdates.ts</code> (events only; native dialogs removed)</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Push <code>app:updateEvent</code> (available/downloaded/error/none); renderer toast with Restart; <code>autoUpdater.on('error')</code> handled</li>
+                <li>Register listeners once, not per window</li>
+                <li>electron-builder: real <code>appId</code>, publish URL, remove camera/microphone usage strings, keep <code>npmRebuild: false</code>, remove the third-party electron mirror</li>
+                <li><code>app:info</code>, <code>app:checkForUpdates</code>, <code>app:openExternal</code> (http(s) only)</li>
+              </ul>
+              <span class="k">Covers</span><span>US-32</span>
+              <span class="k">Accept</span><span>Against a local generic update server the flow reaches "downloaded"; no modal dialogs.</span>
+              <span class="k">Verify</span><span>MC</span>
+              <span class="k">Notes</span><span><code>link.sh</code> (rsync of local packages) is deleted; builds must be reproducible from <code>yarn install</code>.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p7-5">
+            <div class="th"><span class="tid">P7.5</span><h4>EXPLAIN plan tree and editor extras</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/features/editor/PlanTree.tsx</code>, <code>tabs/QueryTab/ExplainPanel.tsx</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li><code>EXPLAIN (FORMAT JSON)</code> rendered as an indented node tree with cost/rows bars; text fallback; ANALYZE with ⇧</li>
+                <li>"Open in query tab" from table-data (current filters), copy as INSERT/JSON from any grid</li>
+                <li>Format on demand only; uppercase keywords per setting</li>
+              </ul>
+              <span class="k">Covers</span><span>US-09 · US-18</span>
+              <span class="k">Accept</span><span>Explain of a seed join shows Hash Join / Seq Scan nodes with row estimates.</span>
+              <span class="k">Verify</span><span>TC; MC</span>
+              <span class="k">Notes</span><span>No third-party graph library.</span>
+            </div>
+          </div>
+
+          <div class="task" id="p7-6">
+            <div class="th"><span class="tid">P7.6</span><h4>Loading, empty and error states; reconnect</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>src/renderer/src/components/{Skeleton,EmptyState,ErrorState}.tsx</code>, <code>store/connections.slice.ts</code> (reconnect), <code>features/connections/useReconnect.ts</code></span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Apply the state rules table from requirement.html §10 to every surface (tree, overview, results, table data, structure, document, preview card, backlinks, palette, dialogs)</li>
+                <li><code>connections:event poolError</code> → status bar warning and lazy reconnect on next use; session death → tab notice</li>
+                <li>Toasts: bottom-right, 4 s, errors persist, max 3</li>
+              </ul>
+              <span class="k">Covers</span><span>US-03 · US-13</span>
+              <span class="k">Accept</span><span>Restarting the Docker Postgres while the app is open yields warnings, then a working app without restart.</span>
+              <span class="k">Verify</span><span>MC</span>
+              <span class="k">Notes</span><span>—</span>
+            </div>
+          </div>
+
+          <div class="task" id="p7-7">
+            <div class="th"><span class="tid">P7.7</span><h4>Delete legacy, README, lint clean</h4><span class="badge todo">TODO</span></div>
+            <div class="tb">
+              <span class="k">Files</span><span><code>legacy/</code> (deleted), <code>README.md</code>, <code>.eslintrc.cjs</code>, <code>CLAUDE.md</code> (project) </span>
+              <span class="k">Port from</span><span>—</span>
+              <span class="k">Subtasks</span><ul class="subtasks">
+                <li>Confirm no import references <code>legacy/</code>; delete it</li>
+                <li>README: dev, test (unit/integration), build, release, data directory layout, security model</li>
+                <li><code>yarn lint</code> and <code>yarn typecheck</code> clean; CI workflow running UT and IT with the compose file</li>
+                <li>Bump version to <code>2.0.0</code>; tag</li>
+              </ul>
+              <span class="k">Covers</span><span>—</span>
+              <span class="k">Accept</span><span>Fresh clone → <code>yarn</code> → <code>yarn test</code> → <code>yarn build:mac</code> succeeds.</span>
+              <span class="k">Verify</span><span>TC; UT; IT; build</span>
+              <span class="k">Notes</span><span>—</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /timeline -->
+    </section>
+
+    <!-- ============================ PROPERTY TESTS ============================ -->
+    <section id="props">
+      <div class="sec-h"><span class="num">05</span><h2>Property-based tests</h2></div>
+      <p>Each correctness property from the requirements spec maps to one test file and the task that must make it pass. Status tracks the test, not the feature.</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Property</th><th>Test file</th><th>Task</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>PROP-01 parseDocRef accepts</td><td><code>tests/unit/parseDocRef.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-02 parseDocRef rejects</td><td><code>tests/unit/parseDocRef.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-03 raw reconstruction</td><td><code>tests/unit/parseDocRef.property.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-04 findDocRefs depth/paths</td><td><code>tests/unit/findDocRefs.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-05 rankCandidates fixtures</td><td><code>tests/unit/rankCandidates.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-06 identifiers only via %I</td><td><code>tests/unit/selectBuilder.test.ts</code>, <code>tests/unit/mutationBuilder.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-07 values only via $n</td><td><code>tests/unit/selectBuilder.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-08 DEFAULT / IS NULL</td><td><code>tests/unit/filters.test.ts</code>, <code>tests/unit/mutationBuilder.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-09 keyset tuples</td><td><code>tests/unit/selectBuilder.test.ts</code>, <code>tests/integration/rowsFetch.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-10 UPDATE/DELETE by full PK</td><td><code>tests/unit/mutationBuilder.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-11 NULL round-trip</td><td><code>tests/integration/rowsMutate.test.ts</code></td><td><a href="#p5-2">P5.2</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-12 numeric precision</td><td><code>tests/integration/queryRunner.test.ts</code>, <code>tests/unit/exporter.test.ts</code></td><td><a href="#p3-1">P3.1</a>, <a href="#p5-5">P5.5</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-13 int8 arrays</td><td><code>tests/integration/rowsMutate.test.ts</code></td><td><a href="#p5-2">P5.2</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-14 workspace round-trip</td><td><code>tests/unit/workspace.test.ts</code></td><td><a href="#p2-1">P2.1</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-15 registry lifecycle</td><td><code>tests/integration/registry.test.ts</code></td><td><a href="#p1-3">P1.3</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-16 session persistence</td><td><code>tests/integration/queryRunner.test.ts</code></td><td><a href="#p3-1">P3.1</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-17 event ordering and cap</td><td><code>tests/integration/queryRunner.test.ts</code></td><td><a href="#p3-1">P3.1</a></td><td><span class="badge todo">TODO</span></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ============================ SEED ============================ -->
+    <section id="seed">
+      <div class="sec-h"><span class="num">06</span><h2>Seed schema for integration tests</h2></div>
+      <p>The seed mirrors the fleet's conventions: a generated <code>_id</code> column with <code>schema_table/id</code>, FK references, text references and nested jsonb references, plus a large table for paging and streaming tests.</p>
+<pre><code>-- tests/integration/seed.sql (outline)
+CREATE SCHEMA sales; CREATE SCHEMA a; CREATE SCHEMA b;
+
+CREATE TABLE sales.sales_customer (
+  id    serial PRIMARY KEY,
+  _id   text GENERATED ALWAYS AS ('sales_customer/' || id) STORED,
+  name  text NOT NULL,
+  email text,
+  meta  jsonb
+);
+
+CREATE TABLE sales.sales_order (
+  id           serial PRIMARY KEY,
+  _id          text GENERATED ALWAYS AS ('sales_order/' || id) STORED,
+  customer_id  int REFERENCES sales.sales_customer(id),        -- FK backlink
+  customer_ref text,                                            -- 'sales_customer/1' text backlink
+  payload      jsonb,                                           -- {"refs": ["sales_customer/1"], "meta": {"owner": "sales_customer/2"}}
+  total        numeric(30,10),
+  created_at   timestamptz DEFAULT now()
+);
+
+CREATE VIEW sales.customer AS SELECT * FROM sales.sales_customer;   -- strippedName candidate
+
+CREATE TABLE public.users (
+  id  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  _id text GENERATED ALWAYS AS ('users/' || id::text) STORED,
+  name text, tags text[]
+);
+
+CREATE TABLE a.dup (id int PRIMARY KEY); CREATE TABLE b.dup (id int PRIMARY KEY);  -- ambiguity fixture
+
+CREATE TABLE public.big (
+  id bigserial PRIMARY KEY,
+  n  numeric(30,10),
+  b  bigint,
+  j  jsonb,
+  t  text,
+  flag boolean,
+  ts timestamptz
+);
+INSERT INTO public.big (n, b, j, t, flag, ts)
+SELECT (g * 1.0000000001)::numeric(30,10), 9007199254740993 + g, jsonb_build_object('i', g, 'ref', 'sales_customer/' || (g % 100 + 1)),
+       'row ' || g, g % 2 = 0, now() - (g || ' seconds')::interval
+FROM generate_series(1, 1000000) g;
+
+INSERT INTO sales.sales_customer (name, email, meta) SELECT 'Customer ' || g, 'c' || g || '@example.com', jsonb_build_object('tier', CASE WHEN g % 5 = 0 THEN 'gold' ELSE 'std' END) FROM generate_series(1, 200) g;
+INSERT INTO sales.sales_order (customer_id, customer_ref, payload, total)
+SELECT (g % 200) + 1, 'sales_customer/' || ((g % 200) + 1),
+       jsonb_build_object('refs', jsonb_build_array('sales_customer/' || ((g % 200) + 1)), 'meta', jsonb_build_object('owner', 'sales_customer/' || ((g % 50) + 1))),
+       (g * 12.3456789012)::numeric(30,10)
+FROM generate_series(1, 5000) g;
+
+CREATE INDEX ON sales.sales_order (customer_id);
+ANALYZE;
+
+-- tests/integration/manyTables.sql: generates 2,000 tables in schema many_* for the catalog NFR
+DO $$ BEGIN FOR i IN 1..2000 LOOP
+  EXECUTE format('CREATE TABLE many.t_%s (id int PRIMARY KEY, a text, b numeric, c jsonb)', i);
+END LOOP; END $$;</code></pre>
+    </section>
+
+    <!-- ============================ DEPS ============================ -->
+    <section id="deps">
+      <div class="sec-h"><span class="num">07</span><h2>Dependencies and package changes</h2></div>
+      <h3>Add</h3>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Package</th><th>Section</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>pg</code> (keep), <code>pg-cursor</code></td><td>dependencies</td><td>Pooled connections; cursor-based streaming of large result sets</td></tr>
+          <tr><td><code>pg-format</code></td><td>dependencies</td><td><code>%I</code> identifier quoting for generated SQL in main</td></tr>
+          <tr><td><code>electron-store</code></td><td>dependencies</td><td>Schema-validated JSON stores in <code>userData</code> (connections, settings, workspace, history, vault)</td></tr>
+          <tr><td><code>electron-updater</code>, <code>@electron-toolkit/utils</code></td><td>dependencies</td><td>Auto-update events; dev helpers</td></tr>
+          <tr><td><code>zustand</code></td><td>dependencies</td><td>Renderer store with slices; replaces the vendored wrapper</td></tr>
+          <tr><td><code>@tanstack/react-table</code>, <code>@tanstack/react-virtual</code></td><td>dependencies</td><td>Column model and row/column virtualisation for grids and the tree</td></tr>
+          <tr><td><code>monaco-editor</code>, <code>sql-formatter</code></td><td>dependencies</td><td>SQL/JSON editing with workers bundled by Vite; on-demand formatting</td></tr>
+          <tr><td><code>react-resizable-panels</code></td><td>dependencies</td><td>Sidebar / main / inspector and editor / results splits (replaces react-split-pane)</td></tr>
+          <tr><td><code>lucide-react</code>, <code>sonner</code>, <code>clsx</code>, <code>tailwind-merge</code>, <code>tailwindcss-animate</code></td><td>dependencies</td><td>Icons, toasts, class utilities used by shadcn components</td></tr>
+          <tr><td><code>@cloudhub-ux/shadcn</code>, <code>tailwindcss</code>, <code>postcss</code>, <code>autoprefixer</code></td><td>dependencies / devDependencies</td><td>UI kit (esm build only) and styling</td></tr>
+          <tr><td><code>vitest</code>, <code>@vitest/coverage-v8</code>, <code>fast-check</code> (optional)</td><td>devDependencies</td><td>Unit and integration tests; property-based tests</td></tr>
+          <tr><td><code>postgres-array</code></td><td>dependencies</td><td>Parse array oids with identity element parsers</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Remove</h3>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Package</th><th>Reason</th></tr></thead>
+        <tbody>
+          <tr><td><code>arangojs</code></td><td>Arango migration feature dropped</td></tr>
+          <tr><td><code>sequelize</code>, <code>pg-hstore</code></td><td>Never imported</td></tr>
+          <tr><td><code>@mui/material</code>, <code>@mui/lab</code>, <code>@mui/styles</code>, <code>@mui/icons-material</code>, <code>@mui/material-nextjs</code>, <code>@emotion/*</code></td><td>UI standardised on shadcn + Tailwind</td></tr>
+          <tr><td><code>@cloudhub-ux/mui</code>, <code>@cloudhub-ux/min</code>, <code>@cloudhub-ux/zstore</code>, <code>@cloudhub-ux/reach-router</code></td><td>Block layout, MUI theme, store wrapper and router replaced; no router in v2</td></tr>
+          <tr><td><code>react-split-pane</code></td><td>Unmaintained; replaced by react-resizable-panels</td></tr>
+          <tr><td><code>@monaco-editor/react</code></td><td>Monaco used directly for explicit provider lifecycle</td></tr>
+          <tr><td><code>babel-plugin-transform-imports</code>, <code>vite-plugin-babel</code>, <code>unplugin-transform-imports</code></td><td>Only served MUI/icon tree-shaking</td></tr>
+          <tr><td><code>electron-reloader</code></td><td>electron-vite provides HMR</td></tr>
+          <tr><td><code>@uiw/react-json-view</code></td><td>Own JSON tree with link chips</td></tr>
+          <tr><td><code>@cloudhub-ux-icons/*</code>, <code>@iconify-icons/eva</code></td><td>lucide only</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ============================ RISKS ============================ -->
+    <section id="risks">
+      <div class="sec-h"><span class="num">08</span><h2>Risks and mitigations</h2></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Risk</th><th>Impact</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr><td><code>safeStorage</code> unavailable or <code>basic_text</code> on Linux</td><td>Cannot store passwords securely</td><td>Vault refuses to persist; UI offers "ask every time" and keeps the password in memory for the session; documented in Settings › Connections</td></tr>
+          <tr><td><code>pg_stat_statements</code> not installed on a server</td><td>Slow-queries panel empty</td><td>Panel shows the enable hint with SQL; everything else works</td></tr>
+          <tr><td>Monaco worker bundling under electron-vite</td><td>Editor fails to load or blocks the UI thread</td><td>Vite <code>?worker</code> imports, <code>MonacoEnvironment.getWorker</code>, CSP <code>worker-src 'self' blob:</code>; verified in P3.3 before building on it</td></tr>
+          <tr><td>Tailwind content globs miss shadcn classes</td><td>Unstyled components in production</td><td>Globs on <code>shadcn/esm/{components,widgets}/**/*.js</code>; a P0.4 check renders Dialog/ContextMenu/Table in the built app</td></tr>
+          <tr><td>react-resizable-panels behaviour differs from react-split-pane</td><td>Layout regressions</td><td>Persist sizes as ratios; test collapse/expand in P2.1</td></tr>
+          <tr><td>1M-row seed slows CI</td><td>Long integration runs</td><td>Container reused between runs; CI seeds once per job; <code>public.big</code> size configurable via env for quick local runs</td></tr>
+          <tr><td>Tailscale latency for catalog and overview queries</td><td>Slow tree expansion on the fleet</td><td>Lazy per-node queries, CompletionIndex in the background, 5 s statement timeouts, skeleton states</td></tr>
+          <tr><td>Sandboxed preload restrictions</td><td>Preload cannot import helpers</td><td>Preload stays dependency-free; channel lists are plain arrays from <code>shared/ipc.ts</code></td></tr>
+          <tr><td>jsonb whole-db backlink scans on big tables</td><td>Long sequential scans</td><td>Default scope sameSchema, per-table timeouts, streaming with cancel, opt-in whole-db scan</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ============================ NOTES ============================ -->
+    <section id="notes">
+      <div class="sec-h"><span class="num">09</span><h2>Implementation notes</h2></div>
+      <h3>Decisions log</h3>
+      <table>
+        <thead><tr><th style="width:120px">Date</th><th>Decision</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>2026-09-22</td><td>Drop the ArangoDB migration feature and <code>arangojs</code></td><td>Customer-specific one-off with known infinite recursion; owner decision</td></tr>
+          <tr><td>2026-09-22</td><td>Standardise UI on <code>@cloudhub-ux/shadcn</code> (esm) + Tailwind, lucide icons</td><td>Five overlapping UI systems today; owner decision</td></tr>
+          <tr><td>2026-09-22</td><td>Clean rewrite in the same repo, legacy kept under <code>legacy/</code> until Phase 7</td><td>Tab model, state and IPC are not salvageable incrementally; owner decision</td></tr>
+          <tr><td>2026-09-22</td><td>Fleet scope: N connections + per-server overview; SSH tunnels and backups deferred</td><td>Owner decision</td></tr>
+          <tr><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+      <h3>Issues found during implementation</h3>
+      <table>
+        <thead><tr><th style="width:120px">Date</th><th>Task</th><th>Issue</th><th>Resolution</th></tr></thead>
+        <tbody><tr><td></td><td></td><td></td><td></td></tr></tbody>
+      </table>
+      <h3>Deferred items</h3>
+      <ul>
+        <li>SSH tunnels (the fleet is reached over Tailscale today).</li>
+        <li>Backup status from restic / R2 and pg_dump / restore actions from the app.</li>
+        <li>ER diagram / visual relationship view (the Relations sub-tab and backlinks cover the navigational need).</li>
+        <li>Multiple windows and cross-window tab dragging.</li>
+        <li>Saved query folders and sync between machines.</li>
+        <li>Graphical EXPLAIN beyond the indented tree.</li>
+        <li>Anything ArangoDB-related.</li>
+      </ul>
+      <p class="muted sans small">Related documents: <a href="requirement.html">requirement.html</a> (what and why) · <a href="../designs/index.html">designs/index.html</a> (how it looks).</p>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeToggle');
+  var modes=['auto','light','dark'];
+  function get(){try{return localStorage.getItem('pgui-spec-theme')||'auto'}catch(e){return 'auto'}}
+  function apply(m){
+    if(m==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',m)}
+    btn.textContent='Theme: '+m;
+  }
+  var cur=get();apply(cur);
+  btn.addEventListener('click',function(){
+    cur=modes[(modes.indexOf(cur)+1)%modes.length];
+    try{localStorage.setItem('pgui-spec-theme',cur)}catch(e){}
+    apply(cur);
+  });
+})();
+</script>
+</body>
+</html>

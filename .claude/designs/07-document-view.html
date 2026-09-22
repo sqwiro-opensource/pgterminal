@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pgui · Document view</title>
+<link rel="stylesheet" href="assets/pgui.css">
+<style>
+  /* page-specific */
+  .doc{display:grid;grid-template-rows:40px 1fr 30px;min-height:0;flex:1}
+  .doc-h{display:flex;align-items:center;gap:8px;padding:0 10px;border-bottom:1px solid hsl(var(--border))}
+  .doc-h .nav{display:flex;gap:2px}
+  .doc-h .crumb{font-size:12.5px}
+  .doc-h .crumb b{font-family:var(--font-mono);font-weight:500}
+  .doc-body{display:grid;grid-template-columns:minmax(0,1fr) 360px;min-height:0}
+  .kv{overflow:auto;padding:6px 0;position:relative}
+  .kv .row{display:grid;grid-template-columns:200px 1fr;height:24px;align-items:center;padding:0 12px;font-size:12.5px}
+  .kv .row:hover{background:hsl(var(--accent)/.6)}
+  .kv .row .k{font-family:var(--font-mono);font-size:12px;color:hsl(var(--muted-foreground));display:flex;align-items:center;gap:4px;white-space:nowrap}
+  .kv .row .k .chev{width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;color:hsl(var(--muted-foreground))}
+  .kv .row .k .chev.open svg{transform:rotate(90deg)}
+  .kv .row .v{font-family:var(--font-mono);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+  .kv .row .v .ty{font-size:10px;color:hsl(var(--muted-foreground));font-family:var(--font-ui);margin-left:auto;padding-right:6px;opacity:0}
+  .kv .row:hover .v .ty{opacity:1}
+  .kv .lvl1 .k{padding-left:18px}.kv .lvl2 .k{padding-left:36px}
+  .kv .v.str{color:hsl(var(--str))}.kv .v.num{color:hsl(var(--num))}.kv .v.time{color:hsl(var(--time))}.kv .v.bool{color:hsl(var(--bool))}.kv .v.null{color:hsl(var(--muted-foreground)/.7);font-style:italic}
+  .kv .v .summ{color:hsl(var(--muted-foreground))}
+  .kv .row.editing{background:hsl(var(--background))}
+  .kv .row.editing .v{outline:2px solid hsl(var(--ring));outline-offset:-2px;border-radius:3px;padding:0 6px;height:22px;background:hsl(var(--background));color:hsl(var(--foreground))}
+  .kv .row.pending .k::before{content:"✎";color:hsl(var(--pending));font-size:11px;margin-right:2px;font-family:var(--font-ui)}
+  .kv .row.pending{box-shadow:inset 3px 0 0 hsl(var(--pending));background:hsl(var(--pending)/.08)}
+  .side{border-left:1px solid hsl(var(--border));display:grid;grid-template-rows:auto minmax(0,1fr);min-height:0;background:hsl(var(--sidebar))}
+  .refs{overflow:auto}
+  .refs .ph{height:30px;display:flex;align-items:center;gap:8px;padding:0 10px;font-size:11.5px;font-weight:600;letter-spacing:.02em;color:hsl(var(--muted-foreground));border-bottom:1px solid hsl(var(--border));position:sticky;top:0;background:hsl(var(--sidebar));z-index:1}
+  .refs .ph .grow{flex:1}
+  .refs .r{display:grid;grid-template-columns:104px 1fr;gap:8px;align-items:center;height:26px;padding:0 10px;font-size:12px}
+  .refs .r:hover{background:hsl(var(--accent))}
+  .refs .r .p{font-family:var(--font-mono);font-size:11px;color:hsl(var(--muted-foreground));overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .refs .r .val{display:flex;align-items:center;gap:6px;min-width:0}
+  .refs .r .val .lab{color:hsl(var(--muted-foreground));overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+  .bl{display:grid;grid-template-columns:1fr auto auto 22px;gap:8px;align-items:center;height:28px;padding:0 10px;font-size:12px}
+  .bl:hover{background:hsl(var(--accent))}
+  .bl .cnt{font-family:var(--font-mono);font-size:12px;color:hsl(var(--num));text-align:right;min-width:36px}
+  .bl .via{font-family:var(--font-mono);font-size:11px;color:hsl(var(--muted-foreground));max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bl .open{width:22px;height:22px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;color:hsl(var(--muted-foreground))}
+  .bl .open:hover{background:hsl(var(--primary)/.12);color:hsl(var(--link))}
+  .bl.grp{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:hsl(var(--muted-foreground));font-weight:600;height:22px;grid-template-columns:1fr}
+  .scan{padding:8px 10px;border-top:1px dashed hsl(var(--border));font-size:11.5px;color:hsl(var(--muted-foreground))}
+  .scan .prog{height:3px;border-radius:2px;background:hsl(var(--muted));margin:6px 0 4px;overflow:hidden}
+  .scan .prog i{display:block;width:18%;height:100%;background:hsl(var(--primary))}
+  .doc-f{display:flex;align-items:center;gap:10px;padding:0 12px;border-top:1px solid hsl(var(--pending)/.5);background:hsl(var(--pending)/.10);font-size:12px}
+  .doc-f .grow{flex:1}
+  /* preview card */
+  .preview{position:absolute;width:320px;top:236px;left:420px;z-index:22;padding:0;overflow:hidden}
+  .preview .pv-h{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid hsl(var(--border));background:hsl(var(--muted)/.5)}
+  .preview .pv-h .tb{font-size:11px;color:hsl(var(--muted-foreground));font-family:var(--font-mono)}
+  .preview .pv-h .grow{flex:1}
+  .preview .pv-b{padding:6px 0}
+  .preview .pv-r{display:grid;grid-template-columns:96px 1fr;height:22px;align-items:center;padding:0 10px;font-size:12px}
+  .preview .pv-r .k{font-family:var(--font-mono);font-size:11px;color:hsl(var(--muted-foreground))}
+  .preview .pv-r .v{font-family:var(--font-mono);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .preview .pv-f{display:flex;align-items:center;gap:6px;padding:7px 10px;border-top:1px solid hsl(var(--border));font-size:11.5px;color:hsl(var(--muted-foreground))}
+  /* json view drawer */
+  .jsonview{border-top:1px solid hsl(var(--border));background:hsl(var(--background));display:grid;grid-template-rows:28px 1fr;min-height:0}
+  .jsonview .jh{display:flex;align-items:center;gap:8px;padding:0 10px;font-size:11.5px;color:hsl(var(--muted-foreground));border-bottom:1px solid hsl(var(--border));background:hsl(var(--grid-header))}
+  .jsonview .code{padding:6px 0;overflow:auto}
+  .code .lk{color:hsl(var(--link));text-decoration:underline dotted hsl(var(--link));text-underline-offset:3px;cursor:pointer}
+  .code .ro{background:hsl(var(--muted));border-radius:2px}
+  .left{display:grid;grid-template-rows:minmax(0,1.15fr) minmax(0,1fr);min-height:0}
+  /* diff sheet */
+  .sheet{width:760px}
+  .sheet .diff{display:grid;grid-template-columns:1fr 1fr;border:1px solid hsl(var(--border));border-radius:6px;overflow:hidden;font-family:var(--font-mono);font-size:11.5px;line-height:1.55}
+  .sheet .diff .col{padding:8px 10px;white-space:pre}
+  .sheet .diff .col + .col{border-left:1px solid hsl(var(--border))}
+  .sheet .diff .col h5{margin:0 0 4px;font:600 10px var(--font-ui);letter-spacing:.06em;text-transform:uppercase;color:hsl(var(--muted-foreground))}
+  .sheet .del{background:hsl(var(--destructive)/.15)}
+  .sheet .add{background:hsl(var(--success)/.18)}
+  .sheet table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+  .sheet th{text-align:left;font-weight:500;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:hsl(var(--muted-foreground));padding:4px 6px;border-bottom:1px solid hsl(var(--border))}
+  .sheet td{padding:4px 6px;border-bottom:1px solid hsl(var(--grid-line));font-family:var(--font-mono);font-size:11.5px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></symbol>
+  <symbol id="i-braces" viewBox="0 0 24 24"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1M16 21h1a2 2 0 0 0 2-2v-5a2 2 0 0 1 2-2 2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01M6 18h.01"/></symbol>
+  <symbol id="i-schema" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-panel-l" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></symbol>
+  <symbol id="i-panel-r" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><path d="m21 2-2 2m-7.6 7.6a5.5 5.5 0 1 1-7.8 7.8 5.5 5.5 0 0 1 7.8-7.8zm0 0L19 6l2-2-3-3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M3 21v-5h5"/></symbol>
+  <symbol id="i-fn" viewBox="0 0 24 24"><path d="M9 4h6M12 4v16M8 20h8"/></symbol>
+  <symbol id="i-cols" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="m6 3 14 9-14 9V3z"/></symbol>
+</svg>
+
+<div class="app with-inspector" style="--inspector:0">
+  <!-- title bar -->
+  <div class="titlebar">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <div class="crumb"><svg class="i sm"><use href="#i-server"/></svg><b>adminserver</b><span class="sep">›</span>sqwiro<span class="sep">›</span>sales.sales_customer<span class="sep">›</span><b>42</b></div>
+    <div class="palette-pill"><svg class="i sm"><use href="#i-search"/></svg>Search objects or run a command<kbd>⌘K</kbd></div>
+    <div class="tb-actions">
+      <button class="iconbtn" title="Toggle sidebar ⌘B"><svg class="i"><use href="#i-panel-l"/></svg></button>
+      <button class="iconbtn" title="Toggle inspector ⌘I"><svg class="i"><use href="#i-panel-r"/></svg></button>
+      <button class="iconbtn" title="Theme ⌘⇧L"><svg class="i"><use href="#i-sun"/></svg></button>
+      <button class="iconbtn" title="Settings ⌘,"><svg class="i"><use href="#i-settings"/></svg></button>
+    </div>
+  </div>
+
+  <div class="body" style="grid-template-columns:240px 1fr">
+    <!-- sidebar -->
+    <aside class="sidebar">
+      <div class="sb-filter"><svg class="i sm"><use href="#i-search"/></svg><input placeholder="Filter connections & objects"><kbd>⌘⇧F</kbd></div>
+      <div class="tree">
+        <div class="tree-group" style="--env-bar:var(--env-prod-bar)"><span class="chev"><svg class="i sm" style="transform:rotate(90deg)"><use href="#i-chev"/></svg></span><span class="caps">Production</span></div>
+        <div class="node d1 active"><span class="chev open"><svg class="i sm"><use href="#i-chev"/></svg></span><span class="dot on"></span><span class="lbl">adminserver</span><span class="env prod">prod</span></div>
+        <div class="node d2 db"><span class="chev open"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-db"/></svg><span class="lbl">sqwiro</span><span class="meta">12 GB</span></div>
+        <div class="node d3"><span class="chev open"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-schema"/></svg><span class="lbl">sales</span></div>
+        <div class="node d4"><span class="chev open"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-table"/></svg><span class="lbl">Tables</span><span class="meta">14</span></div>
+        <div class="node d5 sel"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-table"/></svg><span class="lbl">sales_customer</span><span class="meta">1.2M</span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-table"/></svg><span class="lbl">sales_order</span><span class="meta">98k</span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-table"/></svg><span class="lbl">sales_groupcustomer</span><span class="meta">3.1k</span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-eye"/></svg><span class="lbl">Views</span><span class="meta">3</span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-fn"/></svg><span class="lbl">Functions</span><span class="meta">12</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-schema"/></svg><span class="lbl">billing</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-schema"/></svg><span class="lbl">crm</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-schema"/></svg><span class="lbl">auth</span></div>
+        <div class="node d2 dim"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><svg class="i sm ic"><use href="#i-db"/></svg><span class="lbl">analytics</span><span class="meta">6.1 GB</span></div>
+        <div class="node d2 dim"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><span class="lbl muted">… 29 more databases</span></div>
+        <div class="node d1"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><span class="dot off"></span><span class="lbl">cloudhubserver</span><span class="env prod">prod</span></div>
+        <div class="tree-group" style="--env-bar:var(--env-prod-bar)"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><span class="caps">Trading</span></div>
+        <div class="node d1"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><span class="dot off"></span><span class="lbl">tradingserver</span><span class="env prod">prod</span></div>
+        <div class="tree-group"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><span class="caps">Ungrouped</span></div>
+        <div class="node d1"><span class="chev"><svg class="i sm"><use href="#i-chev"/></svg></span><span class="dot on"></span><span class="lbl">local</span><span class="env local">local</span></div>
+      </div>
+      <div class="sb-footer"><button class="btn ghost sm"><svg class="i sm"><use href="#i-plus"/></svg>New connection</button><button class="btn ghost sm"><svg class="i sm"><use href="#i-settings"/></svg>Manage</button></div>
+    </aside>
+
+    <!-- main -->
+    <div class="main">
+      <div class="tabstrip">
+        <div class="tab prod"><svg class="i ic"><use href="#i-table"/></svg><span class="t">sales_customer</span><span class="x"><svg class="i sm"><use href="#i-x"/></svg></span></div>
+        <div class="tab prod"><svg class="i ic"><use href="#i-code"/></svg><span class="t">Query 2 · sqwiro</span><span class="dirty"></span></div>
+        <div class="tab on prod"><svg class="i ic"><use href="#i-braces"/></svg><span class="t">customer/42</span><span class="x"><svg class="i sm"><use href="#i-x"/></svg></span></div>
+        <div class="tab"><svg class="i ic"><use href="#i-braces"/></svg><span class="t">order/9001</span><span class="x"><svg class="i sm"><use href="#i-x"/></svg></span></div>
+        <div class="tab-add"><svg class="i"><use href="#i-plus"/></svg></div>
+      </div>
+
+      <div class="content doc">
+        <!-- document header -->
+        <div class="doc-h">
+          <div class="nav">
+            <button class="iconbtn" title="Back ⌘["><svg class="i"><use href="#i-left"/></svg></button>
+            <button class="iconbtn" title="Forward ⌘]" style="opacity:.4"><svg class="i"><use href="#i-chev"/></svg></button>
+          </div>
+          <div class="crumb"><span class="dot on"></span><b>adminserver</b><span class="sep">›</span>sqwiro<span class="sep">›</span>sales.sales_customer<span class="sep">›</span><b style="color:hsl(var(--link))">42</b></div>
+          <div style="flex:1"></div>
+          <div class="seg"><button class="on">Tree</button><button>JSON</button></div>
+          <button class="btn sm"><svg class="i sm"><use href="#i-table"/></svg>Open in table</button>
+          <button class="iconbtn"><svg class="i"><use href="#i-more"/></svg></button>
+          <button class="btn sm" style="color:hsl(var(--destructive))"><svg class="i sm"><use href="#i-trash"/></svg>Delete</button>
+          <button class="btn sm primary"><svg class="i sm"><use href="#i-save"/></svg>Save<kbd style="background:transparent;border-color:hsl(0 0% 100%/.3);color:inherit">⌘S</kbd></button>
+        </div>
+
+        <div class="doc-body">
+          <div class="left">
+            <!-- tree view -->
+            <div class="kv">
+              <div class="row"><div class="k">_id</div><div class="v"><span class="chip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">sales_</span>customer/42</span><span class="ty">text · generated</span></div></div>
+              <div class="row"><div class="k">id</div><div class="v num">42<span class="ty">int4 · pk</span></div></div>
+              <div class="row pending"><div class="k">name</div><div class="v str">"Acme Ltd"<span class="ty">text</span></div></div>
+              <div class="row"><div class="k">country</div><div class="v str">"KE"<span class="ty">char(2)</span></div></div>
+              <div class="row"><div class="k">account_id</div><div class="v"><span class="chip derived"><svg class="i sm"><use href="#i-link"/></svg><span class="pre">billing_</span>account/7</span><span class="muted small">FK → billing.billing_account</span><span class="ty">int4</span></div></div>
+              <div class="row editing pending"><div class="k">email</div><div class="v">ops@acme.co.ke<span style="border-left:1.5px solid hsl(var(--foreground));height:14px;animation:pulse 1s steps(2) infinite"></span></div></div>
+              <div class="row"><div class="k">active</div><div class="v bool">true<span class="ty">bool</span></div></div>
+              <div class="row"><div class="k"><span class="chev open"><svg class="i sm"><use href="#i-chev"/></svg></span>meta</div><div class="v"><span class="summ">{3}</span><span class="ty">jsonb</span></div></div>
+              <div class="row lvl1"><div class="k">tier</div><div class="v str">"gold"</div></div>
+              <div class="row lvl1"><div class="k">owner</div><div class="v"><span class="chip" id="ownerChip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">auth_</span>user/3</span></div></div>
+              <div class="row lvl1"><div class="k"><span class="chev open"><svg class="i sm"><use href="#i-chev"/></svg></span>tags</div><div class="v"><span class="summ">[2]</span></div></div>
+              <div class="row lvl2"><div class="k">0</div><div class="v"><span class="chip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">crm_</span>tag/4</span></div></div>
+              <div class="row lvl2"><div class="k">1</div><div class="v"><span class="chip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">crm_</span>tag/12</span></div></div>
+              <div class="row"><div class="k">legacy_ref</div><div class="v"><span class="chip broken"><svg class="i sm"><use href="#i-link"/></svg>archive_customer/42</span><span class="muted small">row not found</span></div></div>
+              <div class="row"><div class="k">notes</div><div class="v null">NULL<span class="ty">text</span></div></div>
+              <div class="row"><div class="k">created_at</div><div class="v time">2026-03-01T10:22:05+03:00<span class="ty">timestamptz</span></div></div>
+              <div class="row"><div class="k">updated_at</div><div class="v time">2026-09-22T10:24:11+03:00<span class="ty">timestamptz</span></div></div>
+
+              <!-- hover preview card -->
+              <div class="popover preview">
+                <div class="pv-h"><span class="chip lg"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">auth_</span>user/3</span><span class="tb">auth.auth_user</span><span class="grow"></span><button class="btn ghost sm" style="color:hsl(var(--link))">Open</button><button class="iconbtn sm" title="Open in new tab"><svg class="i sm"><use href="#i-ext"/></svg></button></div>
+                <div class="pv-b">
+                  <div class="pv-r"><span class="k">id</span><span class="v" style="color:hsl(var(--num))">3</span></div>
+                  <div class="pv-r"><span class="k">name</span><span class="v">Bernard Gaitho</span></div>
+                  <div class="pv-r"><span class="k">email</span><span class="v">b.gaitho@cloudhub.co.ke</span></div>
+                  <div class="pv-r"><span class="k">role</span><span class="v" style="color:hsl(var(--str))">"admin"</span></div>
+                  <div class="pv-r"><span class="k">is_active</span><span class="v" style="color:hsl(var(--bool))">true</span></div>
+                  <div class="pv-r"><span class="k">org_id</span><span class="v muted">org/1 <span class="small">(static)</span></span></div>
+                  <div class="pv-r"><span class="k">last_login</span><span class="v" style="color:hsl(var(--time))">2026-09-22 08:14</span></div>
+                  <div class="pv-r"><span class="k">created_at</span><span class="v" style="color:hsl(var(--time))">2024-11-02 09:30</span></div>
+                </div>
+                <div class="pv-f"><svg class="i sm"><use href="#i-link"/></svg>Referenced by 143<span class="grow"></span><span class="mono small">FK only · cached 60 s</span></div>
+              </div>
+            </div>
+
+            <!-- JSON view (stacked variant) -->
+            <div class="jsonview">
+              <div class="jh"><svg class="i sm"><use href="#i-braces"/></svg>JSON view (⌘⇧J) — same document, Monaco with link decorations · <span class="mono">_id</span> read-only<span style="flex:1"></span><span class="pill warn">2 unsaved</span></div>
+              <div class="code"><span class="ln">1</span>{
+<span class="ln">2</span>  <span class="ro">"_id": <span class="st">"sales_customer/42"</span></span>,
+<span class="ln">3</span>  "id": <span class="nu">42</span>,
+<span class="ln">4</span>  "name": <span class="st">"Acme Ltd"</span>,
+<span class="ln">5</span>  "country": <span class="st">"KE"</span>,
+<span class="ln">6</span>  "account_id": <span class="nu">7</span>,
+<span class="ln">7</span>  "email": <span class="st">"ops@acme.co.ke"</span>,
+<span class="ln">8</span>  "active": <span class="kw">true</span>,
+<span class="ln">9</span>  "meta": {
+<span class="ln">10</span>    "tier": <span class="st">"gold"</span>,
+<span class="ln">11</span>    "owner": <span class="st">"<span class="lk">auth_user/3</span>"</span>,
+<span class="ln">12</span>    "tags": [<span class="st">"<span class="lk">crm_tag/4</span>"</span>, <span class="st">"<span class="lk">crm_tag/12</span>"</span>]
+<span class="ln">13</span>  },
+<span class="ln">14</span>  "legacy_ref": <span class="st">"archive_customer/42"</span>,
+<span class="ln">15</span>  "notes": <span class="kw">null</span>,
+<span class="ln">16</span>  "created_at": <span class="st">"2026-03-01T10:22:05+03:00"</span>
+<span class="ln">17</span>}</div>
+            </div>
+          </div>
+
+          <!-- right side: references / referenced by -->
+          <aside class="side">
+            <div class="refs" style="flex:none">
+              <div class="ph">References<span class="badge">3</span><span class="grow"></span><span class="muted" style="font-weight:400">links found in this row</span></div>
+              <div class="r"><span class="p">account_id</span><span class="val"><span class="chip derived"><svg class="i sm"><use href="#i-link"/></svg><span class="pre">billing_</span>account/7</span><span class="lab">Acme Billing</span></span></div>
+              <div class="r"><span class="p">meta.owner</span><span class="val"><span class="chip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">auth_</span>user/3</span><span class="lab">Bernard Gaitho</span></span></div>
+              <div class="r"><span class="p">meta.tags[0]</span><span class="val"><span class="chip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">crm_</span>tag/4</span><span class="lab">key-account</span></span></div>
+              <div class="r"><span class="p">meta.tags[1]</span><span class="val"><span class="chip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">crm_</span>tag/12</span><span class="lab">vip</span></span></div>
+              <div class="r"><span class="p">legacy_ref</span><span class="val"><span class="chip broken"><svg class="i sm"><use href="#i-link"/></svg>archive_customer/42</span><span class="lab">row not found</span></span></div>
+            </div>
+            <div class="refs" style="border-top:1px solid hsl(var(--border))">
+              <div class="ph">Referenced by<span class="badge">143</span><span class="grow"></span><span class="select" style="height:22px;font-size:11px;padding:0 6px">scope: FK + jsonb<svg class="i sm" style="transform:rotate(90deg)"><use href="#i-chev"/></svg></span></div>
+              <div class="bl grp">Foreign keys</div>
+              <div class="bl"><span class="chip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">sales.</span>sales_order</span><span class="via">via customer_id</span><span class="cnt">128</span><button class="open" title="Open filtered table"><svg class="i sm"><use href="#i-chev"/></svg></button></div>
+              <div class="bl"><span class="chip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">billing.</span>invoice</span><span class="via">via customer_id</span><span class="cnt">12</span><button class="open"><svg class="i sm"><use href="#i-chev"/></svg></button></div>
+              <div class="bl"><span class="chip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">sales.</span>sales_contact</span><span class="via">via customer_id</span><span class="cnt">0</span><button class="open" style="opacity:.3"><svg class="i sm"><use href="#i-chev"/></svg></button></div>
+              <div class="bl grp">jsonb / text · same schema + crm</div>
+              <div class="bl"><span class="chip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">crm.</span>note</span><span class="via" title="body @> jsonb_path_exists($.** ? (@ == &quot;sales_customer/42&quot;))">via body @> …</span><span class="cnt">3</span><button class="open"><svg class="i sm"><use href="#i-chev"/></svg></button></div>
+              <div class="bl"><span class="chip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">sales.</span>sales_activity</span><span class="via">via payload @> …</span><span class="cnt" style="color:hsl(var(--muted-foreground))">?</span><button class="open" title="Retry"><svg class="i sm"><use href="#i-refresh"/></svg></button></div>
+              <div class="scan">
+                <div style="display:flex;align-items:center;gap:8px"><svg class="i sm spin"><use href="#i-refresh"/></svg>Scanning <b class="mono">crm.note</b> (3/17)<span style="flex:1"></span><button class="btn ghost sm">Cancel</button></div>
+                <div class="prog"><i></i></div>
+                <div>Whole-database scan · per-table cap 5 s · last full scan 10:22 (1.2 s)</div>
+                <button class="btn sm" style="margin-top:8px"><svg class="i sm"><use href="#i-search"/></svg>Scan jsonb in whole db…</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <!-- footer -->
+        <div class="doc-f"><span style="color:hsl(var(--pending))">✎</span><b>2 fields changed</b><button class="btn ghost sm">View diff</button><span class="grow"></span><span class="muted">Saved 10:24</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- status bar -->
+  <div class="statusbar">
+    <span class="chip"><span class="dot on"></span>adminserver<span class="env prod">prod</span></span>
+    <span>sqwiro · sales</span>
+    <span>Autocommit</span>
+    <span class="grow">Row loaded in 21 ms</span>
+    <span>1 row</span><span>21 ms</span>
+    <svg class="i sm"><use href="#i-lock"/></svg>
+  </div>
+
+  <!-- diff / save sheet -->
+  <div class="backdrop" id="sheet">
+    <div class="dialog sheet">
+      <div class="dh"><svg class="i"><use href="#i-save"/></svg>Save changes to <span class="mono">sales.sales_customer</span> <span class="chip lg" style="margin-left:4px"><span class="pre">sales_</span>customer/42</span><span style="flex:1"></span><span class="env prod">prod</span></div>
+      <div class="db">
+        <div class="diff">
+          <div class="col"><h5>Original</h5>{
+  <span class="del">"name": "Acme Ltd",</span>
+  <span class="del">"email": "info@acme.co.ke",</span>
+  "meta": {
+    "tier": "gold",
+    …
+  }
+}</div>
+          <div class="col"><h5>New</h5>{
+  <span class="add">"name": "Acme Limited",</span>
+  <span class="add">"email": "ops@acme.co.ke",</span>
+  "meta": {
+    "tier": "gold",
+    …
+  }
+}</div>
+        </div>
+        <div class="code" style="margin-top:10px;border:1px solid hsl(var(--border));border-radius:6px;padding:8px 10px;font-size:12px"><span class="kw">UPDATE</span> sales.sales_customer <span class="kw">SET</span> name = <span class="nu">$1</span>, email = <span class="nu">$2</span> <span class="kw">WHERE</span> id = <span class="nu">$3</span> <span class="kw">RETURNING</span> *;</div>
+        <table>
+          <tr><th>Param</th><th>Column</th><th>Type</th><th>Value</th><th>Coercion</th></tr>
+          <tr><td>$1</td><td>name</td><td>text</td><td>'Acme Limited'</td><td class="muted">none</td></tr>
+          <tr><td>$2</td><td>email</td><td>citext</td><td>'ops@acme.co.ke'</td><td class="muted">::citext</td></tr>
+          <tr><td>$3</td><td>id</td><td>int4 (pk)</td><td>42</td><td class="muted">none · optimistic: updated_at = '…10:24:11'</td></tr>
+        </table>
+      </div>
+      <div class="df"><button class="btn">Cancel</button><button class="btn">Open in editor</button><button class="btn primary"><svg class="i sm"><use href="#i-check"/></svg>Save 2 changes</button></div>
+    </div>
+  </div>
+
+  <!-- annotations -->
+  <div class="mock-note" style="top:44px;left:760px">tab id: doc/{conn}/{db}/sales.sales_customer/[42] — a second row opens a second tab</div>
+  <div class="mock-note" style="top:118px;left:700px">‹ › = in-tab history (⌘[ ⌘]); breadcrumb segments reveal in tree</div>
+  <div class="mock-note" style="top:300px;left:640px">chip states: solid = _id link · dashed = FK-derived · red-dashed = broken</div>
+  <div class="mock-note" style="top:560px;left:700px;max-width:360px;white-space:normal">hover 400 ms → preview card (8 fields, FK count); click navigates in place, ⌘-click new tab, ⇧-click peek</div>
+  <div class="mock-note" style="top:640px;right:30px;max-width:300px;white-space:normal">Referenced-by: FK groups first (instant), then jsonb/text scans streamed with a per-table timeout; ▸ opens the table filtered</div>
+  <div class="mock-note" style="top:700px;left:640px;max-width:380px;white-space:normal">Monaco JSON view: string literals that resolve get a dotted underline + ⌘-click; _id is a read-only range</div>
+  <div class="mock-note" style="top:96px;right:24px;pointer-events:auto;cursor:pointer" onclick="document.getElementById('sheet').classList.toggle('hidden')">Save → diff sheet (click here, or press s)</div>
+</div>
+<script src="assets/pgui.js"></script>
+<script>
+  // mock: hide diff sheet by default; toggle with "s"
+  if(!/[?&]sheet=1/.test(location.search))document.getElementById('sheet').classList.add('hidden');
+  document.addEventListener('keydown',function(e){ if(e.key==='s'&&!e.target.matches('input,textarea')) document.getElementById('sheet').classList.toggle('hidden'); });
+  document.getElementById('sheet').addEventListener('click',function(e){ if(e.target===this) this.classList.add('hidden'); });
+</script>
+</body>
+</html>

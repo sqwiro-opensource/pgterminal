@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pgui · Query editor</title>
+<link rel="stylesheet" href="assets/pgui.css">
+<style>
+
+.content{position:relative}
+.editor{height:200px;display:flex;flex-direction:column;border-bottom:1px solid hsl(var(--border));position:relative}
+.editor .code{flex:1;padding:8px 0}
+.editor .code div{padding:0 8px}
+.handle{height:6px;background:hsl(var(--titlebar));border-bottom:1px solid hsl(var(--border));cursor:row-resize;display:flex;align-items:center;justify-content:center}
+.handle::after{content:"";width:36px;height:2px;border-radius:1px;background:hsl(var(--muted-foreground)/.5)}
+.rtabs{height:30px;display:flex;align-items:center;gap:2px;padding:0 6px;border-bottom:1px solid hsl(var(--border));background:hsl(var(--titlebar))}
+.rtab{height:24px;padding:0 10px;border-radius:4px;font-size:12px;color:hsl(var(--muted-foreground));display:inline-flex;align-items:center;gap:6px}
+.rtab.on{background:hsl(var(--accent));color:hsl(var(--foreground));font-weight:500}
+.rtab .badge{height:15px}
+.results{flex:1;min-height:0;display:grid;grid-template-columns:1fr 420px}
+.results .grid{border-right:1px solid hsl(var(--border))}
+.msgs{display:flex;flex-direction:column;min-height:0;overflow:auto;background:hsl(var(--sidebar))}
+.msg{padding:10px 12px;border-bottom:1px solid hsl(var(--border));font-size:12px;display:flex;gap:8px;align-items:flex-start}
+.msg .t{font-family:var(--font-mono);color:hsl(var(--muted-foreground));flex:none;width:64px}
+.msg .cmd{font-family:var(--font-mono)}
+.errcard{margin:10px 12px;border:1px solid hsl(var(--destructive)/.4);background:hsl(var(--destructive)/.06);border-radius:8px;padding:10px 12px;font-size:12.5px;animation:fadeUp .2s ease-out}
+.errcard .h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.errcard .m{font-family:var(--font-mono);font-size:12.5px;margin:4px 0}
+.errcard .kv{display:grid;grid-template-columns:56px 1fr;gap:2px 8px;font-size:12px;margin-top:6px}
+.errcard .kv b{color:hsl(var(--muted-foreground));font-weight:500}
+.errcard .acts{display:flex;gap:6px;margin-top:8px}
+.limitnote{height:26px;display:flex;align-items:center;gap:8px;padding:0 10px;font-size:11.5px;background:hsl(var(--primary)/.08);border-bottom:1px solid hsl(var(--primary)/.2);color:hsl(var(--link))}
+.limitnote b{text-decoration:underline;cursor:pointer;font-weight:500}
+.tab .spin{color:hsl(var(--primary))}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="titlebar">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <div class="crumb"><svg class="i" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01M6 18h.01"/></svg><b>adminserver</b><span class=sep>›</span>sqwiro<span class=sep>›</span><b>Query 2</b></div>
+    <div class="palette-pill"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span>Search objects or run a command</span><kbd>⌘K</kbd></div>
+    <div class="tb-actions">
+      <button class="iconbtn" title="Toggle sidebar ⌘B"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg></button>
+      <button class="iconbtn" title="Toggle inspector ⌘I"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg></button>
+      <button class="iconbtn" title="Theme ⌘⇧L"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></button>
+      <button class="iconbtn" title="Settings ⌘,"><svg class="i" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+  </header>
+  <div class="body">
+    <aside class="sidebar">
+      <div class="sb-filter"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input placeholder="Filter connections &amp; objects"><kbd>⌘⇧F</kbd></div>
+      <div class="tree">
+        <div class="tree-group" style="--env-bar:var(--env-prod-bar)"><span class="chev open"><svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span><span class="caps">Production</span><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></div>
+        <div class="node d1"><span class="chev open"><svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span><span class="dot on"></span><span class="lbl">adminserver</span><span class="env prod">prod</span></div>
+        <div class="node d2 db"><span class="chev open"><svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/></svg></span><span class="lbl">sqwiro</span><span class="meta">12.4 GB</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg></span><span class="lbl">auth</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg></span><span class="lbl">public</span></div>
+        <div class="node d3"><span class="chev open"><svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg></span><span class="lbl">sales</span></div>
+        <div class="node d4"><span class="chev open"><svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="lbl">Tables</span><span class="meta">48</span></div>
+        <div class="node d5 sel active"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg></span><span class="lbl">sales_customer</span><span class="meta">1.2M</span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg></span><span class="lbl">sales_order</span><span class="meta">98k</span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg></span><span class="lbl">sales_invoice</span><span class="meta">41k</span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65M22 12.65l-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg></span><span class="lbl">sales_ledger</span><span class="meta">8.3M</span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></span><span class="lbl">Views</span><span class="meta">3</span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></span><span class="lbl">Materialized Views</span><span class="meta">1</span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M15 4h-2a2 2 0 0 0-2 2v12a2 2 0 0 1-2 2H7M8 12h6"/></svg></span><span class="lbl">Functions</span><span class="meta">12</span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M3 7h4l3 10h4l3-10h4"/></svg></span><span class="lbl">Sequences</span><span class="meta">5</span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></span><span class="lbl">Types</span><span class="meta">2</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg></span><span class="lbl">trading</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M12 2v6M9 5l3 3 3-3M4 12h16M5 17h14a2 2 0 0 1 2 2v1H3v-1a2 2 0 0 1 2-2z"/></svg></span><span class="lbl">Extensions</span><span class="meta">4</span></div>
+        <div class="node d2 dim"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/></svg></span><span class="lbl">analytics</span><span class="meta">6.1 GB</span></div>
+        <div class="node d2 dim"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/></svg></span><span class="lbl">billing</span><span class="meta">2.0 GB</span></div>
+        <div class="node d2 dim"><span class="chev"></span><span class="lbl muted small">… 28 more databases</span></div>
+        <div class="node d1"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="dot off"></span><span class="lbl">cloudhubserver</span><span class="env prod">prod</span></div>
+        <div class="tree-group" style="--env-bar:var(--env-prod-bar)"><span class="chev open"><svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span><span class="caps">Trading</span></div>
+        <div class="node d1"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="dot off"></span><span class="lbl">tradingserver</span><span class="ic"><svg class="i sm" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><span class="env prod">prod</span></div>
+        <div class="tree-group"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="caps">Ungrouped</span><span class="meta small">1</span></div>
+      </div>
+      <div class="sb-footer"><button class="btn ghost sm"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> New connection</button><button class="btn ghost sm">Manage</button></div>
+    </aside>
+    <main class="main">
+      <div class="tabstrip">
+        <div class="tab pinned" title="Fleet overview"><span class=ic><svg class="i" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span></div>
+        <div class="tab prod"><span class=ic><svg class="i" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg></span><span class=t>sales_customer</span><span class=x><svg class="i sm" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></span></div>
+        <div class="tab on prod"><span class=ic><svg class="i" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></span><span class=t>Query 2 · sqwiro</span><span class=dirty title="Unsaved"></span></div>
+        <div class="tab prod"><span class=ic><svg class="i" viewBox="0 0 24 24"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></svg></span><span class=t>sales_customer/42</span><span class=x><svg class="i sm" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></span></div>
+        <div class="tab"><span class=ic><svg class="i" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></span><span class=t>Query 1 · ticks</span><span class=x><svg class="i sm" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></span></div>
+        <button class="tab-add" title="New query ⌘N"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg></button>
+      </div>
+      <div class="content">
+        <div class="toolbar">
+          <button class="btn primary sm"><svg class="i" viewBox="0 0 24 24"><path d="m6 3 14 9-14 9V3z"/></svg> Run <kbd>⌘↵</kbd></button>
+          <button class="btn sm"><svg class="i" viewBox="0 0 24 24"><path d="m6 3 14 9-14 9V3z"/></svg> Selection <kbd>⌘⇧↵</kbd></button>
+          <button class="btn sm"><svg class="i" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg> Explain</button>
+          <button class="btn sm"><svg class="i" viewBox="0 0 24 24"><path d="M21 6H3M15 12H3M17 18H3"/></svg> Format <kbd>⌘⇧F</kbd></button>
+          <button class="btn sm" disabled><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/></svg> Cancel</button>
+          <span class="sep"></span>
+          <span class="muted small">Limit</span>
+          <span class="select" style="height:24px;font-size:12px">500 <svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+          <span class="sep"></span>
+          <span class="select" style="height:24px;font-size:12px;background:hsl(var(--env-staging-bg));color:hsl(var(--env-staging-fg));border-color:transparent">Manual transaction <svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+          <button class="btn sm">Commit</button><button class="btn sm">Rollback</button>
+          <span class="grow"></span>
+          <span class="select" style="height:24px;font-size:12px"><span class="dot on"></span> adminserver <span class="env prod">prod</span> <svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+          <span class="select" style="height:24px;font-size:12px"><svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/></svg> sqwiro <svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+          <button class="iconbtn" title="Save, History, Export"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+          <div class="mock-note" style="right:210px;top:40px">Target connection + database live on the tab; switching db keeps the text</div>
+        </div>
+        <div class="editor">
+          <div class="code"><div><span class="ln">1</span><span class="kw">SELECT</span> c._id, c.name, c.owner_id, o.total, o.created_at</div><div><span class="ln">2</span><span class="kw">FROM</span> sales.sales_customer c</div><div><span class="ln">3</span><span class="kw">JOIN</span> sales.sales_order o <span class="kw">ON</span> o.customer_id = c.id</div><div><span class="ln">4</span><span class="kw">WHERE</span> c.country = <span class="st">'KE'</span> <span class="kw">AND</span> o.<span class="sq">totl</span> &gt; <span class="nu">1000</span></div><div><span class="ln">5</span><span class="kw">ORDER BY</span> o.created_at <span class="kw">DESC</span>;</div><div><span class="ln">6</span><span class="selection"><span class="kw">UPDATE</span> sales.sales_order <span class="kw">SET</span> status = <span class="st">'paid'</span> <span class="kw">WHERE</span> id <span class="kw">IN</span> (<span class="nu">9001</span>, <span class="nu">9002</span>, <span class="nu">9003</span>);</span><span class="cursor"></span></div><div><span class="ln">7</span></div></div>
+          <div class="mock-note" style="left:520px;top:82px">pg error position → Ln 4, Col 32 marker; never a raw error.toString()</div>
+          <div class="mock-note" style="left:640px;top:140px">Run selection ⌘⇧↵ runs only the highlighted statement; whole-buffer runs split on ; respecting $$ and strings</div>
+          <div class="mock-note" style="left:18px;top:170px">Formatting only on ⌘⇧F — the editor never rewrites your SQL on tab switch</div>
+        </div>
+        <div class="handle" title="Drag to resize · ratio persisted per tab"></div>
+        <div class="rtabs">
+          <span class="rtab on"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg> Result 1 <span class="badge">500+ rows</span></span>
+          <span class="rtab">Result 2 <span class="badge">UPDATE 3</span></span>
+          <span class="rtab" style="color:hsl(var(--destructive))"><svg class="i" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4M12 17h.01"/></svg> Messages <span class="badge" style="background:hsl(var(--destructive)/.15);color:hsl(var(--destructive))">1</span></span>
+          <span class="rtab"><svg class="i" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg> Explain</span>
+          <span class="grow" style="flex:1"></span>
+          <span class="muted small mono">statement 1 of 2 · 38 ms</span>
+          <button class="btn ghost sm"><svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Export <svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+        </div>
+        <div class="limitnote"><svg class="i sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> Limit 500 applied to this SELECT — <b>Remove limit</b> · Result set is editable: rows map to <span class="mono">sales.sales_customer</span> by primary key</div>
+        <div class="results">
+          <div class="grid">
+            <table>
+              <thead><tr>
+                <th class="gut">#</th>
+                <th><svg class="i sm key" viewBox="0 0 24 24"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>_id<span class="ty">text</span></th>
+                <th>name<span class="ty">text</span></th>
+                <th><svg class="i sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> owner_id<span class="ty">int4</span></th>
+                <th style="text-align:right">total<span class="ty">numeric</span></th>
+                <th>created_at<span class="ty">timestamptz</span> <svg class="i sm" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7M12 19V5"/></svg></th>
+              </tr></thead>
+              <tbody>
+                <tr><td class="gut">1</td><td><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales_</span>customer/42</span></td><td>Acme Ltd</td><td><span class="chip derived"><svg class="i sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="pre">auth_</span>user/3</span></td><td class="num">1,204.00</td><td class="time">2026-09-21 10:22:05</td></tr>
+                <tr><td class="gut">2</td><td><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales_</span>customer/43</span></td><td>Beta Foods</td><td><span class="chip derived"><svg class="i sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="pre">auth_</span>user/3</span></td><td class="num">98,120.50</td><td class="time">2026-09-21 09:01:44</td></tr>
+                <tr><td class="gut">3</td><td><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales_</span>customer/44</span></td><td>Gamma Logistics</td><td><span class="chip derived"><svg class="i sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="pre">auth_</span>user/7</span></td><td class="num">4,310.00</td><td class="time">2026-09-20 17:48:10</td></tr>
+                <tr><td class="gut">4</td><td><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales_</span>customer/51</span></td><td>Delta Agro</td><td class="null">NULL</td><td class="num">12,000.00</td><td class="time">2026-09-20 16:03:29</td></tr>
+                <tr><td class="gut">5</td><td><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales_</span>customer/58</span></td><td>Epsilon Traders</td><td><span class="chip derived"><svg class="i sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="pre">auth_</span>user/12</span></td><td class="num">1,500.00</td><td class="time">2026-09-19 08:12:00</td></tr>
+                <tr><td class="gut">6</td><td><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales_</span>customer/61</span></td><td>Zeta Pharma</td><td><span class="chip derived"><svg class="i sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="pre">auth_</span>user/3</span></td><td class="num">27,450.75</td><td class="time">2026-09-18 22:59:51</td></tr>
+                <tr><td class="gut">7</td><td><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales_</span>customer/77</span></td><td>Eta Motors</td><td><span class="chip derived"><svg class="i sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="pre">auth_</span>user/9</span></td><td class="num">1,001.00</td><td class="time">2026-09-18 11:30:00</td></tr>
+                <tr><td class="gut">8</td><td><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales_</span>customer/80</span></td><td>Theta Coffee Co.</td><td><span class="chip derived"><svg class="i sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="pre">auth_</span>user/7</span></td><td class="num">3,220.00</td><td class="time">2026-09-17 14:05:37</td></tr>
+                <tr><td class="gut">9</td><td><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales_</span>customer/93</span></td><td>Iota Studios</td><td><span class="chip derived"><svg class="i sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="pre">auth_</span>user/12</span></td><td class="num">1,080.00</td><td class="time">2026-09-16 09:44:12</td></tr>
+                <tr><td class="gut">10</td><td><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales_</span>customer/101</span></td><td>Kappa Hardware</td><td><span class="chip derived"><svg class="i sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="pre">auth_</span>user/3</span></td><td class="num">56,000.00</td><td class="time">2026-09-15 18:20:08</td></tr>
+                <tr><td class="gut">11</td><td><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales_</span>customer/104</span></td><td>Lambda Media</td><td><span class="chip derived"><svg class="i sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="pre">auth_</span>user/9</span></td><td class="num">2,450.00</td><td class="time">2026-09-15 07:58:41</td></tr>
+                <tr><td class="gut">12</td><td><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales_</span>customer/110</span></td><td>Mu Textiles</td><td><span class="chip derived"><svg class="i sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="pre">auth_</span>user/7</span></td><td class="num">1,999.99</td><td class="time">2026-09-14 12:00:00</td></tr>
+              </tbody>
+            </table>
+            <div class="mock-note" style="left:150px;top:-2px">Every _id-shaped value is a chip in ANY result, not only PK columns of table tabs</div>
+            <div class="mock-note" style="left:330px;top:250px">owner_id is a sole-column FK → derived (dashed) chip to auth.auth_user</div>
+            <div class="mock-note" style="left:380px;top:330px">numeric/int8 arrive as strings — 1,999.99 stays exact; right-aligned mono</div>
+          </div>
+          <div class="msgs">
+            <div class="panel-h"><svg class="i" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4M12 17h.01"/></svg> Messages <span class="muted" style="font-weight:400">· statement 2 of 2 failed</span><span style="flex:1"></span><button class="iconbtn sm"><svg class="i sm" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+            <div class="msg"><span class="t">10:24:01</span><span class="pill ok">SELECT</span><span>500 rows (truncated at limit) · <span class="cmd">38 ms</span></span></div>
+            <div class="msg"><span class="t">10:24:01</span><span class="pill">UPDATE 3</span><span>3 rows · <span class="cmd">12 ms</span></span></div>
+            <div class="msg"><span class="t">10:24:01</span><span class="pill info">NOTICE</span><span>ledger trigger recomputed balance for 3 customers</span></div>
+            <div class="errcard">
+              <div class="h"><span class="pill bad">ERROR</span><span class="badge">SQLSTATE 42703</span><span class="muted small">statement 2 · 4 ms</span></div>
+              <div class="m">column o.totl does not exist</div>
+              <div class="kv"><b>Detail</b><span>—</span><b>Hint</b><span>Perhaps you meant to reference the column "o.total".</span><b>Position</b><span class="mono">Ln 4, Col 32</span><b>Statement</b><span class="mono">SELECT c._id, c.name, … WHERE c.country = 'KE' AND o.totl &gt; 1000</span></div>
+              <div class="acts"><button class="btn sm">Show in editor</button><button class="btn ghost sm"><svg class="i sm" viewBox="0 0 24 24"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Copy</button></div>
+            </div>
+            <div class="msg" style="border-top:1px solid hsl(var(--destructive)/.3)"><span class="t"></span><span class="pill warn">TX aborted</span><span>Transaction is in an aborted state — <b style="text-decoration:underline;cursor:pointer">Rollback</b> to continue.</span></div>
+            <div class="mock-note" style="right:14px;top:150px">Structured PgErrorInfo: code, severity, detail, hint, position, constraint, table</div>
+            <div class="mock-note" style="right:14px;bottom:60px">In the app Messages is a result tab; shown side-by-side here so both are visible</div>
+          </div>
+        </div>
+        <div class="bar">
+          <span>Showing 1–500 of ?</span>
+          <button class="btn ghost sm">Load 500 more</button><button class="btn ghost sm">Load all</button><button class="btn ghost sm" title="Runs SELECT count(*) FROM (…)">Exact count</button>
+          <span class="grow"></span>
+          <span class="mono">exec 38 ms · fetch 6 ms · render 4 ms</span>
+        </div>
+      </div>
+    </main>
+  </div>
+  <footer class="statusbar">
+    <span class="chip"><span class="dot on"></span>adminserver <span class="env prod">prod</span></span><span>sqwiro · sales</span><span class="tx">TX open · 2 stmts · 00:41 <b>Commit</b> <b>Rollback</b></span><span class="grow">Statement 2 failed — transaction aborted</span><span>500+ rows</span><span>38 ms</span><span class="mono">Ln 6, Col 78</span><span><svg class="i sm spin" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg></span>
+  </footer>
+</div>
+<script src="assets/pgui.js"></script>
+</body>
+</html>

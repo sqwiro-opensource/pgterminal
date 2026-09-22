@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pgui · Table structure</title>
+<link rel="stylesheet" href="assets/pgui.css">
+<style>
+
+.content{position:relative;overflow:auto}
+.objh{display:flex;align-items:center;gap:8px}
+.objh .name{font-weight:600;font-size:13px;font-family:var(--font-mono)}
+.subtabs{height:32px;display:flex;align-items:center;gap:2px;padding:0 8px;border-bottom:1px solid hsl(var(--border));background:hsl(var(--sidebar));position:sticky;top:0;z-index:5}
+.subtab{height:26px;padding:0 10px;border-radius:5px;font-size:12.5px;color:hsl(var(--muted-foreground));display:inline-flex;align-items:center;gap:6px}
+.subtab.on{background:hsl(var(--background));color:hsl(var(--foreground));font-weight:500;box-shadow:inset 0 0 0 1px hsl(var(--border))}
+.subtab .badge{height:15px}
+.stage{position:relative;border-bottom:1px solid hsl(var(--border))}
+.stage-h{height:28px;display:flex;align-items:center;gap:8px;padding:0 10px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:hsl(var(--muted-foreground));background:hsl(var(--sidebar));border-bottom:1px solid hsl(var(--border))}
+.grid.static{overflow:visible;flex:none}
+.grid td .cbx{display:inline-flex;width:13px;height:13px;border:1px solid hsl(var(--input));border-radius:3px;align-items:center;justify-content:center;background:hsl(var(--background))}
+.grid td .cbx.on{background:hsl(var(--primary));border-color:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.grid tr.new td{background:hsl(var(--pending)/.10)!important;box-shadow:inset 0 0 0 0 transparent}
+.grid tr.new td:first-child{box-shadow:inset 3px 0 0 hsl(var(--pending))}
+.grid td.tyx{font-family:var(--font-mono);font-size:12px}
+.two{display:grid;grid-template-columns:1fr 1fr}
+.two>div{min-width:0}
+.two>div+div{border-left:1px solid hsl(var(--border))}
+.grp{height:26px;display:flex;align-items:center;gap:8px;padding:0 10px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:hsl(var(--muted-foreground));background:hsl(var(--grid-header));border-bottom:1px solid hsl(var(--grid-line))}
+.rel{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;min-height:30px;padding:4px 10px;border-bottom:1px solid hsl(var(--grid-line));font-size:12.5px}
+.rel .mono{color:hsl(var(--muted-foreground));font-size:11.5px}
+.rel .pill{white-space:nowrap}
+.rel .acts{margin-left:auto;display:flex;gap:2px}
+.dlgstage{height:640px;background:hsl(222 20% 6%/.35);display:flex;align-items:center;justify-content:center}
+[data-theme="dark"] .dlgstage{background:hsl(0 0% 0%/.45)}
+.dialog.ct{width:720px;height:560px;display:flex;flex-direction:column}
+.dialog.ct .db{flex:1;min-height:0;display:flex;flex-direction:column;padding:0}
+.dialog.ct .form{display:grid;grid-template-columns:1fr 200px;gap:10px;padding:8px 16px}
+.dialog.ct .form .field{grid-template-columns:70px 1fr;margin:0}
+.dialog.ct .grid{flex:1;overflow:auto;border-top:1px solid hsl(var(--border))}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="titlebar">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <div class="crumb"><svg class="i" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01M6 18h.01"/></svg><b>adminserver</b><span class=sep>›</span>sqwiro<span class=sep>›</span><b>sales.sales_customer</b><span class=sep>›</span>structure</div>
+    <div class="palette-pill"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span>Search objects or run a command</span><kbd>⌘K</kbd></div>
+    <div class="tb-actions">
+      <button class="iconbtn" title="Toggle sidebar ⌘B"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg></button>
+      <button class="iconbtn" title="Toggle inspector ⌘I"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg></button>
+      <button class="iconbtn" title="Theme ⌘⇧L"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></button>
+      <button class="iconbtn" title="Settings ⌘,"><svg class="i" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+  </header>
+  <div class="body">
+    <aside class="sidebar">
+      <div class="sb-filter"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input placeholder="Filter connections &amp; objects"><kbd>⌘⇧F</kbd></div>
+      <div class="tree">
+        <div class="tree-group" style="--env-bar:var(--env-prod-bar)"><span class="chev open"><svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span><span class="caps">Production</span><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></div>
+        <div class="node d1"><span class="chev open"><svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span><span class="dot on"></span><span class="lbl">adminserver</span><span class="env prod">prod</span></div>
+        <div class="node d2 db"><span class="chev open"><svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/></svg></span><span class="lbl">sqwiro</span><span class="meta">12.4 GB</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg></span><span class="lbl">auth</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg></span><span class="lbl">public</span></div>
+        <div class="node d3"><span class="chev open"><svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg></span><span class="lbl">sales</span></div>
+        <div class="node d4"><span class="chev open"><svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="lbl">Tables</span><span class="meta">48</span></div>
+        <div class="node d5 sel active"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg></span><span class="lbl">sales_customer</span><span class="meta">1.2M</span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg></span><span class="lbl">sales_order</span><span class="meta">98k</span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg></span><span class="lbl">sales_invoice</span><span class="meta">41k</span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65M22 12.65l-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg></span><span class="lbl">sales_ledger</span><span class="meta">8.3M</span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></span><span class="lbl">Views</span><span class="meta">3</span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></span><span class="lbl">Materialized Views</span><span class="meta">1</span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M15 4h-2a2 2 0 0 0-2 2v12a2 2 0 0 1-2 2H7M8 12h6"/></svg></span><span class="lbl">Functions</span><span class="meta">12</span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M3 7h4l3 10h4l3-10h4"/></svg></span><span class="lbl">Sequences</span><span class="meta">5</span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></span><span class="lbl">Types</span><span class="meta">2</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg></span><span class="lbl">trading</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M12 2v6M9 5l3 3 3-3M4 12h16M5 17h14a2 2 0 0 1 2 2v1H3v-1a2 2 0 0 1 2-2z"/></svg></span><span class="lbl">Extensions</span><span class="meta">4</span></div>
+        <div class="node d2 dim"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/></svg></span><span class="lbl">analytics</span><span class="meta">6.1 GB</span></div>
+        <div class="node d2 dim"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="ic"><svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/></svg></span><span class="lbl">billing</span><span class="meta">2.0 GB</span></div>
+        <div class="node d2 dim"><span class="chev"></span><span class="lbl muted small">… 28 more databases</span></div>
+        <div class="node d1"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="dot off"></span><span class="lbl">cloudhubserver</span><span class="env prod">prod</span></div>
+        <div class="tree-group" style="--env-bar:var(--env-prod-bar)"><span class="chev open"><svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span><span class="caps">Trading</span></div>
+        <div class="node d1"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="dot off"></span><span class="lbl">tradingserver</span><span class="ic"><svg class="i sm" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><span class="env prod">prod</span></div>
+        <div class="tree-group"><span class="chev"><svg class="i sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span><span class="caps">Ungrouped</span><span class="meta small">1</span></div>
+      </div>
+      <div class="sb-footer"><button class="btn ghost sm"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> New connection</button><button class="btn ghost sm">Manage</button></div>
+    </aside>
+    <main class="main">
+      <div class="tabstrip">
+        <div class="tab pinned" title="Fleet overview"><span class=ic><svg class="i" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span></div>
+        <div class="tab prod"><span class=ic><svg class="i" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg></span><span class=t>sales_customer</span><span class=x><svg class="i sm" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></span></div>
+        <div class="tab on prod"><span class=ic><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></svg></span><span class=t>sales_customer · structure</span><span class=dirty title="2 pending ALTERs"></span></div>
+        <div class="tab prod"><span class=ic><svg class="i" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></span><span class=t>Query 2 · sqwiro</span><span class=x><svg class="i sm" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></span></div>
+        <div class="tab"><span class=ic><svg class="i" viewBox="0 0 24 24"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></svg></span><span class=t>sales_customer/42</span><span class=x><svg class="i sm" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></span></div>
+        <button class="tab-add" title="New query ⌘N"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg></button>
+      </div>
+      <div class="content">
+        <div class="toolbar">
+          <div class="objh"><svg class="i" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="name">sales.sales_customer</span></div>
+          <span class="seg"><button>Data</button><button class="on">Structure</button></span>
+          <span class="sep"></span>
+          <span class="chip lg" style="cursor:default"><span class="dot on"></span>adminserver <span class="env prod">prod</span></span>
+          <span class="muted small">· 1.2M rows · 412 MB · owner sqwiro</span>
+          <span class="grow"></span>
+          <button class="btn sm"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Column</button>
+          <button class="btn sm">Discard</button>
+          <button class="btn primary sm">Apply <span class="badge" style="background:hsl(0 0% 100%/.25);color:inherit">2</span></button>
+          <div class="mock-note" style="right:14px;top:38px">Apply always opens the confirm dialog with the generated ALTER TABLE statements — never silent</div>
+        </div>
+        <div class="subtabs">
+          <span class="subtab on">Columns <span class="badge">12</span></span>
+          <span class="subtab">Indexes <span class="badge">3</span></span>
+          <span class="subtab">Constraints <span class="badge">4</span></span>
+          <span class="subtab">Triggers <span class="badge">0</span></span>
+          <span class="subtab">Relations</span>
+          <span class="subtab">Partitions</span>
+          <span class="subtab"><svg class="i" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg> DDL</span>
+        </div>
+
+        <div class="stage">
+          <div class="grid static">
+            <table>
+              <thead><tr><th class="gut">#</th><th>Name</th><th>Type</th><th>Nullable</th><th>Default</th><th>PK</th><th>Identity</th><th>Comment</th><th style="width:36px"></th></tr></thead>
+              <tbody>
+<tr class=""><td class="gut">1</td><td class="mono">id</td><td class="tyx">int4</td><td><span class="cbx"></span></td><td class="mono muted"></td><td><svg class="i sm key" viewBox="0 0 24 24"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></td><td class="muted">always</td><td></td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">2</td><td class="mono">_id</td><td class="tyx">text</td><td><span class="cbx"></span></td><td class="mono muted">generated: 'sales_customer/' || id</td><td><span class="cbx"></span></td><td class="muted"></td><td>ArangoDB-style document id</td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">3</td><td class="mono">name</td><td class="tyx">text</td><td><span class="cbx"></span></td><td class="mono muted"></td><td><span class="cbx"></span></td><td class="muted"></td><td>Display name</td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">4</td><td class="mono">country</td><td class="tyx">text</td><td><span class="cbx on"><svg class="i sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="mono muted">'KE'</td><td><span class="cbx"></span></td><td class="muted"></td><td>ISO-3166 alpha-2</td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">5</td><td class="mono">email</td><td class="tyx">text</td><td><span class="cbx on"><svg class="i sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="mono muted"></td><td><span class="cbx"></span></td><td class="muted"></td><td></td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">6</td><td class="mono">active</td><td class="tyx">bool</td><td><span class="cbx"></span></td><td class="mono muted">true</td><td><span class="cbx"></span></td><td class="muted"></td><td></td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">7</td><td class="mono">balance</td><td class="tyx">numeric(18,2)</td><td><span class="cbx"></span></td><td class="mono muted">0</td><td><span class="cbx"></span></td><td class="muted"></td><td>Ledger balance, recomputed by trigger</td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">8</td><td class="mono">meta</td><td class="tyx">jsonb</td><td><span class="cbx on"><svg class="i sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="mono muted">'{}'::jsonb</td><td><span class="cbx"></span></td><td class="muted"></td><td></td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">9</td><td class="mono">owner_id</td><td class="tyx">int4</td><td><span class="cbx on"><svg class="i sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="mono muted"></td><td><span class="cbx"></span></td><td class="muted"></td><td>FK → auth.auth_user</td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">10</td><td class="mono">tags</td><td class="tyx">text[]</td><td><span class="cbx on"><svg class="i sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="mono muted">'{}'</td><td><span class="cbx"></span></td><td class="muted"></td><td></td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">11</td><td class="mono">created_at</td><td class="tyx">timestamptz</td><td><span class="cbx"></span></td><td class="mono muted">now()</td><td><span class="cbx"></span></td><td class="muted"></td><td></td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">12</td><td class="mono">uid</td><td class="tyx">uuid</td><td><span class="cbx"></span></td><td class="mono muted">gen_random_uuid()</td><td><span class="cbx"></span></td><td class="muted"></td><td></td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="grid static">
+            <table><tbody>
+              <tr><td class="gut">5</td><td class="mono">email</td><td class="tyx pending" title="was: text">varchar(320)</td><td><span class="cbx on"><svg class="i sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="mono muted"></td><td><span class="cbx"></span></td><td class="muted"></td><td></td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+              <tr class="new"><td class="gut">13</td><td class="mono"><span class="input" style="height:22px;width:140px"><input value="phone"></span></td><td class="tyx"><span class="select" style="height:22px;width:130px;font-size:12px">varchar(20) <svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></td><td><span class="cbx on"><svg class="i sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="mono muted"><span class="input" style="height:22px;width:120px"><input value="''"></span></td><td><span class="cbx"></span></td><td class="muted"></td><td><span class="input" style="height:22px;width:160px"><input placeholder="Comment"></span></td><td><span class="iconbtn sm" style="color:hsl(var(--destructive))"><svg class="i sm" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></span></td></tr>
+            </tbody></table>
+            <div class="popover menu" style="right:24px;top:-40px">
+              <div class="mh">column email</div>
+              <div class="mi"><svg class="i sm" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7M12 19V5"/></svg> Move up</div>
+              <div class="mi"><span style="transform:rotate(180deg);display:inline-flex"><svg class="i sm" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7M12 19V5"/></svg></span> Move down <span class="r muted small">CREATE only</span></div>
+              <div class="mi"><svg class="i sm" viewBox="0 0 24 24"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Copy name</div>
+              <div class="mi"><svg class="i" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg> Open data filtered by…</div>
+              <hr>
+              <div class="mi danger"><svg class="i" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg> Drop column <span class="r muted small">CF</span></div>
+            </div>
+            <div class="mock-note" style="left:120px;top:-14px">Mock: pending rows shown as a separate block for clarity — in the app they sit in the same grid (row 5 modified, row 13 new)</div>
+            <div class="mock-note" style="left:420px;top:38px">"Nullable" header is a real checkbox column; PK and Nullable are no longer swapped</div>
+          </div>
+        </div>
+
+        <div class="stage-h">Constraints &amp; Relations sub-tabs (second view)</div>
+        <div class="two stage">
+          <div>
+            <div class="grp">Primary key</div>
+            <div class="rel"><svg class="i sm key" viewBox="0 0 24 24"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg><span class="mono">sales_customer_pkey</span><span class="mono">PRIMARY KEY (id)</span><span class="acts"><button class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></span></div>
+            <div class="grp">Foreign keys</div>
+            <div class="rel"><svg class="i sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="mono">sales_customer_owner_fk</span><span>owner_id →</span><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">auth.</span>auth_user(id)</span><span class="pill">ON DELETE SET NULL</span><span class="acts"><button class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></span></div>
+            <div class="rel"><svg class="i sm" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="mono">sales_customer_parent_fk</span><span>parent_id →</span><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales.</span>sales_customer(id)</span><span class="pill warn">NOT VALID</span><button class="btn sm">Validate</button><span class="acts"><button class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></span></div>
+            <div class="grp">Unique</div>
+            <div class="rel"><span class="mono">sales_customer_email_key</span><span class="mono">UNIQUE (email)</span><span class="acts"><button class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></span></div>
+            <div class="grp">Check</div>
+            <div class="rel"><span class="mono">sales_customer_email_check</span><span class="mono">CHECK (email ~ '^[^@]+@[^@]+$')</span><span class="acts"><button class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></span></div>
+            <div class="bar"><button class="btn sm"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Constraint</button><span class="muted small">Add opens a dialog, then the confirm dialog with ALTER TABLE … ADD CONSTRAINT</span></div>
+            <div class="mock-note" style="left:260px;top:60px">FK targets are link chips → opens the target table's structure</div>
+          </div>
+          <div>
+            <div class="grp">References <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">· this table's FKs</span></div>
+            <div class="rel"><span class="mono">owner_id</span>→<span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">auth.</span>auth_user</span><span class="acts"><button class="btn ghost sm">Structure</button><button class="btn ghost sm">Data</button></span></div>
+            <div class="rel"><span class="mono">parent_id</span>→<span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales.</span>sales_customer</span><span class="acts"><button class="btn ghost sm">Structure</button><button class="btn ghost sm">Data</button></span></div>
+            <div class="grp">Referenced by <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">· tables with FKs to sales_customer</span></div>
+            <div class="rel"><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales.</span>sales_order</span><span class="mono">customer_id</span><span class="badge">128k</span><span class="acts"><button class="btn ghost sm">Structure</button><button class="btn ghost sm">Data</button></span></div>
+            <div class="rel"><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales.</span>sales_invoice</span><span class="mono">customer_id</span><span class="badge">41k</span><span class="acts"><button class="btn ghost sm">Structure</button><button class="btn ghost sm">Data</button></span></div>
+            <div class="rel"><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">billing.</span>billing_account</span><span class="mono">customer_id</span><span class="badge">1.1k</span><span class="acts"><button class="btn ghost sm">Structure</button><button class="btn ghost sm">Data</button></span></div>
+            <div class="rel"><span class="chip"><svg class="i sm" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg><span class="pre">sales.</span>sales_customer</span><span class="mono">parent_id</span><span class="badge">312</span><span class="acts"><button class="btn ghost sm">Structure</button><button class="btn ghost sm">Data</button></span></div>
+            <div class="mock-note" style="left:200px;top:100px">Schema-level counterpart of the document backlinks panel; "Data" opens the table filtered by the FK</div>
+          </div>
+        </div>
+
+        <div class="stage-h">Create table dialog (from schema context menu) — same column grid, 720×560</div>
+        <div class="dlgstage stage">
+          <div class="dialog ct">
+            <div class="dh"><svg class="i" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg> Create table <span class="muted" style="font-weight:400">in</span> <span class="mono">sales</span><span style="flex:1"></span><span class="env prod">prod</span><button class="iconbtn sm"><svg class="i sm" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+            <div class="db">
+              <div class="form">
+                <div class="field"><label>Name</label><span class="input"><input value="sales_supplier"></span></div>
+                <div class="field"><label>Schema</label><span class="select">sales <svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>
+              </div>
+              <div class="grid">
+                <table>
+                  <thead><tr><th class="gut">#</th><th>Name</th><th>Type</th><th>Nullable</th><th>Default</th><th>PK</th><th>Identity</th><th>Comment</th><th style="width:36px"></th></tr></thead>
+                  <tbody>
+<tr class=""><td class="gut">1</td><td class="mono">id</td><td class="tyx">int4</td><td><span class="cbx"></span></td><td class="mono muted"></td><td><svg class="i sm key" viewBox="0 0 24 24"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></td><td class="muted">always</td><td></td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">2</td><td class="mono">_id</td><td class="tyx">text</td><td><span class="cbx"></span></td><td class="mono muted">generated: 'sales_supplier/' || id</td><td><span class="cbx"></span></td><td class="muted"></td><td>document id</td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">3</td><td class="mono">name</td><td class="tyx">text</td><td><span class="cbx"></span></td><td class="mono muted"></td><td><span class="cbx"></span></td><td class="muted"></td><td></td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">4</td><td class="mono">country</td><td class="tyx">text</td><td><span class="cbx on"><svg class="i sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="mono muted">'KE'</td><td><span class="cbx"></span></td><td class="muted"></td><td></td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">5</td><td class="mono">meta</td><td class="tyx">jsonb</td><td><span class="cbx on"><svg class="i sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span></td><td class="mono muted">'{}'::jsonb</td><td><span class="cbx"></span></td><td class="muted"></td><td></td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+<tr class=""><td class="gut">6</td><td class="mono">created_at</td><td class="tyx">timestamptz</td><td><span class="cbx"></span></td><td class="mono muted">now()</td><td><span class="cbx"></span></td><td class="muted"></td><td></td><td><span class="iconbtn sm"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span></td></tr>
+                    <tr class="new"><td class="gut">7</td><td class="mono"><span class="input" style="height:22px;width:140px"><input placeholder="column"></span></td><td class="tyx"><span class="select" style="height:22px;width:130px;font-size:12px">text <svg class="i sm" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></td><td><span class="cbx on"><svg class="i sm" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span></td><td><span class="input" style="height:22px;width:120px"><input placeholder="now(), gen_random_uuid()…"></span></td><td><span class="cbx"></span></td><td></td><td></td><td></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="df"><button class="btn ghost sm"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Column</button><span style="flex:1"></span><button class="btn sm">Cancel</button><button class="btn sm"><svg class="i" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg> Preview DDL</button><button class="btn primary sm">Create table</button></div>
+          </div>
+          <div class="mock-note" style="left:330px;top:14px">Type is a combobox (common types + free text); identity/generated supported; "Preview DDL" → confirm dialog with CREATE TABLE</div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <footer class="statusbar">
+    <span class="chip"><span class="dot on"></span>adminserver <span class="env prod">prod</span></span><span>sqwiro · sales</span><span>Autocommit</span><span class="grow">2 pending schema changes</span><span>12 columns · 3 indexes</span><span>21 ms</span>
+  </footer>
+</div>
+<script src="assets/pgui.js"></script>
+</body>
+</html>

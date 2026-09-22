@@ -1,0 +1,1153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pgui v2 Requirements</title>
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle">Theme: auto</button>
+<div class="page">
+<nav class="toc">
+  <div class="brand">pgui v2 · Requirements</div>
+  <a href="#s1"><span class="n">01</span>Vision &amp; scope</a>
+  <a href="#s2"><span class="n">02</span>Current-state assessment</a>
+  <a href="#s3"><span class="n">03</span>Glossary</a>
+  <a href="#s4"><span class="n">04</span>Personas &amp; fleet</a>
+  <a href="#s5"><span class="n">05</span>User stories</a>
+  <div class="sub">
+    <a href="#us-conn">Connections &amp; fleet</a>
+    <a href="#us-catalog">Catalog &amp; tree</a>
+    <a href="#us-query">Query editor</a>
+    <a href="#us-rows">Results &amp; table data</a>
+    <a href="#us-links">Document links &amp; backlinks</a>
+    <a href="#us-ddl">Structure / DDL</a>
+    <a href="#us-overview">Server overview</a>
+    <a href="#us-workspace">Workspace, tabs &amp; shortcuts</a>
+    <a href="#us-settings">Settings, history &amp; export</a>
+    <a href="#us-safety">Safety on prod</a>
+  </div>
+  <a href="#s6"><span class="n">06</span>Architecture</a>
+  <a href="#s7"><span class="n">07</span>IPC contract</a>
+  <a href="#s8"><span class="n">08</span>Data models</a>
+  <a href="#s9"><span class="n">09</span>Document link resolver</a>
+  <a href="#s10"><span class="n">10</span>UX summary</a>
+  <a href="#s11"><span class="n">11</span>Correctness &amp; testing</a>
+  <a href="#s12"><span class="n">12</span>Non-functional requirements</a>
+  <a href="#s13"><span class="n">13</span>Technical decisions</a>
+  <div class="links">
+    <a href="plan.html">→ Implementation plan</a>
+    <a href="../designs/index.html">→ Design mockups</a>
+  </div>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="kicker">Specification · v2</div>
+  <h1>pgui v2 — a PostgreSQL workbench with document links</h1>
+  <p>A clean rewrite of pgui: an Electron desktop tool for browsing, querying and editing the sqwiro
+  PostgreSQL fleet, with the ArangoDB-style ability to follow any <code>schema_table/id</code> value to
+  the row it names and to see who points back at it. This document records the current-state review,
+  the requirements as user stories with EARS acceptance criteria, the target architecture and IPC
+  contract, the document-link resolver, correctness properties and the technical decisions behind them.</p>
+  <div class="meta">
+    <span><b>Owner</b> Bernard Gaitho</span>
+    <span><b>Date</b> 2026-09-22</span>
+    <span><b>Status</b> Draft</span>
+    <span><b>Companion</b> <a href="plan.html">plan.html</a> · <a href="../designs/index.html">designs/index.html</a></span>
+    <span><b>Repo</b> <code>~/@cloudhub/pgui</code></span>
+  </div>
+</header>
+
+<!-- ============================================================ 1 -->
+<section id="s1">
+  <div class="sec-h"><span class="num">01</span><h2>Vision &amp; scope</h2></div>
+  <p>pgui v2 is a desktop workbench for PostgreSQL aimed at one operator who runs a small fleet of
+  production servers and wants the density and directness of TablePlus or DBeaver together with the
+  one thing those tools lack: first-class <em>document links</em>. The sqwiro schemas were migrated from
+  ArangoDB, and every table carries a generated <code>_id</code> column whose value is
+  <code>schema_table/id</code>. In v2 any string shaped like <code>table/id</code>, anywhere in a row or
+  nested inside <code>jsonb</code>, is a clickable link, and every document can list the rows that
+  reference it.</p>
+
+  <h3>Goals</h3>
+  <ul>
+    <li><b>Robust by construction.</b> One typed IPC contract, a connection registry with real pool
+    limits, parameterised SQL for every write, structured Postgres errors, streaming results with a
+    cap, and cancellable queries.</li>
+    <li><b>Fleet-aware.</b> Several servers connected at once, grouped and colour-labelled by
+    environment, with a per-server overview of sessions, locks, sizes and slow queries.</li>
+    <li><b>Document navigation.</b> A single link resolver shared by the grid, the JSON tree, the
+    editor and the command palette; reverse references via foreign keys and jsonb scans; in-tab
+    history.</li>
+    <li><b>Safe on production.</b> Destructive actions show the SQL, require a typed confirmation on
+    prod-labelled servers, and never run silently.</li>
+    <li><b>Restorable.</b> Tabs, filters, unsaved SQL and layout survive a restart; credentials live in
+    the OS keychain.</li>
+  </ul>
+
+  <h3>Out of scope for v2</h3>
+  <ul>
+    <li>The ArangoDB → Postgres migration feature and the <code>arangojs</code> dependency (dropped, see §2).</li>
+    <li>SSH tunnels — the fleet is reached over Tailscale.</li>
+    <li>Backups and restores (handled by the restic → R2 jobs on each server).</li>
+    <li>ER diagrams, schema diff, multi-window, plugins.</li>
+  </ul>
+
+  <h3>Decisions taken with the owner</h3>
+  <table>
+    <thead><tr><th>Decision</th><th>Choice</th><th>Consequence</th></tr></thead>
+    <tbody>
+      <tr><td>ArangoDB migration</td><td><b>Drop entirely</b></td><td>Remove <code>src/main/arangodb/*</code>, <code>MigrationPage</code>, <code>ConnectedDatabase</code>, <code>arangojs</code>, PLV8 transaction helpers.</td></tr>
+      <tr><td>UI system</td><td><b>@cloudhub-ux/shadcn (esm) + Tailwind</b>, lucide icons</td><td>Drop <code>@cloudhub-ux/mui</code> Block layout, raw <code>@mui/material</code>, <code>@cloudhub-ux/min</code>, MDI icons.</td></tr>
+      <tr><td>Fleet scope</td><td><b>N connections + server overview</b></td><td>Connection registry keyed by connection and database; stats service; fleet page.</td></tr>
+      <tr><td>Approach</td><td><b>Clean rewrite</b> in the same repo</td><td>New <code>src/</code> layout; legacy moved to <code>legacy/</code> for porting, deleted at the end.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================================================ 2 -->
+<section id="s2">
+  <div class="sec-h"><span class="num">02</span><h2>Current-state assessment</h2></div>
+  <p>Three read-only reviews (main process &amp; IPC, renderer &amp; state, query/results/document links)
+  were run against the working tree on 2026-09-22. The findings below are the ones that shape v2;
+  each cites the file and line range it was observed at.</p>
+
+  <div class="callout bad"><span class="t">Build is broken.</span><span><code>src/renderer/src/app/database/schemas/tables/TableColumnsForm.tsx</code> contains an empty <code>return ( );</code> and is statically imported by two dialogs, so the renderer cannot be built from a clean checkout.</span></div>
+
+  <h3>Security</h3>
+  <div class="cards">
+    <div class="card finding"><h3>Node integration on, sandbox off</h3>
+      <p><code>nodeIntegration: true</code>, <code>sandbox: false</code>, <code>webSecurity</code> disabled in development, window is <code>transparent</code> and frameless with custom IPC for min/max/close.</p>
+      <span class="cite">src/main/index.ts:38-46</span></div>
+    <div class="card finding"><h3>Generic ipcRenderer exposed</h3>
+      <p>Preload mutates <code>electronAPI</code> in place and re-exports it, so the renderer gets <code>ipcRenderer.invoke/send/sendSync</code> for <em>any</em> channel. The allow-listed <code>window.api</code> is cosmetic.</p>
+      <span class="cite">src/preload/index.ts:14-35, 72</span></div>
+    <div class="card finding"><h3>CSP removed, CORS forced open</h3>
+      <p>The response-header CSP was deleted and replaced with <code>Access-Control-Allow-Origin: *</code>; the remaining meta CSP allows <code>unsafe-eval</code>, <code>connect-src *</code>, <code>object-src *</code>.</p>
+      <span class="cite">src/main/index.ts:68-77 · src/renderer/index.html</span></div>
+    <div class="card finding"><h3>Plaintext passwords on disk</h3>
+      <p>Connections including <code>password</code> are written by the renderer via <code>AsyncStorage</code> → sync IPC → a JSON file in dev (<code>electron-dev-storage.json</code>) and LevelDB in prod. No <code>safeStorage</code>, no keychain.</p>
+      <span class="cite">src/renderer/src/app/sidebar/ConnectionForm.tsx:66-69 · src/main/localstorage/localStorage.ts:8-34</span></div>
+    <div class="card finding"><h3>Build environment leaked into the bundle</h3>
+      <p><code>define: {'process.env': process.env}</code> embeds every environment variable of the build machine in the renderer JavaScript.</p>
+      <span class="cite">electron.vite.config.ts:36-38</span></div>
+    <div class="card finding"><h3>Unvalidated external open</h3>
+      <p><code>setWindowOpenHandler</code> hands any URL scheme to <code>shell.openExternal</code>; no <code>will-navigate</code> guard; no single-instance lock.</p>
+      <span class="cite">src/main/index.ts:62-65</span></div>
+  </div>
+
+  <h3>Connections</h3>
+  <div class="cards">
+    <div class="card finding"><h3>One global connection</h3>
+      <p>A module-level <code>connectedServer</code>/<code>connectedServerConfig</code> pair; the multi-connection <code>Map</code> was started and commented out. The UI hides all other saved connections once one is open.</p>
+      <span class="cite">src/main/db/PgConnectionHandlers.ts:8-15 · SavedConnections.tsx:37</span></div>
+    <div class="card finding"><h3>Pool without limits or error handler</h3>
+      <p><code>new Pool({...config, connectionTimeoutMillis: 5000})</code> — no <code>max</code>, idle timeout, <code>statement_timeout</code>, SSL or <code>application_name</code>, and no <code>pool.on('error')</code>: an idle-client error crashes the main process.</p>
+      <span class="cite">src/main/db/PostgresServer.ts:36-45</span></div>
+    <div class="card finding"><h3>Pool recreated on every database change</h3>
+      <p><code>change-database</code> calls <code>disconnectServer()</code> without awaiting and constructs a new <code>PostgresServer</code>; every schema refresh pays TCP + auth again and orphans in-flight queries.</p>
+      <span class="cite">src/main/db/PgConnectionHandlers.ts:41-57</span></div>
+    <div class="card finding"><h3>Class instance returned over IPC</h3>
+      <p>Reconnecting with an unchanged config returns the <code>PostgresServer</code> object from <code>ipcMain.handle</code>, which cannot be structured-cloned; the error path returns <code>undefined</code>, which the renderer destructures.</p>
+      <span class="cite">src/main/db/PgConnectionHandlers.ts:25-37 · ConnectionForm.tsx:44</span></div>
+    <div class="card finding"><h3>Pools never closed</h3>
+      <p>No <code>before-quit</code>/<code>will-quit</code> cleanup; Postgres sees abandoned backends after the app exits. A failed test leaves an ended pool assigned as the current server.</p>
+      <span class="cite">src/main/db/PostgresServer.ts:60-70, 214-220</span></div>
+  </div>
+
+  <h3>Queries</h3>
+  <div class="cards">
+    <div class="card finding"><h3>Raw SQL, parameters never used</h3>
+      <p><code>dbQuery(query, params)</code> is plumbed end-to-end, yet all twenty renderer call sites build SQL by template literal and pass no params. <code>formatValue</code> turns <code>null</code> into the string <code>'null'</code>.</p>
+      <span class="cite">src/preload/index.ts:11 · AddRowButton.tsx:11-22, 82 · DocumentEditor.tsx:9-24, 80 · ResultsDataTable.tsx:96-98 · DocumentViewer.tsx:27</span></div>
+    <div class="card finding"><h3>Structured errors discarded</h3>
+      <p>Errors are serialised as <code>error.toString()</code>; <code>code</code>, <code>position</code>, <code>detail</code>, <code>hint</code>, <code>constraint</code> are lost, so the editor can never point at the failing token.</p>
+      <span class="cite">src/main/db/PostgresServer.ts:114-128</span></div>
+    <div class="card finding"><h3>Result shape-shifting and dropped result sets</h3>
+      <p>A single-row result with an unnamed column returns a scalar as <code>data</code>; multi-statement scripts keep only the first <code>SELECT</code>.</p>
+      <span class="cite">src/main/db/PostgresServer.ts:86-105</span></div>
+    <div class="card finding"><h3>No cap, cursor, cancel or timeout</h3>
+      <p>The whole result set is materialised in main and cloned into the renderer; the only limit is a hard-coded <code>LIMIT 100</code> string in the renderer with client-side paging over those 100 rows.</p>
+      <span class="cite">useTabInterfaceContext.tsx:142 · data-table.tsx:114-138</span></div>
+    <div class="card finding"><h3>Global type parsers lose precision</h3>
+      <p><code>types.setTypeParser</code> maps <code>numeric</code>/<code>int8</code>/<code>float8</code> to JS numbers process-wide; bigints beyond 2<sup>53</sup> and exact money values are corrupted before display.</p>
+      <span class="cite">src/main/db/PostgresServer.ts:14-24</span></div>
+    <div class="card finding"><h3>Broken transaction helper</h3>
+      <p><code>BEGIN; … COMMIT;</code> built as one string; the <code>$</code> escape uses <code>/$/g</code> (an anchor), <code>getPgTransaction</code> is called with a string where a <code>PoolConfig</code> is expected, and the body is <code>new Function</code>-evaluated inside PLV8.</p>
+      <span class="cite">src/main/db/PostgresServer.ts:131-212, 250, 281</span></div>
+  </div>
+
+  <h3>Catalog</h3>
+  <div class="cards">
+    <div class="card finding"><h3>282-line CTE in the renderer, re-run constantly</h3>
+      <p>The whole database tree is one recursive query shipped from the renderer, executed on connect, after <em>every</em> query run (<code>reload()</code>), and by each of the 23 components that mount the hook before the first dispatch lands.</p>
+      <span class="cite">useSelectedDatabaseContext.tsx:4-286, 497-504 · QueryComponent.tsx:152</span></div>
+    <div class="card finding"><h3>Incomplete coverage</h3>
+      <p>Only <code>relkind = 'r'</code>; partitioned, foreign and materialized views are invisible; indexes carry names only; <code>procedures</code> and schema triggers are hard-coded <code>'{}'</code>.</p>
+      <span class="cite">useSelectedDatabaseContext.tsx:266-273</span></div>
+    <div class="card finding"><h3>Duplicated loaders and a crash on refresh</h3>
+      <p><code>getSchemas</code> and <code>reloadSchemas</code> are ~140 duplicated lines; the view branch reads <code>viewList[view.viewName].expanded</code> unguarded and throws after a view is created.</p>
+      <span class="cite">useSelectedDatabaseContext.tsx:298-495, 450</span></div>
+  </div>
+
+  <h3>State &amp; UI</h3>
+  <div class="cards">
+    <div class="card finding"><h3>React elements stored in global state</h3>
+      <p>Tabs hold <code>queryComponent: &lt;QueryComponent/&gt;</code> and <code>resultsComponent</code>; nothing is serialisable, props are frozen at creation (query tabs always claim <code>schema="public"</code>), and the store's deep <code>isEqual</code> walks React trees on every write.</p>
+      <span class="cite">useTabInterfaceContext.tsx:22-25, 89-90</span></div>
+    <div class="card finding"><h3>Initial state wiped at mount</h3>
+      <p><code>databaseContext: {}</code> and <code>authContext: {}</code> overwrite the initial state, which is why every consumer guards with <code>|| {}</code>.</p>
+      <span class="cite">src/renderer/src/App.tsx:24-28</span></div>
+    <div class="card finding"><h3>Tab id collisions</h3>
+      <p>Table data and table structure share the id <code>table_data/schema.table</code>; document tabs omit the row id, so opening a second row replaces the first.</p>
+      <span class="cite">useTabInterfaceContext.tsx:118, 144, 164</span></div>
+    <div class="card finding"><h3>Routing that fails in production</h3>
+      <p><code>reach-router</code> with history push; packaged builds load <code>file://</code> where <code>pushState</code> throws. Two routes, one of them unreachable.</p>
+      <span class="cite">AppRouter.tsx · src/main/index.ts:88</span></div>
+    <div class="card finding"><h3>Advertised shortcuts do not exist</h3>
+      <p>The empty screen lists ⌘T, ⌘Enter, ⌘W, ⌘⇧N …; no <code>keydown</code>, <code>addCommand</code> or <code>KeyMod</code> appears anywhere in the renderer.</p>
+      <span class="cite">EmptySpace.tsx:11-19</span></div>
+    <div class="card finding"><h3>Five UI systems, unstyled shadcn</h3>
+      <p><code>@cloudhub-ux/mui</code> Block layout, shadcn <code>/esm</code> and <code>/src</code>, raw MUI and <code>@cloudhub-ux/min</code> coexist; Tailwind scans only <code>shadcn/esm</code>, so <code>/src</code> components (ContextMenu, Card, Select…) render without their classes.</p>
+      <span class="cite">tailwind.config.js:6</span></div>
+    <div class="card finding"><h3>Dead controls</h3>
+      <p>View/Delete on saved connections, Export/Import/Rename on tables, Save on queries, four "Save changes" buttons in the structure tabs, the filter form's submit and the dark-mode switch all have no working handler.</p>
+      <span class="cite">SavedConnections.tsx:49-50 · TablesTree.tsx:271-273, 303 · TableStructure.tsx · FilterForm.tsx:22 · BaseOption.tsx:19-38</span></div>
+    <div class="card finding"><h3>No loading, error or boundary states</h3>
+      <p>No spinner for connect, catalog or query; catalog errors go to <code>console.error</code>; no React error boundary, so one bad cell renderer blanks the window.</p>
+      <span class="cite">useSelectedDatabaseContext.tsx:307, 363</span></div>
+  </div>
+
+  <h3>Document links</h3>
+  <div class="cards">
+    <div class="card finding"><h3>Links only on the PK column of a table tab</h3>
+      <p><code>Row_IdCell</code> is gated by <code>isPrimaryKey</code>, which is only known when the grid has a <code>tableName</code>; ad-hoc query results never render links, and a reference in an ordinary column is plain text.</p>
+      <span class="cite">useDataTableColumns.tsx:31-91, 194-205</span></div>
+    <div class="card finding"><h3>Wrong parsing rules</h3>
+      <p>A link requires an underscore, so <code>users/42</code> fails; the schema is <code>split('_')[0]</code>, so <code>sales_customer_order/42</code> resolves to schema <code>sales</code>, table <code>customer</code>; nothing is validated against the catalog.</p>
+      <span class="cite">useDataTableColumns.tsx:46-50</span></div>
+    <div class="card finding"><h3>JSON editor: key-name regex, leaking providers</h3>
+      <p>Only keys literally named <code>_id</code>/<code>_ref</code> are linkified (regex repeated three times); link and tokens providers are registered in <code>beforeMount</code> for every editor instance and never disposed; decorations accumulate.</p>
+      <span class="cite">MonacoJsonEditor.tsx:44-155</span></div>
+    <div class="card finding"><h3>No backlinks, no history, lossy navigation</h3>
+      <p>Following a link opens a tab keyed without the id, re-runs a <code>SELECT</code> even though the row is in hand, shows nothing when 0 rows match, and there is no back/forward.</p>
+      <span class="cite">useTabInterfaceContext.tsx:105-139 · DocumentViewer.tsx:25-42</span></div>
+  </div>
+
+  <h3>ArangoDB migration</h3>
+  <div class="cards">
+    <div class="card finding"><h3>Customer-specific script inside the product</h3>
+      <p>A 300-line collection dictionary and a stringified <code>formatDocument</code> function are shipped from the renderer into PLV8 via <code>new Function</code>; collection→table mapping is guessed by string splitting in five different ways.</p>
+      <span class="cite">ConnectedDatabase.tsx:11-460 · PostgresServer.ts:224-365 · arangodb/server.ts:66-74, 344-346, 389-395</span></div>
+    <div class="card finding"><h3>Non-functional entry points</h3>
+      <p><code>arangodbQuery</code> calls itself forever; the renderer invokes it on <code>window.api</code>, where it does not exist; migration promises are neither awaited nor caught; migrating strips the source collection's schema validator.</p>
+      <span class="cite">arangodb/server.ts:177-179, 454-456 · useArangoDbServer.tsx:12 · ConnectedDatabase.tsx:565, 591</span></div>
+  </div>
+
+  <h3>Summary</h3>
+  <table>
+    <thead><tr><th>Area</th><th>Severity</th><th>v2 answer</th></tr></thead>
+    <tbody>
+      <tr><td>Renderer security posture</td><td><span class="badge must">must fix</span></td><td>Sandbox on, node off, strict CSP, typed <code>window.pgui</code> only (§6)</td></tr>
+      <tr><td>Credentials</td><td><span class="badge must">must fix</span></td><td><code>safeStorage</code> vault in main; passwords cross IPC once (§6)</td></tr>
+      <tr><td>Connection lifecycle</td><td><span class="badge must">must fix</span></td><td>ConnectionRegistry with limits, error handler, reaper, close on quit (§6)</td></tr>
+      <tr><td>Write SQL by interpolation</td><td><span class="badge must">must fix</span></td><td>All writes built in main with <code>pg-format %I</code> + <code>$n</code> (§9, §11)</td></tr>
+      <tr><td>Result handling</td><td><span class="badge must">must fix</span></td><td>Streaming runner, caps, cancel, structured errors, multi-result (§7)</td></tr>
+      <tr><td>Catalog loading</td><td><span class="badge should">should fix</span></td><td>Lazy per-node queries in main with cache + invalidation (§6)</td></tr>
+      <tr><td>Tab/state model</td><td><span class="badge must">must fix</span></td><td>Serialisable tab descriptors + component registry (§8)</td></tr>
+      <tr><td>Document links</td><td><span class="badge must">must fix</span></td><td>Catalog-validated resolver shared by every surface; backlinks (§9)</td></tr>
+      <tr><td>Arango migration</td><td><span class="badge must">remove</span></td><td>Deleted with its dependencies</td></tr>
+      <tr><td>UI library mix</td><td><span class="badge should">should fix</span></td><td>shadcn esm + Tailwind only; fixed content globs (§13)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================================================ 3 -->
+<section id="s3">
+  <div class="sec-h"><span class="num">03</span><h2>Glossary</h2></div>
+  <dl>
+    <dt>connection</dt><dd>A saved server definition (<code>ConnectionMeta</code>) identified by <code>connectionId</code>; owns one pool per database it has opened.</dd>
+    <dt>session</dt><dd>A dedicated <code>PoolClient</code> checked out for one query tab so that <code>BEGIN</code>, <code>SET</code> and temp tables persist between runs.</dd>
+    <dt>run</dt><dd>One execution of a script or statement, identified by <code>runId</code>, reported as a stream of <code>QueryEvent</code>s.</dd>
+    <dt>catalog node</dt><dd>One entry in the object tree (database, schema, table, column, index…) addressed by a <code>nodeId</code>, fetched lazily and cached in main.</dd>
+    <dt>CompletionIndex</dt><dd>A flat list of relations and their columns plus <code>search_path</code> for a database; feeds editor completion and link resolution.</dd>
+    <dt>DocRef</dt><dd>A parsed <code>[schema.]table/key</code> string, before it is matched to a real table.</dd>
+    <dt>DocTarget</dt><dd>A resolved reference: schema, table, key column, key value and the rank/reason it was chosen.</dd>
+    <dt>backlink</dt><dd>A row in another table that references a document, found via a foreign key or by scanning text/jsonb/array columns.</dd>
+    <dt>env label</dt><dd>The environment tag on a connection (prod, staging, dev, local) that drives colours and confirmation rules.</dd>
+    <dt>pending change</dt><dd>An edited, inserted or deleted row held in the grid's edit buffer until Apply sends it as one transaction.</dd>
+    <dt>DX / DDL / CF</dt><dd>Context-menu action classes: direct execute; open generated SQL in a query tab; confirm dialog that shows the SQL and executes on confirm.</dd>
+    <dt>keyset paging</dt><dd>Paging with <code>WHERE (pk…) &gt; ($1…) ORDER BY pk LIMIT n</code> instead of <code>OFFSET</code>; used when the sort is the primary key.</dd>
+    <dt>row cap</dt><dd>The maximum number of rows (default 10,000) or bytes (64 MB) a run may deliver to the renderer before it is marked truncated.</dd>
+  </dl>
+</section>
+
+<!-- ============================================================ 4 -->
+<section id="s4">
+  <div class="sec-h"><span class="num">04</span><h2>Personas &amp; fleet context</h2></div>
+  <div class="two">
+    <div class="card"><h3>The operator</h3>
+      <p>One person who is both DBA and application developer for SQWIRO. Works on macOS, hops
+      between production servers over Tailscale, needs to inspect a customer's document, trace what
+      references it, patch a few cells, run a migration script, and kill a runaway query — several
+      times a day, without ceremony and without touching the wrong server.</p></div>
+    <div class="card"><h3>Typical tasks</h3>
+      <ul>
+        <li>Open <code>sales.sales_customer</code> on adminserver, find one row, follow links three hops deep, come back.</li>
+        <li>Run a multi-statement script on staging, then the same on prod with a typed confirmation.</li>
+        <li>See which sessions are blocking, cancel one, look at the top slow queries.</li>
+        <li>Edit three cells and a jsonb field, preview the SQL, apply in one transaction.</li>
+        <li>Create a table or index from a dialog and keep the DDL in a tab.</li>
+      </ul></div>
+  </div>
+  <h3>The fleet</h3>
+  <table>
+    <thead><tr><th>Server</th><th>Engines</th><th>Databases</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>adminserver</code></td><td>PostgreSQL</td><td>31</td><td>Main tenant databases; production.</td></tr>
+      <tr><td><code>cloudhubserver</code></td><td>PostgreSQL (+ ArangoDB 3.10, not managed by pgui)</td><td>6</td><td>Production.</td></tr>
+      <tr><td><code>tradingserver</code></td><td>PostgreSQL + TimescaleDB</td><td>7</td><td>Hypertables; <code>_timescaledb_*</code> schemas hidden by default.</td></tr>
+      <tr><td>local</td><td>PostgreSQL 16</td><td>varies</td><td>Development and the integration-test container.</td></tr>
+    </tbody>
+  </table>
+  <div class="callout info"><span class="t">Reachability.</span><span>All servers are addressed by their Tailscale hostnames; connections are TCP with <code>sslmode</code> per connection. Network failures must surface as friendly messages ("is Tailscale up?") with the raw error behind a details toggle.</span></div>
+</section>
+
+<!-- ============================================================ 5 -->
+<section id="s5">
+  <div class="sec-h"><span class="num">05</span><h2>User stories</h2></div>
+  <p>Stories are written from the operator's point of view. Acceptance criteria use EARS
+  (<span class="ears-when">WHEN</span> trigger <span class="ears-when">THEN</span> the system
+  <span class="ears-when">SHALL</span> response; <span class="ears-when">IF</span> for conditions,
+  <span class="ears-when">WHILE</span> for states). Each card lists the plan tasks that implement it.</p>
+
+  <h3 id="us-conn">Connections &amp; fleet</h3>
+  <div class="cards">
+    <div class="card story" id="us-01"><span class="id">US-01 <span class="badge must">must</span></span><h3>Save a connection with a stored password</h3>
+      <p>As the operator I want to save name, host, port, user, password, default database, SSL mode, environment label and group, so that I can connect with one click.</p>
+      <ul class="ears">
+        <li><b>WHEN</b> I click Save with a valid form <b>THEN</b> the system SHALL persist <code>ConnectionMeta</code> without the password and store the password encrypted with <code>safeStorage</code>.</li>
+        <li><b>IF</b> the OS keychain backend is <code>basic_text</code> <b>THEN</b> the system SHALL refuse to store the password and keep it in memory for the session only, telling me why.</li>
+        <li><b>WHEN</b> a connection is listed or returned by any IPC call <b>THEN</b> the payload SHALL contain <code>hasPassword</code> and never the password.</li>
+      </ul><span class="cite">P1.1 · P1.2 · P1.4 · P1.7</span></div>
+    <div class="card story" id="us-02"><span class="id">US-02 <span class="badge must">must</span></span><h3>Test a connection without saving</h3>
+      <p>I want a Test button separate from Save so that I can validate host, credentials and SSL before committing.</p>
+      <ul class="ears">
+        <li><b>WHEN</b> I click Test <b>THEN</b> the system SHALL attempt a connection with a 10 s timeout and show version, latency and database count on success.</li>
+        <li><b>IF</b> the connection fails <b>THEN</b> the system SHALL show the structured error (code, message, hint) with a Copy action, and SHALL NOT persist anything.</li>
+        <li><b>WHILE</b> the test is running <b>THEN</b> the button SHALL show progress and offer Cancel.</li>
+      </ul><span class="cite">P1.4 · P1.7</span></div>
+    <div class="card story" id="us-03"><span class="id">US-03 <span class="badge must">must</span></span><h3>Several servers connected at once</h3>
+      <p>I want adminserver, cloudhubserver and tradingserver open simultaneously, grouped and colour-labelled, so that I can work across the fleet without disconnecting.</p>
+      <ul class="ears">
+        <li><b>WHEN</b> I connect a second server <b>THEN</b> the first SHALL remain connected and visible in the tree.</li>
+        <li><b>WHEN</b> a server is labelled prod <b>THEN</b> its row SHALL show a red PROD badge and its tabs SHALL carry a red top border.</li>
+        <li><b>WHEN</b> I disconnect a server <b>THEN</b> all its pools SHALL be ended within 1 s and its tabs SHALL show a Connect placeholder instead of closing.</li>
+      </ul><span class="cite">P1.3 · P1.4 · P1.7 · P1.8</span></div>
+    <div class="card story" id="us-04"><span class="id">US-04 <span class="badge should">should</span></span><h3>Import from a URI, duplicate, delete</h3>
+      <p>I want to paste a <code>postgres://</code> URI, duplicate a connection and delete one with confirmation.</p>
+      <ul class="ears">
+        <li><b>WHEN</b> a valid URI is pasted into Host <b>THEN</b> the system SHALL fill host, port, user, password, database and sslmode.</li>
+        <li><b>WHEN</b> I delete a connection <b>THEN</b> the system SHALL ask for confirmation, remove the vault entry and close that connection's tabs.</li>
+      </ul><span class="cite">P1.4 · P1.7</span></div>
+    <div class="card story" id="us-05"><span class="id">US-05 <span class="badge should">should</span></span><h3>Read-only connections</h3>
+      <p>I want to mark a connection read-only so that DML/DDL cannot run through it.</p>
+      <ul class="ears">
+        <li><b>WHEN</b> a read-only connection opens a pool <b>THEN</b> it SHALL set <code>default_transaction_read_only=on</code>.</li>
+        <li><b>IF</b> a statement is classified as write on a read-only connection <b>THEN</b> the editor SHALL block Run with an explanatory message.</li>
+      </ul><span class="cite">P1.3 · P3.3</span></div>
+  </div>
+
+  <h3 id="us-catalog">Catalog &amp; tree</h3>
+  <div class="cards">
+    <div class="card story" id="us-06"><span class="id">US-06 <span class="badge must">must</span></span><h3>Lazy object tree</h3>
+      <p>I want the tree to load databases, schemas, folders and objects on expand so that a 31-database server is usable immediately.</p>
+      <ul class="ears">
+        <li><b>WHEN</b> I connect <b>THEN</b> the system SHALL list databases within one query and SHALL NOT crawl schemas until a database is expanded.</li>
+        <li><b>WHEN</b> I expand a schema <b>THEN</b> the system SHALL show Tables, Views, Materialized Views, Functions, Sequences and Types folders with counts.</li>
+        <li><b>WHILE</b> a node is loading <b>THEN</b> a spinner SHALL replace its chevron and the rest of the tree SHALL stay interactive.</li>
+        <li><b>IF</b> a node fails to load <b>THEN</b> it SHALL show an error icon with the message and a Retry item.</li>
+      </ul><span class="cite">P1.5 · P1.6 · P1.8</span></div>
+    <div class="card story" id="us-07"><span class="id">US-07 <span class="badge must">must</span></span><h3>Complete object coverage</h3>
+      <p>I want partitioned tables, foreign tables, materialized views, sequences, enum/composite types, procedures and extensions in the tree, and TimescaleDB hypertables flagged.</p>
+      <ul class="ears">
+        <li><b>WHEN</b> a schema is expanded <b>THEN</b> relations of kind r, p, v, m and f SHALL be listed with row estimates and sizes.</li>
+        <li><b>WHEN</b> a table is expanded <b>THEN</b> columns (with generated/identity/PK/FK/unique flags), indexes (with definitions), constraints and triggers SHALL be available.</li>
+        <li><b>IF</b> the <code>timescaledb</code> extension is installed <b>THEN</b> hypertables SHALL carry a badge and <code>_timescaledb_*</code> schemas SHALL be hidden unless "Show system schemas" is on.</li>
+      </ul><span class="cite">P1.5 · P6.4</span></div>
+    <div class="card story" id="us-08"><span class="id">US-08 <span class="badge should">should</span></span><h3>Filter and refresh</h3>
+      <p>I want to filter the tree by substring and refresh a single node.</p>
+      <ul class="ears">
+        <li><b>WHEN</b> I type in the filter box <b>THEN</b> loaded nodes SHALL be filtered and ancestors of matches expanded.</li>
+        <li><b>WHEN</b> I choose Refresh on a node <b>THEN</b> only that node's cache entry SHALL be invalidated and re-queried.</li>
+        <li><b>WHEN</b> a DDL statement completes in a query tab <b>THEN</b> the affected database's catalog SHALL be invalidated automatically.</li>
+      </ul><span class="cite">P1.6 · P1.8 · P3.1</span></div>
+  </div>
+
+  <h3 id="us-query">Query editor</h3>
+  <div class="cards">
+    <div class="card story" id="us-09"><span class="id">US-09 <span class="badge must">must</span></span><h3>Run a script with multiple result sets</h3>
+      <p>I want to run a whole script or only the selection/statement at the cursor and see one result tab per statement.</p>
+      <ul class="ears">
+        <li><b>WHEN</b> I press ⌘↵ <b>THEN</b> the system SHALL split the script on statement boundaries (respecting strings, dollar quotes and comments) and run them in order on the tab's session.</li>
+        <li><b>WHEN</b> I press ⌘⇧↵ <b>THEN</b> the system SHALL run only the selection, or the statement under the cursor if nothing is selected.</li>
+        <li><b>WHEN</b> a statement returns rows <b>THEN</b> a result tab SHALL be added in order; command-only statements SHALL appear in Messages with their row count and duration.</li>
+        <li><b>IF</b> a statement fails <b>THEN</b> the run SHALL stop (unless "continue on error"), the Messages pane SHALL show code, message, detail and hint, and the editor SHALL mark the failing position.</li>
+      </ul><span class="cite">P0.10 · P3.1 · P3.3</span></div>
+    <div class="card story" id="us-10"><span class="id">US-10 <span class="badge must">must</span></span><h3>Streaming results with a cap</h3>
+      <p>I want <code>SELECT *</code> on a million-row table to stream and stop at a cap instead of freezing.</p>
+      <ul class="ears">
+        <li><b>WHEN</b> a SELECT runs <b>THEN</b> rows SHALL arrive in pages of 500 and the first page SHALL be visible in under 300 ms.</li>
+        <li><b>IF</b> the row cap (default 10,000) or 64 MB is reached <b>THEN</b> the run SHALL close the cursor, mark the result truncated and offer to raise the cap.</li>
+        <li><b>WHEN</b> a limit selector value is set <b>THEN</b> a banner SHALL say the limit was applied and allow removing it.</li>
+      </ul><span class="cite">P3.1 · P3.3 · P3.4</span></div>
+    <div class="card story" id="us-11"><span class="id">US-11 <span class="badge must">must</span></span><h3>Cancel a running query</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> I press Cancel or ⌘. <b>THEN</b> the system SHALL send <code>pg_cancel_backend(pid)</code> on a separate client and the cancelled event SHALL be observed within 500 ms.</li>
+        <li><b>IF</b> cancel has no effect after 5 s <b>THEN</b> the button SHALL offer Terminate with a confirmation explaining the session will be dropped.</li>
+      </ul><span class="cite">P3.1 · P3.3</span></div>
+    <div class="card story" id="us-12"><span class="id">US-12 <span class="badge must">must</span></span><h3>Schema-aware completion</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> I type <code>FROM cust</code> <b>THEN</b> completion SHALL offer tables from <code>search_path</code> and qualified names from other schemas.</li>
+        <li><b>WHEN</b> I type <code>c.</code> after <code>FROM sales_customer c</code> <b>THEN</b> completion SHALL list that table's columns with types and PK/FK markers.</li>
+        <li><b>WHEN</b> the app starts <b>THEN</b> Monaco providers SHALL be registered exactly once and disposed on unload.</li>
+      </ul><span class="cite">P1.6 · P3.2</span></div>
+    <div class="card story" id="us-13"><span class="id">US-13 <span class="badge should">should</span></span><h3>Transactions, formatting, explain</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> the tab is in manual-transaction mode <b>THEN</b> the first run SHALL issue <code>BEGIN</code>, the status bar SHALL show the open transaction and offer Commit/Rollback, and closing the tab SHALL prompt.</li>
+        <li><b>WHEN</b> I press ⌘⇧F <b>THEN</b> the system SHALL format the selection or the whole buffer; formatting SHALL never run automatically.</li>
+        <li><b>WHEN</b> I press ⌘E <b>THEN</b> the system SHALL run <code>EXPLAIN (FORMAT JSON)</code> and render a plan tree with text fallback.</li>
+      </ul><span class="cite">P3.1 · P3.3 · P7.5</span></div>
+    <div class="card story" id="us-14"><span class="id">US-14 <span class="badge should">should</span></span><h3>Query history and saved queries</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> a run finishes <b>THEN</b> the system SHALL append the statement, connection, duration and status to history (cap 5,000, retention configurable).</li>
+        <li><b>WHEN</b> I open history (⌘⇧H) and pick an entry <b>THEN</b> it SHALL be inserted into a query tab targeting the same connection.</li>
+      </ul><span class="cite">P3.1 · P3.5 · P7.3</span></div>
+  </div>
+
+  <h3 id="us-rows">Results &amp; table data editing</h3>
+  <div class="cards">
+    <div class="card story" id="us-15"><span class="id">US-15 <span class="badge must">must</span></span><h3>Browse a table with server-side paging, sort and filter</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> I open a table <b>THEN</b> the system SHALL fetch one page ordered by PK using keyset paging and show an estimated row count marked "~" with an exact-count action.</li>
+        <li><b>WHEN</b> I sort by a non-PK column <b>THEN</b> the system SHALL switch to offset paging and keep the sort in the tab state.</li>
+        <li><b>WHEN</b> I add a filter chip <b>THEN</b> the system SHALL build a parameterised WHERE clause using type-appropriate operators (incl. jsonb <code>@&gt;</code>, IS NULL, IN).</li>
+        <li><b>WHEN</b> I toggle raw WHERE <b>THEN</b> chips SHALL be converted to text and the fragment SHALL be marked as unparameterised.</li>
+      </ul><span class="cite">P5.1 · P5.2 · P5.3</span></div>
+    <div class="card story" id="us-16"><span class="id">US-16 <span class="badge must">must</span></span><h3>Typed cell rendering</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> a cell is NULL <b>THEN</b> it SHALL render as an italic muted <code>NULL</code>, distinct from an empty string.</li>
+        <li><b>WHEN</b> a column is <code>int8</code>, <code>numeric</code> or <code>money</code> <b>THEN</b> the value SHALL be shown right-aligned in monospace as the exact string the server sent.</li>
+        <li><b>WHEN</b> a cell is <code>jsonb</code> <b>THEN</b> it SHALL show a one-line preview and open a tree popover on click.</li>
+      </ul><span class="cite">P1.3 · P3.4</span></div>
+    <div class="card story" id="us-17"><span class="id">US-17 <span class="badge must">must</span></span><h3>Inline editing with a pending buffer</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> I edit a cell in a table with a primary key <b>THEN</b> the cell SHALL be marked pending (amber) and the footer SHALL count pending changes.</li>
+        <li><b>WHEN</b> I press ⌘S <b>THEN</b> the system SHALL send all updates, inserts and deletes as one transaction with <code>RETURNING *</code>; <b>IF</b> any op fails <b>THEN</b> nothing SHALL be committed and the failing row SHALL be highlighted.</li>
+        <li><b>IF</b> the table has no primary key <b>THEN</b> cells SHALL be read-only with a banner.</li>
+        <li><b>WHEN</b> I choose Set NULL or Set DEFAULT <b>THEN</b> the generated SQL SHALL use <code>NULL</code> / <code>DEFAULT</code>, never the strings.</li>
+      </ul><span class="cite">P5.1 · P5.2 · P5.3</span></div>
+    <div class="card story" id="us-18"><span class="id">US-18 <span class="badge should">should</span></span><h3>Export and copy</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> I export a result <b>THEN</b> the system SHALL write CSV (RFC 4180), JSON or SQL INSERT via a save dialog, preserving numeric strings verbatim.</li>
+        <li><b>WHEN</b> I copy rows <b>THEN</b> I SHALL be able to choose JSON, INSERT, CSV/TSV or the <code>_id</code>.</li>
+      </ul><span class="cite">P5.5 · P7.5</span></div>
+  </div>
+
+  <h3 id="us-links">Document links &amp; backlinks</h3>
+  <div class="cards">
+    <div class="card story" id="us-19"><span class="id">US-19 <span class="badge must">must</span></span><h3>Every link-shaped value is clickable</h3>
+      <p>I want any string matching <code>[schema.]table/key</code> — in any column, in ad-hoc query results, nested in jsonb, in the JSON editor — to render as a chip that opens the target document.</p>
+      <ul class="ears">
+        <li><b>WHEN</b> a string parses as a DocRef and resolves to a relation in the catalog <b>THEN</b> it SHALL render as a link chip; <code>users/42</code> SHALL be accepted without an underscore.</li>
+        <li><b>WHEN</b> a DocRef does not resolve <b>THEN</b> it SHALL render as plain text (or a dashed "unresolved" chip if that setting is on).</li>
+        <li><b>WHEN</b> a cell belongs to a single-column foreign key <b>THEN</b> it SHALL render as a derived chip that opens the referenced row.</li>
+      </ul><span class="cite">P4.1 · P4.2 · P4.4 · P4.5 · P4.6</span></div>
+    <div class="card story" id="us-20"><span class="id">US-20 <span class="badge must">must</span></span><h3>Catalog-validated resolution</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> a ref is resolved <b>THEN</b> candidates SHALL be ranked explicit → schema-prefixed → stripped → search_path → any schema, matching only real relations.</li>
+        <li><b>IF</b> two candidates tie at the best rank <b>THEN</b> the system SHALL show a picker instead of guessing.</li>
+        <li><b>WHEN</b> the target has an <code>_id</code> column <b>THEN</b> the lookup SHALL compare the full raw string; otherwise the single-column PK or <code>id</code> with type checking.</li>
+        <li><b>IF</b> no row matches <b>THEN</b> the chip SHALL show a broken state with the candidates tried.</li>
+      </ul><span class="cite">P4.1 · P4.2</span></div>
+    <div class="card story" id="us-21"><span class="id">US-21 <span class="badge must">must</span></span><h3>Document tab with history</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> I click a chip <b>THEN</b> a document tab keyed by connection/db/schema/table/key SHALL open or be focused; ⌘-click SHALL open a new tab; ⇧-click SHALL peek in the inspector.</li>
+        <li><b>WHEN</b> I click a chip inside a document tab <b>THEN</b> that tab SHALL navigate in place and push history; ⌘[ / ⌘] SHALL go back/forward.</li>
+        <li><b>WHEN</b> I toggle Tree/JSON <b>THEN</b> unsaved edits SHALL be preserved.</li>
+        <li><b>WHEN</b> I save <b>THEN</b> a diff sheet SHALL show the changed columns and the generated parameterised UPDATE by primary key.</li>
+      </ul><span class="cite">P2.1 · P4.4</span></div>
+    <div class="card story" id="us-22"><span class="id">US-22 <span class="badge must">must</span></span><h3>Referenced by (backlinks)</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> a document opens <b>THEN</b> FK backlinks SHALL be counted immediately from the constraint index.</li>
+        <li><b>WHEN</b> the scope is "FK + jsonb in same schema" <b>THEN</b> the system SHALL scan text/jsonb/text[] columns sequentially with a 5 s statement timeout per table and stream groups as they finish.</li>
+        <li><b>WHILE</b> a scan runs <b>THEN</b> progress SHALL be shown per table and Cancel SHALL stop it.</li>
+        <li><b>WHEN</b> I click a backlink group <b>THEN</b> a table-data tab SHALL open filtered to those rows.</li>
+      </ul><span class="cite">P4.3 · P4.4</span></div>
+    <div class="card story" id="us-23"><span class="id">US-23 <span class="badge should">should</span></span><h3>Hover preview and references panel</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> I hover a chip for 400 ms <b>THEN</b> a card SHALL show the qualified table, up to eight fields and the FK backlink count.</li>
+        <li><b>WHEN</b> a document contains links <b>THEN</b> the References panel SHALL list each with its JSON path and a resolved label.</li>
+      </ul><span class="cite">P4.4 · P4.5</span></div>
+  </div>
+
+  <h3 id="us-ddl">Structure / DDL</h3>
+  <div class="cards">
+    <div class="card story" id="us-24"><span class="id">US-24 <span class="badge must">must</span></span><h3>Structure tab with DDL</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> I open a table's structure <b>THEN</b> Columns, Indexes, Constraints, Triggers, Relations, Partitions and DDL SHALL be available from the catalog node.</li>
+        <li><b>WHEN</b> I view DDL <b>THEN</b> it SHALL be generated in main with <code>format('%I')</code>-quoted identifiers and be copyable / openable in a query tab.</li>
+      </ul><span class="cite">P2.5 · P2.6</span></div>
+    <div class="card story" id="us-25"><span class="id">US-25 <span class="badge should">should</span></span><h3>Create and alter via generated SQL</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> I add a column, index or constraint from the structure tab <b>THEN</b> the system SHALL generate the ALTER/CREATE statement and open the confirm dialog; nothing SHALL execute silently.</li>
+        <li><b>WHEN</b> I create a table from the dialog <b>THEN</b> defaults, nullability, identity and primary key SHALL all be honoured in the DDL and the column grid SHALL allow removing a row.</li>
+      </ul><span class="cite">P5.4</span></div>
+  </div>
+
+  <h3 id="us-overview">Server overview</h3>
+  <div class="cards">
+    <div class="card story" id="us-26"><span class="id">US-26 <span class="badge must">must</span></span><h3>Per-server overview</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> I open a server's overview <b>THEN</b> it SHALL show version, uptime, connections used/max, databases with sizes, active sessions, locks/blocking chains, slow queries (if <code>pg_stat_statements</code> exists) and replication.</li>
+        <li><b>WHILE</b> the tab is visible <b>THEN</b> it SHALL refresh every 5 s using a single batch with a 5 s statement timeout.</li>
+        <li><b>WHEN</b> I choose Cancel or Terminate on a session <b>THEN</b> the system SHALL call <code>pg_cancel_backend</code> / <code>pg_terminate_backend</code> after confirmation; my own session SHALL be protected.</li>
+      </ul><span class="cite">P6.1 · P6.2</span></div>
+    <div class="card story" id="us-27"><span class="id">US-27 <span class="badge could">could</span></span><h3>Fleet page</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> I open Fleet overview <b>THEN</b> one card per configured server SHALL show connection state and, when connected, the headline numbers.</li>
+      </ul><span class="cite">P6.3</span></div>
+  </div>
+
+  <h3 id="us-workspace">Workspace, tabs &amp; shortcuts</h3>
+  <div class="cards">
+    <div class="card story" id="us-28"><span class="id">US-28 <span class="badge must">must</span></span><h3>Serialisable, restorable workspace</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> the app quits <b>THEN</b> tabs (kind, params, title, pinned), the active tab, unsaved SQL, data-tab filters/sort/page and layout SHALL be saved by main.</li>
+        <li><b>WHEN</b> the app starts <b>THEN</b> tabs SHALL be restored hibernated and rehydrate when their connection connects; query text SHALL never auto-run.</li>
+        <li><b>WHEN</b> the same object is opened twice <b>THEN</b> the existing tab SHALL be focused.</li>
+      </ul><span class="cite">P2.1 · P2.2 · P2.3</span></div>
+    <div class="card story" id="us-29"><span class="id">US-29 <span class="badge must">must</span></span><h3>Keyboard-first</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> the empty workspace lists a shortcut <b>THEN</b> that shortcut SHALL be implemented.</li>
+        <li><b>WHEN</b> I press ⌘K <b>THEN</b> the command palette SHALL open with modes for objects (@), documents (#), tabs (:) and actions (&gt;).</li>
+        <li><b>WHEN</b> focus is in the tree <b>THEN</b> arrows, Enter, ⌘Enter, Delete and F2 SHALL act on the node.</li>
+      </ul><span class="cite">P7.1 · P7.2</span></div>
+    <div class="card story" id="us-30"><span class="id">US-30 <span class="badge should">should</span></span><h3>Tab ergonomics</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> I middle-click a tab <b>THEN</b> it SHALL close; dirty tabs SHALL prompt.</li>
+        <li><b>WHEN</b> I drag a tab <b>THEN</b> tabs SHALL reorder; pinned tabs SHALL stay leftmost.</li>
+        <li><b>WHEN</b> I press ⌘⇧T <b>THEN</b> the last closed tab SHALL reopen.</li>
+      </ul><span class="cite">P2.2</span></div>
+  </div>
+
+  <h3 id="us-settings">Settings, history &amp; export</h3>
+  <div class="cards">
+    <div class="card story" id="us-31"><span class="id">US-31 <span class="badge should">should</span></span><h3>Settings that autosave</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> I change a setting <b>THEN</b> it SHALL be saved by main within 2 s and applied without restart (theme, density, editor font, row cap, page size, timeouts, confirmation rules, link options).</li>
+      </ul><span class="cite">P2.3 · P7.3</span></div>
+    <div class="card story" id="us-32"><span class="id">US-32 <span class="badge could">could</span></span><h3>Auto-update without modal dialogs</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> an update is downloaded <b>THEN</b> a toast SHALL offer Restart; <b>IF</b> the updater errors <b>THEN</b> the error SHALL be logged and shown once, never crash the app.</li>
+      </ul><span class="cite">P7.4</span></div>
+  </div>
+
+  <h3 id="us-safety">Safety on prod</h3>
+  <div class="cards">
+    <div class="card story" id="us-33"><span class="id">US-33 <span class="badge must">must</span></span><h3>Typed confirmation for destructive actions</h3>
+      <ul class="ears">
+        <li><b>WHEN</b> I drop/truncate an object, delete more than 10 rows, terminate a backend or drop a database on a prod-labelled server <b>THEN</b> the confirm dialog SHALL show the SQL, dependents and sizes, and require typing the object name.</li>
+        <li><b>WHEN</b> I run an UPDATE or DELETE without WHERE <b>THEN</b> the system SHALL warn and require confirmation (setting, default on).</li>
+        <li><b>IF</b> the confirmation fails on the server <b>THEN</b> the dialog SHALL stay open with the error and offer Retry / Open in editor.</li>
+      </ul><span class="cite">P5.3 · P5.4 · P6.2 · P7.3</span></div>
+    <div class="card story" id="us-34"><span class="id">US-34 <span class="badge must">must</span></span><h3>Errors never crash, never vanish</h3>
+      <ul class="ears">
+        <li><b>IF</b> a pool emits an error <b>THEN</b> main SHALL push a connection event and stay alive.</li>
+        <li><b>IF</b> a tab throws during render <b>THEN</b> only that tab SHALL show a crash card with Reload and Copy error.</li>
+        <li><b>WHEN</b> an IPC call fails <b>THEN</b> the response SHALL be a typed <code>PgErrorInfo</code>, never <code>undefined</code>.</li>
+      </ul><span class="cite">P1.3 · P0.8 · P7.6</span></div>
+  </div>
+</section>
+
+<!-- ============================================================ 6 -->
+<section id="s6">
+  <div class="sec-h"><span class="num">06</span><h2>Architecture</h2></div>
+  <table>
+    <thead><tr><th>Process</th><th>Owns</th><th>Never does</th></tr></thead>
+    <tbody>
+      <tr><td><b>main</b></td><td>pg pools and clients, credential vault, catalog cache, SQL generation for writes and paging, DDL extraction, server stats, persistence (electron-store), auto-update, window security policy</td><td>render; hold React state</td></tr>
+      <tr><td><b>preload</b></td><td>a typed, allow-listed <code>window.pgui</code> API generated from <code>shared/ipc.ts</code></td><td>expose <code>ipcRenderer</code>, <code>process</code> or any Node API</td></tr>
+      <tr><td><b>renderer</b></td><td>React UI, zustand store, Monaco, grids, tab workspace; only sends typed requests</td><td>build write SQL, see passwords after save, touch the filesystem</td></tr>
+      <tr><td><b>shared</b></td><td>TypeScript types and pure functions used by both sides (DocRef parser, statement splitter, nodeId codec, display quoting)</td><td>import <code>electron</code>, <code>pg</code>, React</td></tr>
+    </tbody>
+  </table>
+
+  <div class="diagram">
+    <div class="box"><h5>renderer</h5><ul><li>shell, tabs registry, features/*</li><li>zustand slices</li><li>Monaco (providers once)</li><li>calls <code>window.pgui.*</code></li></ul></div>
+    <div class="arrow">⇄</div>
+    <div class="box"><h5>preload</h5><ul><li><code>contextBridge.exposeInMainWorld('pgui')</code></li><li>one fn per invoke channel</li><li><code>on()</code> limited to push channels</li></ul></div>
+    <div class="arrow">⇄</div>
+    <div class="box"><h5>main</h5><ul><li>ipc/*.ipc.ts (typed handle/push)</li><li>ConnectionRegistry · SessionManager · QueryRunner</li><li>CatalogService · DdlService · StatsService</li><li>DocLinkResolver · BacklinkFinder</li><li>CredentialVault · stores · autoUpdate</li></ul></div>
+    <div class="arrow">⇄</div>
+    <div class="box"><h5>PostgreSQL fleet</h5><ul><li>one Pool per (connection, database)</li><li>one dedicated client per query session</li><li><code>application_name = pgui</code></li></ul></div>
+  </div>
+
+  <h3>Directory layout</h3>
+<pre><code>src/
+  shared/
+    ipc.ts                         # IpcInvokeMap / IpcPushMap + request/response types
+    types/{connection,catalog,query,rows,doclink,workspace,settings,stats}.ts
+    doclink/{parseDocRef,findDocRefs,rankCandidates}.ts     # pure
+    sql/{statementSplitter,quote}.ts                        # pure
+    catalog/nodeId.ts                                       # pure
+  main/
+    index.ts  window.ts
+    ipc/{handle,register}.ts  ipc/*.ipc.ts   # connections catalog query rows doclink ddl stats settings workspace history export app
+    db/{ConnectionRegistry,poolFactory,typeParsers,pgError,SessionManager,QueryRunner,cancel}.ts
+    catalog/{CatalogService,CompletionIndex}.ts  catalog/sql/*.sql.ts
+    ddl/DdlService.ts   sql/{selectBuilder,mutationBuilder,filters}.ts
+    doclink/{DocLinkResolver,BacklinkFinder}.ts   stats/StatsService.ts
+    vault/CredentialVault.ts   store/stores.ts   history/QueryHistory.ts
+    export/Exporter.ts   updates/autoUpdate.ts
+  preload/{index,api,index.d}.ts
+  renderer/
+    index.html
+    src/{main,App}.tsx
+    src/shell/{Shell,TitleBar,Sidebar,TabBar,StatusBar,CommandPalette}.tsx
+    src/store/{index,connections.slice,catalog.slice,workspace.slice,history.slice,settings.slice,ui.slice,persist}.ts
+    src/tabs/registry.tsx  src/tabs/{QueryTab,TableDataTab,TableStructureTab,DocumentTab,ServerOverviewTab,DdlPreviewTab,FunctionTab}/
+    src/features/{connections,tree,grid,editor,doclink,overview}/
+    src/lib/{ipc,keybindings,format}.ts
+tests/{unit,integration}/   docker-compose.test.yml   vitest.config.ts</code></pre>
+
+  <h3>Main-process modules</h3>
+  <h4>ConnectionRegistry · poolFactory · typeParsers</h4>
+  <p><code>Map&lt;connectionId, {meta, pools: Map&lt;database, Pool&gt;}&gt;</code>. Pools are created lazily with the password fetched from the vault at that moment and never kept on the entry.</p>
+  <ul>
+    <li>Pool config: <code>max 4</code>, <code>idleTimeoutMillis 30 000</code>, <code>connectionTimeoutMillis 5 000</code>, <code>application_name 'pgui'</code>, <code>keepAlive</code>, SSL by <code>sslMode</code>, <code>statement_timeout</code> through <code>options</code>, per-pool <code>types</code>.</li>
+    <li>Type parsers (per pool, not global): <code>int8</code>, <code>numeric</code>, <code>money</code>, <code>date</code>, <code>timestamp(tz)</code>, <code>time(tz)</code>, <code>interval</code> and their arrays → strings; <code>bytea</code> → <code>\x</code>-hex; <code>json/jsonb</code> → parsed.</li>
+    <li><code>pool.on('error')</code> → push <code>connections:event {poolError}</code>; a reaper ends pools idle for 10 min; <code>closeAll()</code> is awaited in <code>before-quit</code> with a 2 s race.</li>
+  </ul>
+  <h4>SessionManager</h4>
+  <p>One <code>PoolClient</code> per query tab; records <code>processID</code>; tracks transaction state by command tags; <code>ROLLBACK</code> on close; reconnects lazily and reports when a session dies.</p>
+  <h4>QueryRunner</h4>
+  <ul>
+    <li>Split (shared splitter) → classify by first keyword (SELECT/WITH/VALUES/TABLE/SHOW/EXPLAIN/FETCH or <code>RETURNING</code>) → cursor path with <code>pg-cursor</code> pages of 500, row cap and byte cap; otherwise simple path.</li>
+    <li><code>rowMode: 'array'</code> plus <code>fields</code>; notices forwarded; errors serialised as <code>PgErrorInfo</code> with line/col computed from <code>position</code>.</li>
+    <li>DDL command tags invalidate the catalog; cancel via <code>pg_cancel_backend</code> from a second client; SQLSTATE 57014 becomes a <code>cancelled</code> event.</li>
+  </ul>
+  <h4>CredentialVault</h4>
+  <p><code>safeStorage.encryptString</code> → base64 in electron-store <code>vault.json</code>; refuses when only the <code>basic_text</code> backend is available; <code>set/get/delete</code> by connection id.</p>
+  <h4>CatalogService · CompletionIndex</h4>
+  <p>One parameterised query per node kind, scoped by <code>$1,$2</code>, returning <code>jsonb_build_object</code> payloads; cache keyed by <code>connection/database</code> then <code>nodeId</code>; <code>invalidate(connection, database?, nodeIdPrefix?)</code>. The CompletionIndex is a flat relations + columns + <code>search_path</code> payload built once per open database.</p>
+  <h4>DdlService</h4>
+  <p>Port of the eight builders in <code>scriptGenerator.ts</code> with <code>$n</code> parameters and server-side <code>format('%I.%I')</code> instead of concatenation; emits CREATE TABLE/INDEX/VIEW/FUNCTION/TRIGGER/CONSTRAINT text.</p>
+  <h4>DocLinkResolver · BacklinkFinder</h4>
+  <p>Resolver applies the ranking in §9 against the CompletionIndex, picks a key column from the relation's columns and runs one parameterised lookup. BacklinkFinder streams FK groups from the constraint index, then value-scan groups per column in scope, each in a read-only transaction with <code>SET LOCAL statement_timeout</code>.</p>
+  <h4>StatsService</h4>
+  <p><code>version()</code>, <code>pg_postmaster_start_time()</code>, <code>max_connections</code>, <code>pg_stat_database ⨝ pg_database</code>, <code>pg_stat_activity</code> with <code>pg_blocking_pids()</code>, <code>pg_locks</code>, <code>pg_stat_statements</code> top 20 when present, <code>pg_stat_replication</code>, extensions; 5 s timeout per sub-query.</p>
+  <h4>Stores and persistence</h4>
+  <p>electron-store instances <code>connections</code>, <code>settings</code>, <code>workspace</code>, <code>history</code>, <code>vault</code> in <code>userData</code>; renderer never touches the filesystem; writes are async and atomic.</p>
+  <h4>autoUpdate</h4>
+  <p>electron-updater events pushed as <code>app:updateEvent</code>; no native dialogs; listeners registered once; <code>error</code> handled.</p>
+
+  <h3>Security posture</h3>
+  <ul>
+    <li><code>webPreferences: { preload, contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true, allowRunningInsecureContent: false }</code>; macOS <code>titleBarStyle: 'hiddenInset'</code>; no <code>transparent</code>, no custom window-control IPC.</li>
+    <li>CSP: <code>default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-src 'none'</code> (dev adds <code>ws://localhost:*</code>).</li>
+    <li><code>will-navigate</code> blocked; <code>setWindowOpenHandler</code> allows <code>http(s)</code> only and denies the window.</li>
+    <li><code>app.requestSingleInstanceLock()</code>; second launch focuses the window.</li>
+    <li>No <code>process.env</code> define; the preload exposes exactly the channels in <code>IpcInvokeMap</code>/<code>IpcPushMap</code>.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 7 -->
+<section id="s7">
+  <div class="sec-h"><span class="num">07</span><h2>IPC contract</h2></div>
+  <p>All channels live in <code>src/shared/ipc.ts</code>. The preload derives <code>window.pgui</code> from
+  the channel list, so a channel that is not in the map cannot be called.</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Invoke channel</th><th>Request</th><th>Response</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>connections:list</code></td><td>—</td><td><code>ConnectionMeta[]</code></td><td>never includes passwords</td></tr>
+      <tr><td><code>connections:save</code></td><td><code>ConnectionInput</code></td><td><code>ConnectionMeta</code></td><td>password → vault</td></tr>
+      <tr><td><code>connections:delete</code></td><td><code>{connectionId}</code></td><td>void</td><td>ends pools, deletes vault entry</td></tr>
+      <tr><td><code>connections:test</code></td><td><code>ConnectionInput | {connectionId}</code></td><td><code>TestResult</code></td><td>never persists</td></tr>
+      <tr><td><code>connections:connect</code></td><td><code>{connectionId, password?}</code></td><td><code>ConnectResult</code></td><td>server info, databases, search_path</td></tr>
+      <tr><td><code>connections:disconnect</code></td><td><code>{connectionId}</code></td><td>void</td><td></td></tr>
+      <tr><td><code>connections:listDatabases</code></td><td><code>{connectionId}</code></td><td><code>DatabaseInfo[]</code></td><td></td></tr>
+      <tr><td><code>catalog:getNode</code></td><td><code>{connectionId, database, nodeId, refresh?}</code></td><td><code>CatalogNode</code></td><td>cached</td></tr>
+      <tr><td><code>catalog:completionIndex</code></td><td><code>{connectionId, database, refresh?}</code></td><td><code>CompletionIndex</code></td><td></td></tr>
+      <tr><td><code>catalog:invalidate</code></td><td><code>{connectionId, database?, nodeId?}</code></td><td>void</td><td></td></tr>
+      <tr><td><code>session:open</code></td><td><code>{sessionId, connectionId, database}</code></td><td><code>{pid}</code></td><td>one per query tab</td></tr>
+      <tr><td><code>session:close</code></td><td><code>{sessionId}</code></td><td>void</td><td>rolls back</td></tr>
+      <tr><td><code>query:run</code></td><td><code>RunQueryRequest</code></td><td><code>{accepted: true}</code></td><td>results via <code>query:event</code></td></tr>
+      <tr><td><code>query:cancel</code></td><td><code>{runId}</code></td><td><code>{sent}</code></td><td><code>pg_cancel_backend</code></td></tr>
+      <tr><td><code>rows:fetch</code></td><td><code>FetchRowsRequest</code></td><td><code>RowsPage</code></td><td>keyset or offset</td></tr>
+      <tr><td><code>rows:count</code></td><td><code>CountRequest</code></td><td><code>CountResult</code></td><td>estimate + optional exact</td></tr>
+      <tr><td><code>rows:mutate</code></td><td><code>MutateRowsRequest</code></td><td><code>MutateRowsResult</code></td><td>one transaction, <code>dryRun</code></td></tr>
+      <tr><td><code>doclink:resolve</code></td><td><code>ResolveDocLinkRequest</code></td><td><code>DocLinkResolution</code></td><td></td></tr>
+      <tr><td><code>doclink:backlinks</code></td><td><code>BacklinksRequest</code></td><td><code>{accepted: true}</code></td><td>streams <code>doclink:backlinksEvent</code></td></tr>
+      <tr><td><code>doclink:cancelBacklinks</code></td><td><code>{jobId}</code></td><td>void</td><td></td></tr>
+      <tr><td><code>ddl:get</code></td><td><code>DdlRequest</code></td><td><code>{sql}</code></td><td></td></tr>
+      <tr><td><code>stats:overview</code></td><td><code>{connectionId}</code></td><td><code>ServerOverview</code></td><td></td></tr>
+      <tr><td><code>stats:cancelBackend</code></td><td><code>{connectionId, pid, terminate}</code></td><td><code>{ok}</code></td><td></td></tr>
+      <tr><td><code>settings:get</code> / <code>settings:set</code></td><td>— / <code>Partial&lt;AppSettings&gt;</code></td><td><code>AppSettings</code></td><td></td></tr>
+      <tr><td><code>workspace:load</code> / <code>workspace:save</code></td><td>— / <code>WorkspaceSnapshot</code></td><td><code>WorkspaceSnapshot | null</code> / void</td><td></td></tr>
+      <tr><td><code>history:list</code> / <code>history:clear</code></td><td><code>{connectionId?, search?, limit?}</code></td><td><code>HistoryEntry[]</code> / void</td><td></td></tr>
+      <tr><td><code>export:write</code></td><td><code>ExportRequest</code></td><td><code>{path} | null</code></td><td>save dialog</td></tr>
+      <tr><td><code>app:info</code> · <code>app:checkForUpdates</code> · <code>app:openExternal</code></td><td>— · — · <code>{url}</code></td><td><code>{version, electron, platform, dataDir}</code> · void · void</td><td>http(s) only</td></tr>
+    </tbody>
+  </table></div>
+  <table>
+    <thead><tr><th>Push channel</th><th>Payload</th></tr></thead>
+    <tbody>
+      <tr><td><code>query:event</code></td><td><code>QueryEvent</code> — start · fields · rows · statementDone · notice · error · cancelled · done</td></tr>
+      <tr><td><code>doclink:backlinksEvent</code></td><td><code>BacklinksEvent</code> — plan · group · done · cancelled</td></tr>
+      <tr><td><code>connections:event</code></td><td><code>{connectionId, type: connected|disconnected|poolError, error?}</code></td></tr>
+      <tr><td><code>catalog:invalidated</code></td><td><code>{connectionId, database, nodeId?}</code></td></tr>
+      <tr><td><code>app:updateEvent</code></td><td><code>{type: available|downloaded|error|none, version?, message?}</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Key types</h3>
+<pre><code>export type SslMode = 'disable' | 'require' | 'verify-full';
+export type EnvLabel = 'prod' | 'staging' | 'dev' | 'local';
+export interface ConnectionMeta {
+  id: string; name: string; host: string; port: number; user: string; defaultDatabase: string;
+  sslMode: SslMode; env: EnvLabel; color?: string; group?: string; readOnly: boolean;
+  poolMax: number; idleTimeoutMs: number; statementTimeoutMs: number; connectTimeoutMs: number;
+  hasPassword: boolean; createdAt: number; updatedAt: number;
+}
+export type ConnectionInput = Omit&lt;ConnectionMeta,'hasPassword'|'createdAt'|'updatedAt'|'id'&gt; &amp; { id?: string; password?: string };
+
+export interface PgErrorInfo {
+  message: string; code?: string; severity?: string; detail?: string; hint?: string;
+  position?: number; internalPosition?: number; internalQuery?: string; where?: string;
+  schema?: string; table?: string; column?: string; dataType?: string; constraint?: string;
+  statementIndex?: number; line?: number; col?: number;
+}
+export type JsonValue = string | number | boolean | null | JsonValue[] | { [k: string]: JsonValue };
+export const DEFAULT_SENTINEL = { __pguiDefault: true } as const;
+export type CellValue = JsonValue | typeof DEFAULT_SENTINEL;      // null === SQL NULL; int8/numeric/dates are strings
+export interface FieldInfo { name: string; dataTypeID: number; dataType: string; tableID: number; columnID: number }
+
+export interface RunQueryRequest {
+  runId: string; connectionId: string; database: string; sessionId?: string;
+  sql: string; mode: 'script' | 'single'; rowCap?: number; pageSize?: number;
+  continueOnError?: boolean; explain?: { analyze: boolean };
+}
+export type QueryEvent =
+  | { runId: string; type: 'start'; statementCount: number }
+  | { runId: string; type: 'fields'; statementIndex: number; fields: FieldInfo[]; statementText: string }
+  | { runId: string; type: 'rows'; statementIndex: number; rows: CellValue[][] }
+  | { runId: string; type: 'statementDone'; statementIndex: number; command: string; rowCount: number | null; truncated: boolean; durationMs: number }
+  | { runId: string; type: 'notice'; statementIndex: number; message: string; severity: string }
+  | { runId: string; type: 'error'; statementIndex: number; error: PgErrorInfo }
+  | { runId: string; type: 'cancelled' }
+  | { runId: string; type: 'done'; durationMs: number };
+
+export type FilterOp = 'eq'|'neq'|'lt'|'lte'|'gt'|'gte'|'like'|'ilike'|'in'|'isNull'|'isNotNull'|'contains'|'raw';
+export interface Filter { column: string; op: FilterOp; value?: JsonValue }
+export interface Sort { column: string; dir: 'asc'|'desc'; nullsFirst?: boolean }
+export interface FetchRowsRequest {
+  connectionId: string; database: string; schema: string; table: string;
+  columns?: string[]; filters: Filter[]; sort: Sort[]; limit: number;
+  page: { mode: 'offset'; offset: number } | { mode: 'keyset'; after: Record&lt;string, CellValue&gt; | null; before?: Record&lt;string, CellValue&gt; | null };
+}
+export interface RowsPage { fields: FieldInfo[]; rows: CellValue[][]; pkColumns: string[]; hasMore: boolean; sqlText: string; durationMs: number }
+export type RowOp =
+  | { op: 'update'; pk: Record&lt;string, CellValue&gt;; set: Record&lt;string, CellValue&gt; }
+  | { op: 'insert'; values: Record&lt;string, CellValue&gt; }
+  | { op: 'delete'; pk: Record&lt;string, CellValue&gt; };
+export interface MutateRowsRequest { connectionId: string; database: string; schema: string; table: string; ops: RowOp[]; dryRun?: boolean }
+export interface MutateRowsResult { ok: boolean; sqlText: string; results?: Array&lt;{ rowCount: number; returning?: CellValue[][]; fields?: FieldInfo[] }&gt;; error?: PgErrorInfo &amp; { opIndex: number } }
+
+export interface DocRef { raw: string; schemaHint: string | null; table: string; key: string }
+export interface DocTarget { schema: string; table: string; keyColumn: string; keyValue: string; rank: number;
+  reason: 'explicit'|'prefixedName'|'strippedName'|'searchPath'|'anySchema' }
+export type DocLinkResolution =
+  | { status: 'found'; target: DocTarget; row: Record&lt;string, CellValue&gt;; fields: FieldInfo[] }
+  | { status: 'ambiguous'; candidates: DocTarget[] }
+  | { status: 'notFound'; candidates: DocTarget[] }
+  | { status: 'invalid'; reason: string };
+export interface BacklinksRequest {
+  jobId: string; connectionId: string; database: string; target: DocTarget; row: Record&lt;string, CellValue&gt;;
+  scope: { mode: 'fkOnly' | 'sameSchema' | 'wholeDb' | 'tables'; tables?: Array&lt;{ schema: string; table: string }&gt; };
+  perTableLimit: number; perQueryTimeoutMs: number;
+}
+export type BacklinksEvent =
+  | { jobId: string; type: 'plan'; groups: Array&lt;{ via: 'fk'|'jsonb'|'text'|'array'; schema: string; table: string; column: string; constraint?: string }&gt; }
+  | { jobId: string; type: 'group'; via: 'fk'|'jsonb'|'text'|'array'; schema: string; table: string; column: string; constraint?: string;
+      count: number; rows: CellValue[][]; fields: FieldInfo[]; truncated: boolean; error?: PgErrorInfo }
+  | { jobId: string; type: 'done' | 'cancelled' };
+
+export interface ServerOverview {                       // abridged
+  connectionId: string; collectedAt: number;
+  server: { version: string; versionNum: number; startedAt: string; maxConnections: number; extensions: string[] };
+  databases: Array&lt;{ name: string; sizeBytes: string; backends: number; cacheHitRatio: number | null; deadlocks: string }&gt;;
+  activity: Array&lt;{ pid: number; user: string; database: string; app: string; client: string | null; state: string | null;
+    waitEventType: string | null; waitEvent: string | null; durationMs: number | null; query: string; blockedBy: number[] }&gt;;
+  locks: Array&lt;{ pid: number; locktype: string; mode: string; granted: boolean; relation: string | null; blockedBy: number[] }&gt;;
+  slowQueries: null | { source: 'pg_stat_statements'; byTotal: SlowQuery[]; byMean: SlowQuery[] };
+  replication: Array&lt;{ client: string | null; state: string; sentLsn: string; replayLsn: string; lagBytes: string | null }&gt;;
+}
+export interface AppSettings {
+  theme: 'dark'|'light'|'system'; density: 'compact'|'default'|'comfortable'; editorFontSize: number;
+  gridPageSize: 50|100|200|500|1000; queryRowCap: number; resultBytesCapMb: number; statementTimeoutMs: number;
+  showInternalSchemas: boolean; confirmOnEnv: EnvLabel[]; typedConfirmOnProd: boolean; warnNoWhere: boolean;
+  backlinkScopeDefault: BacklinksRequest['scope']['mode']; linkFkColumns: boolean; linkUnresolved: boolean;
+  historyRetentionDays: number; historyMax: number; autoUpdate: boolean;
+}
+export interface WorkspaceSnapshot { version: 1; tabs: Tab[]; activeTabId: string | null;
+  sidebar: { width: number; expandedNodeIds: string[]; activeConnectionId: string | null } }
+export interface HistoryEntry { id: string; connectionId: string; database: string; sql: string; startedAt: number;
+  durationMs: number; rowCount: number | null; status: 'ok'|'error'|'cancelled'; errorCode?: string }</code></pre>
+  <div class="callout info"><span class="t">Row encoding.</span><span>Rows are sent as arrays with a separate <code>fields</code> list, so duplicate or unnamed columns (<code>?column?</code>) never collide and there is no scalar shape-shifting.</span></div>
+</section>
+
+<!-- ============================================================ 8 -->
+<section id="s8">
+  <div class="sec-h"><span class="num">08</span><h2>Data models</h2></div>
+  <h3>ConnectionMeta</h3>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>uuid</td><td>generated</td><td>stable key for pools, tabs, vault</td></tr>
+      <tr><td><code>name</code></td><td>string</td><td>—</td><td>unique, required</td></tr>
+      <tr><td><code>host</code> / <code>port</code></td><td>string / 1–65535</td><td>— / 5432</td><td>Tailscale hostname allowed</td></tr>
+      <tr><td><code>user</code> / <code>defaultDatabase</code></td><td>string</td><td>postgres / postgres</td><td></td></tr>
+      <tr><td><code>sslMode</code></td><td>disable | require | verify-full</td><td>require</td><td>CA file path when verify-full</td></tr>
+      <tr><td><code>env</code></td><td>prod | staging | dev | local</td><td>dev</td><td>drives badge colour and confirmation rules</td></tr>
+      <tr><td><code>group</code> / <code>color</code></td><td>string?</td><td>—</td><td>sidebar grouping; colour override</td></tr>
+      <tr><td><code>readOnly</code></td><td>boolean</td><td>false</td><td><code>default_transaction_read_only</code></td></tr>
+      <tr><td><code>poolMax</code> / <code>idleTimeoutMs</code></td><td>number</td><td>4 / 30 000</td><td></td></tr>
+      <tr><td><code>statementTimeoutMs</code> / <code>connectTimeoutMs</code></td><td>number</td><td>0 / 10 000</td><td>0 = none</td></tr>
+      <tr><td><code>hasPassword</code></td><td>boolean</td><td>—</td><td>derived from the vault; "ask every time" when false</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Catalog node kinds</h3>
+  <p><code>connection · database · schema · tablesGroup · viewsGroup · functionsGroup · typesGroup · sequencesGroup · table · view · matview · foreignTable · partitionedTable · columnsGroup · column · indexesGroup · index · constraintsGroup · constraint · triggersGroup · trigger · function · procedure · sequence · type · extension</code>. Node ids are encoded by <code>shared/catalog/nodeId.ts</code> as <code>conn/db/kind/schema/name[/child]</code> and round-trip losslessly.</p>
+
+  <h3>Tabs</h3>
+  <table>
+    <thead><tr><th>Kind</th><th>Params</th><th>Id scheme</th></tr></thead>
+    <tbody>
+      <tr><td><code>query</code></td><td>connectionId, database, sessionId, sql, name?</td><td><code>query:{uuid}</code></td></tr>
+      <tr><td><code>table-data</code></td><td>connectionId, database, schema, table, filters, sort, page</td><td><code>table-data:{conn}/{db}/{schema}/{table}</code> (+ filter hash for backlink views)</td></tr>
+      <tr><td><code>table-structure</code></td><td>… , section</td><td><code>table-structure:{conn}/{db}/{schema}/{table}</code></td></tr>
+      <tr><td><code>document</code></td><td>connectionId, database, history: DocTarget[], index, view</td><td><code>document:{conn}/{db}/{schema}/{table}/{key}</code></td></tr>
+      <tr><td><code>server-overview</code></td><td>connectionId | 'all'</td><td><code>server-overview:{conn|all}</code></td></tr>
+      <tr><td><code>ddl-preview</code></td><td>connectionId, database, ddl: DdlRequest</td><td><code>ddl-preview:{…}</code></td></tr>
+      <tr><td><code>function</code></td><td>connectionId, database, schema, name, args</td><td><code>function:{…}</code></td></tr>
+      <tr><td><code>connections</code> / <code>settings</code></td><td>—</td><td>singleton ids</td></tr>
+    </tbody>
+  </table>
+  <p>A <code>Tab</code> is <code>{ id, kind, title, params, dirty, pinned, createdAt }</code> — plain data. Components are looked up in <code>tabs/registry.tsx</code> by <code>kind</code>. Transient runtime (result sets, edit buffers, scroll) lives in <code>ui.tabRuntime</code> and is never persisted.</p>
+
+  <h3>AppSettings defaults</h3>
+  <table>
+    <thead><tr><th>Setting</th><th>Default</th></tr></thead>
+    <tbody>
+      <tr><td>theme / density / editorFontSize</td><td>system / default / 13</td></tr>
+      <tr><td>gridPageSize / queryRowCap / resultBytesCapMb</td><td>100 / 10 000 / 64</td></tr>
+      <tr><td>statementTimeoutMs</td><td>0</td></tr>
+      <tr><td>showInternalSchemas</td><td>false</td></tr>
+      <tr><td>confirmOnEnv / typedConfirmOnProd / warnNoWhere</td><td>[prod] / true / true</td></tr>
+      <tr><td>backlinkScopeDefault / linkFkColumns / linkUnresolved</td><td>sameSchema / true / false</td></tr>
+      <tr><td>historyRetentionDays / historyMax / autoUpdate</td><td>30 / 5 000 / true</td></tr>
+    </tbody>
+  </table>
+
+  <h3>CellValue rules</h3>
+  <ul>
+    <li><code>null</code> is SQL NULL. An empty string is <code>''</code>. A JSON <code>null</code> inside a <code>jsonb</code> column is distinguishable by the field's <code>dataType</code>.</li>
+    <li><code>int8</code>, <code>numeric</code>, <code>money</code>, dates, times, intervals and their arrays arrive and are sent as strings; the renderer never converts them to <code>Number</code>.</li>
+    <li><code>DEFAULT_SENTINEL</code> in an insert/update value renders the SQL keyword <code>DEFAULT</code> and consumes no parameter.</li>
+    <li><code>bytea</code> is a <code>\x…</code> hex string with its byte length shown in the UI.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 9 -->
+<section id="s9">
+  <div class="sec-h"><span class="num">09</span><h2>Document link resolver</h2></div>
+  <p>The resolver is one algorithm in three pure functions (<code>shared/doclink/*</code>) plus one
+  main-process lookup. Every surface — grid cell, JSON tree, Monaco JSON/SQL link providers, the
+  command palette's <code>#</code> mode — uses the same <code>useDocLinks()</code> hook, so a value
+  behaves identically wherever it appears.</p>
+
+  <h3>Grammar</h3>
+<pre><code>^(?:(?&lt;schema&gt;[A-Za-z_][A-Za-z0-9_]{0,62})\.)?(?&lt;table&gt;[A-Za-z_][A-Za-z0-9_]{0,62})\/(?&lt;key&gt;[A-Za-z0-9_\-:.@()+,=;$!*'%]{1,254})$
+// exactly one "/", no whitespace, length ≤ 320, input must be a string
+// key charset = ArangoDB _key charset (int, uuid and text keys all pass)</code></pre>
+  <p><code>parseDocRef('users/42')</code> succeeds without an underscore. <code>findDocRefs(json)</code> walks
+  objects and arrays (depth ≤ 32, ≤ 500 refs) and returns <code>[{path, ref}]</code> for string leaves
+  only — keys are never linkified.</p>
+
+  <div class="flow"><span>parseDocRef</span><i>→</i><span>rankCandidates (CompletionIndex)</span><i>→</i><span>pick key column</span><i>→</i><span>SELECT … WHERE key = $1 LIMIT 2</span><i>→</i><span>found / ambiguous / notFound</span><i>→</i><span>openTab(document)</span></div>
+
+  <h3>Candidate ranking</h3>
+  <table>
+    <thead><tr><th>Rank</th><th>Reason</th><th>Rule</th><th>Example (schemas <code>sales</code>, <code>public</code>; search_path <code>public</code>)</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>explicit</td><td><code>schemaHint.table</code> exists</td><td><code>sales.customer/1</code> → <code>sales.customer</code></td></tr>
+      <tr><td>1</td><td>prefixedName</td><td>for each schema <code>s</code> (longest first) where <code>table</code> starts with <code>s_</code>: <code>(s, table)</code> exists</td><td><code>sales_customer/42</code> → <code>sales.sales_customer</code> (the fleet convention)</td></tr>
+      <tr><td>2</td><td>strippedName</td><td>same prefix, relation <code>(s, table without prefix)</code> exists</td><td><code>sales_customer/42</code> → <code>sales.customer</code> when that exists instead</td></tr>
+      <tr><td>3</td><td>searchPath</td><td><code>(s, table)</code> for <code>s</code> in <code>search_path</code> (<code>$user</code> expanded, <code>public</code> appended)</td><td><code>users/…</code> → <code>public.users</code></td></tr>
+      <tr><td>4</td><td>anySchema</td><td>any other schema with a relation named <code>table</code></td><td><code>dup/1</code> with <code>a.dup</code> and <code>b.dup</code> → <strong>ambiguous</strong></td></tr>
+    </tbody>
+  </table>
+  <p>Only tables, partitioned tables, views, materialized views and foreign tables are candidates.
+  If the best rank has more than one candidate the result is <code>ambiguous</code> unless a
+  <code>preferred</code> target (for example the FK's referenced table) matches one. Results are
+  memoised per <code>(connection, database, raw)</code> and cleared on <code>catalog:invalidated</code>.</p>
+
+  <h3>Key column</h3>
+  <ol>
+    <li>A column named <code>_id</code> → compare the full raw string (also try the alternate form with/without schema prefix).</li>
+    <li>Else a single-column primary key → compare <code>key</code>; skip the candidate if the PK type is integer-like and the key is not <code>^-?\d+$</code>, or uuid and the key is not a UUID.</li>
+    <li>Else a column named <code>id</code> with the same type rules.</li>
+    <li>Composite primary key without <code>_id</code>/<code>id</code> → not a string-link target (FK-derived links still work with all key columns).</li>
+  </ol>
+<pre><code>SELECT * FROM %I.%I WHERE %I::text = $1 LIMIT 2;   -- identifiers via pg-format %I, value via $1
+-- 1 row → found · 2 rows → ambiguous (data level) · 0 rows → next candidate of the same rank, then notFound</code></pre>
+
+  <h3>Backlinks</h3>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Source</th><th>Column types</th><th>Query</th><th>When</th></tr></thead>
+    <tbody>
+      <tr><td>FK</td><td>constraints with <code>confrelid = target</code> (constraint index, one <code>pg_constraint</code> query per db)</td><td><code>SELECT * FROM %I.%I WHERE (%I, …) = ($1, …) LIMIT $n</code></td><td>always, first</td></tr>
+      <tr><td>jsonb</td><td><code>jsonb</code>, <code>json</code> (cast)</td><td><code>WHERE jsonb_path_exists(%I, '$.** ? (@ == $ref)', jsonb_build_object('ref', $1::text))</code></td><td>scope ≥ sameSchema</td></tr>
+      <tr><td>text</td><td><code>text</code>, <code>varchar</code>, <code>citext</code></td><td><code>WHERE %I IN ($1, $2)</code> (raw and alternate form)</td><td>scope ≥ sameSchema</td></tr>
+      <tr><td>array</td><td><code>text[]</code>, <code>varchar[]</code></td><td><code>WHERE $1 = ANY(%I)</code></td><td>scope ≥ sameSchema</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li>A <code>plan</code> event is emitted first so the UI can show every group with a spinner; groups run sequentially (FK, then the target's schema, then others) inside a read-only transaction with <code>SET LOCAL statement_timeout = $perQueryTimeoutMs</code> (default 5 s), <code>LIMIT perTableLimit + 1</code> to detect truncation.</li>
+    <li>Scopes: <code>fkOnly</code> (instant), <code>sameSchema</code> (default), <code>wholeDb</code> (explicit Scan button with per-table progress), <code>tables</code> (explicit list). Cancel uses <code>pg_cancel_backend</code>.</li>
+    <li>Value scans are sequential scans; a GIN index is suggested in the UI only when the user opts in — no automatic DDL.</li>
+  </ul>
+
+  <h3>FK-derived chips</h3>
+  <p>When a column is the sole column of a foreign key, its cells render as chips labelled <code>{ref_table}/{value}</code> in the dashed "derived" style and open the referenced row directly. This keeps plain <code>customer_id = 42</code> navigable on tables without <code>_id</code>.</p>
+
+  <h3>Shared consumer contract</h3>
+<pre><code>export function useDocLinks(): {
+  isRef(value: unknown): DocRef | null;                  // parseDocRef + memo
+  candidates(ref: DocRef): DocTarget[];                   // rankCandidates against catalog.completionIndex
+  open(ref: DocRef, opts?: { fromTabId?: string; preferred?: { schema: string; table: string }; newTab?: boolean; peek?: boolean }): Promise&lt;void&gt;;
+  // found     → workspace.openTab({ kind: 'document', … }, { reuse: !newTab }) or navigate in place when fromTabId is a document tab
+  // ambiguous → ui.openPicker(candidates)
+  // notFound  → chip enters the broken state; toast lists the candidates tried
+}</code></pre>
+</section>
+
+<!-- ============================================================ 10 -->
+<section id="s10">
+  <div class="sec-h"><span class="num">10</span><h2>UX summary</h2></div>
+  <p>The full UX specification is carried by the mockups. This section fixes the structural rules the
+  implementation must respect.</p>
+  <table>
+    <thead><tr><th>Mockup</th><th>Shows</th></tr></thead>
+    <tbody>
+      <tr><td><a href="../designs/01-shell-welcome.html">01 Shell &amp; welcome</a></td><td>Title bar, sidebar tree with env badges, tab strip, status bar, empty workspace with real shortcuts</td></tr>
+      <tr><td><a href="../designs/02-connections.html">02 Connections</a></td><td>Master–detail manager, Test states, URI import, keychain note</td></tr>
+      <tr><td><a href="../designs/03-server-overview.html">03 Server overview</a></td><td>KPIs, databases, sessions with cancel/terminate, locks, slow queries</td></tr>
+      <tr><td><a href="../designs/04-query-editor.html">04 Query editor</a></td><td>Toolbar, error squiggle, multi-result tabs, structured error card</td></tr>
+      <tr><td><a href="../designs/05-table-data.html">05 Table data</a></td><td>Filter chips, typed cells, link chips, pending edits, server-side pager</td></tr>
+      <tr><td><a href="../designs/06-table-structure.html">06 Table structure</a></td><td>Columns/indexes/constraints/triggers/relations/DDL, pending ALTER</td></tr>
+      <tr><td><a href="../designs/07-document-view.html">07 Document view</a></td><td>Breadcrumb, history, tree/JSON, hover card, references, backlinks</td></tr>
+      <tr><td><a href="../designs/08-dialogs-palette-settings.html">08 Dialogs, palette, settings</a></td><td>Typed confirm, light confirm, palette modes, shortcut sheet, settings</td></tr>
+      <tr><td><a href="../designs/tokens.html">Tokens</a> · <a href="../designs/index.html">Gallery</a></td><td>Colours, env colours, data-type rendering, typography, chip states</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Shell</h3>
+  <p>Title bar 38 px (traffic lights, active-tab breadcrumb, ⌘K pill, sidebar/inspector/theme/settings buttons) · sidebar 280 px (200–520, ⌘B) · tab strip 34 px · status bar 24 px (connection chip with env badge, database, transaction state with Commit/Rollback, transient message, row count, timing, cursor, running-queries spinner) · optional inspector 320 px (⌘I). Layout is persisted by main.</p>
+
+  <h3>Sidebar node hierarchy and lazy loading</h3>
+  <table>
+    <thead><tr><th>Level</th><th>Children loaded when</th><th>Query</th></tr></thead>
+    <tbody>
+      <tr><td>Group</td><td>local only</td><td>—</td></tr>
+      <tr><td>Server</td><td>on connect</td><td><code>pg_database</code> (non-template, <code>datallowconn</code>) with sizes where permitted</td></tr>
+      <tr><td>Database</td><td>on expand (opens the pool)</td><td><code>pg_namespace</code> + extensions + <code>search_path</code></td></tr>
+      <tr><td>Schema</td><td>on expand</td><td>one counts query for the folders</td></tr>
+      <tr><td>Folder</td><td>on expand</td><td>names + <code>reltuples</code> + <code>pg_total_relation_size</code></td></tr>
+      <tr><td>Table</td><td>on expand</td><td>columns / indexes / constraints / triggers, each lazily</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Tab keys</h3>
+<pre><code>query:{uuid}                                   connections           settings
+server-overview:{conn|all}                     table-data:{conn}/{db}/{schema}.{table}[?f={filterHash}]
+table-structure:{conn}/{db}/{schema}.{table}   document:{conn}/{db}/{schema}.{table}/{pkJson}</code></pre>
+
+  <h3>Context-menu action classes</h3>
+  <p><b>DX</b> runs immediately with a toast (Refresh, Set read-only, Refresh matview). <b>DDL</b> opens generated SQL in a query tab for the user to run (Create view, Generate SELECT/INSERT). <b>CF</b> opens the confirm dialog showing the SQL and executes on confirm (Drop, Truncate, Rename, Apply pending changes, Terminate backend). Example — table node: Open data · Open structure · Open document by id… · New query with SELECT (DDL) · Generate SQL ▸ (DDL) · Copy name · Copy qualified name · Export data… · Import from CSV… · Rename… (CF) · Truncate (CF) · Drop (CF) · Refresh (DX) · Properties.</p>
+
+  <h3>Keyboard shortcuts</h3>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Action</th><th>macOS</th><th>Windows / Linux</th></tr></thead>
+    <tbody>
+      <tr><td>Command palette / Open table / Go to document / Shortcut list</td><td>⌘K / ⌘P / ⌘⇧D / ⌘/</td><td>Ctrl+K / Ctrl+P / Ctrl+Shift+D / Ctrl+/</td></tr>
+      <tr><td>New query / Close tab / Reopen closed / Tabs 1–9</td><td>⌘N / ⌘W / ⌘⇧T / ⌘1–9</td><td>Ctrl+N / Ctrl+W / Ctrl+Shift+T / Alt+1–9</td></tr>
+      <tr><td>Next / previous tab</td><td>⌃Tab / ⌃⇧Tab</td><td>Ctrl+Tab / Ctrl+Shift+Tab</td></tr>
+      <tr><td>Toggle sidebar / inspector · Focus tree filter / tree / editor</td><td>⌘B / ⌘I · ⌘⇧F / ⌘0 / ⌘1</td><td>Ctrl+B / Ctrl+I · Ctrl+Shift+F / Ctrl+0 / Ctrl+1</td></tr>
+      <tr><td>Run all / Run selection or statement / Explain / Cancel</td><td>⌘↵ / ⌘⇧↵ / ⌘E / ⌘. or Esc</td><td>Ctrl+Enter / Ctrl+Shift+Enter / Ctrl+E / Ctrl+.</td></tr>
+      <tr><td>Format (in editor) / Toggle comment / Save·Apply / Discard</td><td>⌘⇧F / ⌘/ / ⌘S / ⌘⇧Z</td><td>Ctrl+Shift+F / Ctrl+/ / Ctrl+S / Ctrl+Shift+Z</td></tr>
+      <tr><td>History / Refresh tab</td><td>⌘⇧H / ⌘R</td><td>Ctrl+Shift+H / F5</td></tr>
+      <tr><td>Grid: next/prev page · add row · delete selected · set NULL</td><td>⌘⌥↓/↑ · ⌘⇧N · ⌘⌫ · ⌘⇧⌫</td><td>Ctrl+Alt+Down/Up · Ctrl+Shift+N · Ctrl+Delete · Ctrl+Shift+Delete</td></tr>
+      <tr><td>Grid: edit / commit / cancel · copy cell / row JSON · filter bar</td><td>Enter or F2 / Enter,Tab / Esc · ⌘C / ⌘⇧C · ⌘F</td><td>same · Ctrl+C / Ctrl+Shift+C · Ctrl+F</td></tr>
+      <tr><td>Document: back / forward · Tree/JSON · open in table</td><td>⌘[ / ⌘] · ⌘⇧J · ⌘⇧O</td><td>Alt+Left / Alt+Right · Ctrl+Shift+J · Ctrl+Shift+O</td></tr>
+      <tr><td>Link: open / new tab / peek</td><td>click, ↵ / ⌘-click, ⌘↵, middle / ⇧-click</td><td>click / Ctrl+click, middle / Shift+click</td></tr>
+      <tr><td>Tree: expand/collapse · open data · structure · drop · rename</td><td>→ ← · ↵ · ⌘↵ · ⌫ · F2</td><td>Right Left · Enter · Ctrl+Enter · Delete · F2</td></tr>
+      <tr><td>Connect/disconnect selected · Settings · Toggle theme</td><td>⌘⇧C · ⌘, · ⌘⇧L</td><td>Ctrl+Shift+C · Ctrl+, · Ctrl+Shift+L</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">Shortcuts are scoped by focus (editor &gt; grid &gt; tree &gt; global); the palette shows the effective binding.</p>
+
+  <h3>State rules</h3>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Surface</th><th>Empty</th><th>Loading</th><th>Error</th></tr></thead>
+    <tbody>
+      <tr><td>Sidebar tree</td><td>"No connections" + New connection</td><td>spinner in the node's chevron slot, never a full overlay</td><td>red icon on the node, tooltip, Retry item</td></tr>
+      <tr><td>Server overview</td><td>per-card "No data"</td><td>per-card skeleton; refreshes show a 1 px progress line only</td><td>per-card message + Retry; missing extension → hint card with SQL</td></tr>
+      <tr><td>Query results</td><td>"No rows" + command tag</td><td>10-row skeleton, Run disabled, elapsed timer</td><td>Messages selected, error card, editor squiggle</td></tr>
+      <tr><td>Table data</td><td>"Table is empty" / "No rows match · Clear filters"</td><td>skeleton rows keeping widths; pager disabled</td><td>red bar above grid + Retry; last rows greyed</td></tr>
+      <tr><td>Document</td><td>full-tab "Row not found" with Open table / Close</td><td>header immediately, body skeleton, panels independent</td><td>full-tab error with Retry / Close; save errors inline</td></tr>
+      <tr><td>Backlinks</td><td>"No references in scope · Widen scope"</td><td>progressive list + progress text + Cancel</td><td>per-row "?" with retry tooltip</td></tr>
+      <tr><td>Confirm dialog</td><td>—</td><td>dependents skeleton; executing locks the dialog</td><td>error card inside the dialog; stays open</td></tr>
+      <tr><td>Global</td><td>—</td><td>shell first, tabs hibernated</td><td>error boundary per tab: "This tab crashed" + Reload + Copy error</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Link chip states</h3>
+  <ul>
+    <li><b>Normal</b> — monospace, table icon, schema prefix muted, tinted background, dotted underline on hover.</li>
+    <li><b>Derived (FK)</b> — same shape, no background, dashed border, link icon.</li>
+    <li><b>Broken</b> — dashed red border, unlink icon, muted text, tooltip "sales.customer/42 not found".</li>
+    <li>Arrays of links wrap in trees and show a <code>+N</code> overflow badge in grid cells.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 11 -->
+<section id="s11">
+  <div class="sec-h"><span class="num">11</span><h2>Correctness properties &amp; testing</h2></div>
+  <p>Each property is a test target; <span class="tag">UT</span> = vitest unit test on a pure module,
+  <span class="tag">IT</span> = vitest integration test against the Docker PostgreSQL 16 seed.</p>
+  <div class="cards">
+    <div class="card property" id="prop-01"><span class="id">PROP-01 <span class="tag">UT</span></span><h3>parseDocRef accepts the fleet forms</h3><p><code>sales_customer/42</code> → table <code>sales_customer</code>, key <code>42</code>; <code>users/42</code> succeeds; <code>sales.sales_customer/42</code> sets <code>schemaHint</code>.</p><span class="cite">US-19 · P4.1</span></div>
+    <div class="card property" id="prop-02"><span class="id">PROP-02 <span class="tag">UT</span></span><h3>parseDocRef rejects non-refs</h3><p><code>''</code>, <code>a/b/c</code>, <code>/42</code>, <code>x/</code>, <code>http://h/p</code>, <code>a b/1</code>, <code>1abc/2</code>, non-strings, identifiers &gt; 63 chars, keys &gt; 254 chars or outside the key charset.</p><span class="cite">US-19 · P4.1</span></div>
+    <div class="card property" id="prop-03"><span class="id">PROP-03 <span class="tag">UT</span></span><h3>Raw reconstruction</h3><p>For every accepted input, <code>raw === (schemaHint ? schemaHint + '.' : '') + table + '/' + key</code>.</p><span class="cite">P4.1</span></div>
+    <div class="card property" id="prop-04"><span class="id">PROP-04 <span class="tag">UT</span></span><h3>findDocRefs is deep and key-blind</h3><p>Finds refs at any depth in arrays and objects, never in keys, and returns paths that index back to the same string.</p><span class="cite">US-19 · P4.1</span></div>
+    <div class="card property" id="prop-05"><span class="id">PROP-05 <span class="tag">UT</span></span><h3>Ranking fixtures</h3><p>With <code>{sales.sales_customer, public.customer, sales.customer}</code> and search_path <code>[public]</code>: <code>sales_customer/1</code> → prefixedName; <code>customer/1</code> → searchPath then anySchema; <code>sales.customer/1</code> → explicit; <code>{a.dup, b.dup}</code> → ambiguous; the longest schema prefix wins when <code>s</code> and <code>s_x</code> both exist.</p><span class="cite">US-20 · P4.1</span></div>
+    <div class="card property" id="prop-06"><span class="id">PROP-06 <span class="tag">UT</span></span><h3>Identifiers only through %I</h3><p>For names <code>a"b</code>, <code>Select</code>, <code>naïve</code>, <code>x y</code> the generated text contains <code>"a""b"</code>, <code>"Select"</code>, <code>"naïve"</code>, <code>"x y"</code> and never the raw name unquoted.</p><span class="cite">US-17 · P5.1</span></div>
+    <div class="card property" id="prop-07"><span class="id">PROP-07 <span class="tag">UT</span></span><h3>Values only through $n</h3><p>No user value appears in <code>text</code>; all values are in <code>values</code> referenced as <code>$1..$n</code> in order with no gaps.</p><span class="cite">US-15 · US-17 · P5.1</span></div>
+    <div class="card property" id="prop-08"><span class="id">PROP-08 <span class="tag">UT</span></span><h3>DEFAULT and NULL</h3><p><code>DEFAULT_SENTINEL</code> renders the keyword and consumes no parameter; <code>null</code> renders as <code>$n</code> with value null; an <code>eq null</code> filter is rewritten to <code>IS NULL</code>, so <code>= NULL</code> is never generated.</p><span class="cite">US-17 · P5.1</span></div>
+    <div class="card property" id="prop-09"><span class="id">PROP-09 <span class="tag">UT</span></span><h3>Keyset comparisons</h3><p>After <code>{id: '10'}</code> with sort <code>[id asc]</code> → <code>WHERE ("id") &gt; ($1)</code>; composite → <code>WHERE ("a","b") &gt; ($1,$2)</code>; <code>before</code> flips the comparison and order, and rows are re-reversed.</p><span class="cite">US-15 · P5.1</span></div>
+    <div class="card property" id="prop-10"><span class="id">PROP-10 <span class="tag">UT</span></span><h3>Writes always by full PK</h3><p><code>buildUpdate</code>/<code>buildDelete</code> target rows by all PK columns; a missing PK column throws — never a WHERE-less UPDATE/DELETE.</p><span class="cite">US-17 · US-33 · P5.1</span></div>
+    <div class="card property" id="prop-11"><span class="id">PROP-11 <span class="tag">IT</span></span><h3>NULL round-trip</h3><p>Insert <code>{t: null, t2: '', j: null, j2: 'null'::jsonb}</code> via <code>rows:mutate</code>; <code>rows:fetch</code> returns <code>null</code>, <code>''</code>, <code>null</code> and JSON null distinguishable by field type; the grid renders NULL badge vs <code>""</code>.</p><span class="cite">US-16 · P5.2</span></div>
+    <div class="card property" id="prop-12"><span class="id">PROP-12 <span class="tag">IT</span></span><h3>Numeric precision</h3><p><code>9007199254740993::int8</code>, <code>0.1::numeric + 0.2::numeric</code>, <code>12345678901234567890.123456789::numeric(30,9)</code> arrive as exact strings; editing a <code>numeric(30,10)</code> cell with <code>1.0000000001</code> and re-fetching yields the same string; CSV/JSON export emits them verbatim.</p><span class="cite">US-16 · US-18 · P1.3 · P5.5</span></div>
+    <div class="card property" id="prop-13"><span class="id">PROP-13 <span class="tag">IT</span></span><h3>Array element parsing</h3><p><code>'{9007199254740993}'::int8[]</code> → <code>['9007199254740993']</code>.</p><span class="cite">P1.3</span></div>
+    <div class="card property" id="prop-14"><span class="id">PROP-14 <span class="tag">UT</span></span><h3>Workspace round-trip</h3><p><code>JSON.parse(JSON.stringify(snapshot))</code> deep-equals the snapshot and contains no functions or React elements; restore(load(save(s))) yields identical tabs, active tab and expanded nodes; opening document key 42 twice yields one tab, key 43 a second.</p><span class="cite">US-28 · P2.1</span></div>
+    <div class="card property" id="prop-15"><span class="id">PROP-15 <span class="tag">IT</span></span><h3>Registry lifecycle</h3><p>Same <code>(connection, database)</code> → same Pool; different databases → different pools; disconnect ends all backends with <code>application_name = 'pgui'</code> within 1 s; <code>closeAll()</code> resolves within 2 s even with a busy client; a pool <code>error</code> emits an event and never throws; delete removes the vault entry.</p><span class="cite">US-03 · US-34 · P1.3</span></div>
+    <div class="card property" id="prop-16"><span class="id">PROP-16 <span class="tag">IT</span></span><h3>Session persistence</h3><p><code>BEGIN</code> persists across two runs on the same <code>sessionId</code> and is rolled back on <code>session:close</code>; a dead session reconnects transparently and reports the reset.</p><span class="cite">US-13 · P3.1</span></div>
+    <div class="card property" id="prop-17"><span class="id">PROP-17 <span class="tag">IT</span></span><h3>Runner event ordering</h3><p>Events are strictly <code>start → (fields? → rows* → statementDone | error)+ → done | cancelled</code>; every <code>rows</code> follows a <code>fields</code> with the same index; total rows ≤ cap; <code>truncated</code> iff the cap was hit.</p><span class="cite">US-09 · US-10 · P3.1</span></div>
+  </div>
+
+  <h3>Testing strategy</h3>
+  <ul>
+    <li><b>Unit (vitest, node)</b>: <code>shared/*</code> (parser, ranker, splitter, nodeId, quote), <code>main/sql/*</code> builders, <code>main/db/pgError.ts</code>, <code>CredentialVault</code> with a fake <code>safeStorage</code>, workspace slice.</li>
+    <li><b>Integration (vitest, Docker PostgreSQL 16)</b>: <code>docker compose -f docker-compose.test.yml up -d</code>, seed below; registry, catalog queries, runner cases, resolver, backlinks, rows fetch/mutate, DdlService, StatsService. Skipped when <code>PG_TEST_URL</code> is unset.</li>
+    <li><b>Manual</b>: <code>yarn dev</code> checks listed per task in <a href="plan.html">plan.html</a>; fleet checks over Tailscale for Phase 6.</li>
+  </ul>
+<pre><code>-- tests/integration/seed.sql
+CREATE SCHEMA sales;
+CREATE TABLE sales.sales_customer (
+  id serial PRIMARY KEY,
+  _id text GENERATED ALWAYS AS ('sales_customer/' || id) STORED,
+  name text, meta jsonb);
+CREATE TABLE sales.sales_order (
+  id serial PRIMARY KEY,
+  _id text GENERATED ALWAYS AS ('sales_order/' || id) STORED,
+  customer_id int REFERENCES sales.sales_customer(id),
+  customer_ref text,            -- 'sales_customer/1'
+  payload jsonb);               -- {"refs": ["sales_customer/1"], "owner": "users/…"}
+CREATE TABLE public.users (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  _id text GENERATED ALWAYS AS ('users/' || id::text) STORED,
+  email text);
+CREATE TABLE public.big (id bigserial PRIMARY KEY, n numeric(30,10), b bigint, j jsonb);
+INSERT INTO public.big (n, b, j) SELECT g * 1.0000000001, 9007199254740993 + g, jsonb_build_object('g', g) FROM generate_series(1, 1000000) g;
+-- plus tests/integration/manyTables.sql: 2,000 generated tables for the catalog NFR</code></pre>
+</section>
+
+<!-- ============================================================ 12 -->
+<section id="s12">
+  <div class="sec-h"><span class="num">12</span><h2>Non-functional requirements</h2></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Requirement</th><th>Target</th><th>How it is met / measured</th></tr></thead>
+    <tbody>
+      <tr><td>Browse a 1,000,000-row table</td><td>first page &lt; 300 ms; 60 fps scroll; no main-thread stall &gt; 50 ms</td><td>keyset paging, 100–200-row pages, virtualised grid; IT timing on <code>public.big</code>; React Profiler</td></tr>
+      <tr><td>Ad-hoc <code>SELECT *</code> over 1M rows</td><td>streams; stops at 10,000 rows (configurable to 200,000) or 64 MB; UI responsive</td><td>pg-cursor pages, cap events, batched appends with <code>startTransition</code></td></tr>
+      <tr><td>Catalog for 2,000 tables</td><td>tree usable &lt; 2 s after connect; node expand &lt; 300 ms warm</td><td>lazy per-node queries; CompletionIndex in background; IT with <code>manyTables.sql</code></td></tr>
+      <tr><td>Query cancel</td><td>cancelled event &lt; 500 ms after click</td><td><code>pg_cancel_backend</code> on a separate client; IT asserts</td></tr>
+      <tr><td>Memory</td><td>per-tab buffers ≤ cap; renderer heap &lt; 1 GB with 10 result tabs</td><td>caps enforced in main; runtime dropped on tab close</td></tr>
+      <tr><td>Startup</td><td>window &lt; 1 s; interactive with workspace restored &lt; 2 s</td><td>no auto-connect; Monaco lazy; timestamps logged in dev</td></tr>
+      <tr><td>Credentials</td><td>zero plaintext passwords on disk; none in IPC responses or renderer store</td><td>CredentialVault; grep of the data dir in tests; <code>ConnectionMeta</code> has no password field</td></tr>
+      <tr><td>Backlinks</td><td>never blocks; ≤ 5 s per group; cancellable</td><td><code>SET LOCAL statement_timeout</code>, streamed groups</td></tr>
+      <tr><td>Overview polling</td><td>≤ 1 batch / 5 s / visible tab; ≤ 5 s server time each</td><td>visibility check; per-query timeout</td></tr>
+      <tr><td>Security</td><td>sandbox, contextIsolation, no nodeIntegration, strict CSP, navigation blocked, single instance</td><td>Phase 0 acceptance checks in DevTools</td></tr>
+      <tr><td>Robustness</td><td>pool errors never crash main; renderer errors contained per tab; pools closed on quit</td><td><code>pool.on('error')</code>, error boundary per tab, <code>before-quit</code> <code>closeAll</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============================================================ 13 -->
+<section id="s13">
+  <div class="sec-h"><span class="num">13</span><h2>Technical decisions</h2></div>
+  <div class="cards">
+    <div class="card decision"><h3>Paging for table data</h3><p><b>Chosen:</b> keyset when the sort equals the PK, offset otherwise.<br><b>Alternatives:</b> offset only; server cursor held per tab.<br><b>Why:</b> keyset is O(page) on 1M rows for the default browse; offset is fine for ad-hoc sorts and avoids holding cursors across IPC and time.</p></div>
+    <div class="card decision"><h3>Ad-hoc query results</h3><p><b>Chosen:</b> <code>pg-cursor</code> streaming, 500-row pages, row and byte caps.<br><b>Alternatives:</b> LIMIT injection; <code>pg-query-stream</code>.<br><b>Why:</b> works for any SELECT/RETURNING without rewriting user SQL; caps bound memory.</p></div>
+    <div class="card decision"><h3>Cancel</h3><p><b>Chosen:</b> <code>pg_cancel_backend(pid)</code> from a second client.<br><b>Alternatives:</b> destroy the socket.<br><b>Why:</b> clean server-side cancel keeps the session (transaction, temp tables) alive.</p></div>
+    <div class="card decision"><h3>Row encoding</h3><p><b>Chosen:</b> <code>rowMode: 'array'</code> + <code>FieldInfo[]</code>.<br><b>Alternatives:</b> object rows.<br><b>Why:</b> preserves duplicate/unnamed columns, ~40 % smaller payloads, the grid needs fields anyway.</p></div>
+    <div class="card decision"><h3>Type parsing</h3><p><b>Chosen:</b> per-pool <code>types</code>; int8/numeric/dates as strings.<br><b>Alternatives:</b> global <code>types.setTypeParser</code> (current).<br><b>Why:</b> no precision loss, no local-time shifting, no cross-connection global state.</p></div>
+    <div class="card decision"><h3>Store</h3><p><b>Chosen:</b> zustand directly with slices and <code>useShallow</code>.<br><b>Alternatives:</b> <code>@cloudhub-ux/zstore</code>, Redux Toolkit, jotai.<br><b>Why:</b> the same primitive as zstore without its shallow-merge/deep-equal wrapper; no lodash; small.</p></div>
+    <div class="card decision"><h3>Tabs</h3><p><b>Chosen:</b> serialisable descriptors + component registry by <code>kind</code>.<br><b>Alternatives:</b> React elements in the store (current).<br><b>Why:</b> persistence, restore, reuse-by-id, testability.</p></div>
+    <div class="card decision"><h3>Routing</h3><p><b>Chosen:</b> none.<br><b>Alternatives:</b> reach-router (current), hash router.<br><b>Why:</b> single-window desktop app with tabs; a router only adds <code>pushState</code> problems under <code>file://</code>.</p></div>
+    <div class="card decision"><h3>UI kit</h3><p><b>Chosen:</b> <code>@cloudhub-ux/shadcn/esm</code> + Tailwind + <code>react-resizable-panels</code>.<br><b>Alternatives:</b> <code>@cloudhub-ux/mui</code> Block layout; MUI.<br><b>Why:</b> owner decision; drops emotion/MUI runtime; shadcn esm already ships dialog, command, table, tabs, sonner.</p></div>
+    <div class="card decision"><h3>Credentials</h3><p><b>Chosen:</b> Electron <code>safeStorage</code> + electron-store <code>vault.json</code>.<br><b>Alternatives:</b> keytar (deprecated, native build); plaintext JSON (current).<br><b>Why:</b> no native module; OS keychain-backed on mac/Windows; explicit refusal on <code>basic_text</code>.</p></div>
+    <div class="card decision"><h3>Identifier quoting</h3><p><b>Chosen:</b> <code>pg-format %I</code> in main for generated SQL, <code>$n</code> for values, server <code>format('%I')</code> inside catalog DDL queries.<br><b>Alternatives:</b> hand-rolled quoting.<br><b>Why:</b> tiny, battle-tested; server-side quoting is authoritative for DDL; <code>shared/sql/quote.ts</code> only for clipboard/export.</p></div>
+    <div class="card decision"><h3>Editor</h3><p><b>Chosen:</b> <code>monaco-editor</code> direct with Vite <code>?worker</code>; built-in <code>pgsql</code> tokenizer; providers registered once with disposables.<br><b>Alternatives:</b> <code>@monaco-editor/react</code> + loader; custom monarch (current).<br><b>Why:</b> explicit lifecycle, no CDN loader, the built-in tokenizer beats the 25-keyword override.</p></div>
+    <div class="card decision"><h3>Grid</h3><p><b>Chosen:</b> TanStack Table + <code>@tanstack/react-virtual</code> (rows and columns).<br><b>Alternatives:</b> AG Grid, Glide Data Grid, react-data-grid.<br><b>Why:</b> already partly in use; virtualisation meets the 1M-row / 100-column targets; full control over cell renderers for links.</p></div>
+    <div class="card decision"><h3>Catalog loading</h3><p><b>Chosen:</b> per-node lazy queries in main + cache + one flat CompletionIndex.<br><b>Alternatives:</b> one giant CTE in the renderer (current).<br><b>Why:</b> 2,000-table databases load in &lt; 2 s; refresh is local; DDL command tags can invalidate.</p></div>
+    <div class="card decision"><h3>Backlink search</h3><p><b>Chosen:</b> FK index + <code>jsonb_path_exists('$.** ? (@ == $ref)')</code> + text equality + array ANY, sequential with per-query timeouts, streamed.<br><b>Alternatives:</b> <code>@&gt;</code> containment only; <code>::text LIKE</code>.<br><b>Why:</b> matches nested values at any depth; bounded by timeouts and limits; <code>@&gt;</code> cannot see nested refs.</p></div>
+    <div class="card decision"><h3>Tailwind content</h3><p><b>Chosen:</b> renderer <code>src</code> + <code>shadcn/esm/{components,widgets}/**/*.js</code>.<br><b>Alternatives:</b> whole <code>esm/**</code> including <code>.d.ts</code> (current).<br><b>Why:</b> faster scans and no false positives; fixes the unstyled <code>/src</code> components by not using them.</p></div>
+    <div class="card decision"><h3>Persistence</h3><p><b>Chosen:</b> electron-store JSON files in <code>userData</code>, written by main.<br><b>Alternatives:</b> renderer sync IPC to a hand-rolled JSON file (current).<br><b>Why:</b> async, schema-validated, atomic writes; the renderer never touches the filesystem.</p></div>
+    <div class="card decision"><h3>Statement splitting</h3><p><b>Chosen:</b> own pure splitter in <code>shared/</code>.<br><b>Alternatives:</b> <code>pgsql-ast-parser</code>.<br><b>Why:</b> only boundaries and ranges are needed (dollar quotes, comments, strings); a full parser is heavy and rejects valid dialect.</p></div>
+    <div class="card decision"><h3>Tests</h3><p><b>Chosen:</b> vitest with two projects; Docker PostgreSQL 16 for integration.<br><b>Alternatives:</b> jest.<br><b>Why:</b> Vite-native, fast, one config for pure modules and integration.</p></div>
+  </div>
+</section>
+
+<footer class="muted small sans" style="border-top:1px solid hsl(var(--line));padding-top:16px">
+  pgui v2 requirements · generated 2026-09-22 · companion documents: <a href="plan.html">plan.html</a>, <a href="../designs/index.html">design mockups</a>.
+</footer>
+</main>
+</div>
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeToggle');
+  var modes=['auto','light','dark'],cur='auto';
+  try{cur=localStorage.getItem('pgui-spec-theme')||'auto'}catch(e){}
+  function apply(){ if(cur==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',cur)} btn.textContent='Theme: '+cur; }
+  btn.addEventListener('click',function(){cur=modes[(modes.indexOf(cur)+1)%modes.length];try{localStorage.setItem('pgui-spec-theme',cur)}catch(e){}apply();});
+  apply();
+})();
+</script>
+</body>
+</html>

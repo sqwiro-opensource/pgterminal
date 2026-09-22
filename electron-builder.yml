@@ -1,45 +1,67 @@
-appId: com.electron.app
+appId: com.cloudhub.pgui
 productName: pgui
+copyright: Copyright © 2026 Bernard Gaitho
 directories:
   buildResources: build
+  output: dist
 files:
+  - out/**
+  - resources/**
+  - package.json
   - '!**/.vscode/*'
   - '!src/*'
+  - '!legacy/**'
+  - '!tests/**'
+  - '!.claude/**'
+  - '!.github/**'
+  - '!{docker-compose.test.yml,vitest.config.ts,vitest.workspace.ts}'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
   - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
-  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml,bun.lock,yarn.lock}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
 win:
   executableName: pgui
+  target:
+    - target: nsis
+      arch:
+        - x64
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 mac:
+  category: public.app-category.developer-tools
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
-  extendInfo:
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
-    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
-    - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+  # Signing and notarization are left off: set CSC_LINK/CSC_KEY_PASSWORD and flip notarize
+  # to publish outside a trusted machine. See README "Building and releasing".
   notarize: false
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+    - target: zip
+      arch:
+        - arm64
+        - x64
 dmg:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: ${name}-${version}-${arch}.${ext}
 linux:
   target:
     - AppImage
-    - snap
     - deb
-  maintainer: electronjs.org
-  category: Utility
+  maintainer: Bernard Gaitho
+  category: Development
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
+# Placeholder: replace with the real update host before shipping (see README).
 publish:
   provider: generic
-  url: https://example.com/auto-updates
-electronDownload:
-  mirror: https://npmmirror.com/mirrors/electron/
+  url: https://updates.example.invalid/pgui

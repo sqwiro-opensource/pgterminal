@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pgui · Shell &amp; Welcome</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="assets/pgui.css">
+<style>
+  /* page-specific */
+  .welcome{flex:1;display:grid;place-items:center;overflow:auto;position:relative;padding-left:250px}
+  .welcome-inner{width:760px;max-width:92%;animation:fadeUp .35s ease-out}
+  .wordmark{font-family:var(--font-mono);font-size:34px;font-weight:600;letter-spacing:-.03em;display:flex;align-items:center;gap:12px}
+  .wordmark .mark{width:38px;height:38px;border-radius:9px;background:hsl(var(--primary));color:hsl(var(--primary-foreground));display:inline-flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 6px 18px -6px hsl(var(--primary)/.6)}
+  .tagline{color:hsl(var(--muted-foreground));margin:6px 0 28px 50px;font-size:13.5px}
+  .cols{display:grid;grid-template-columns:1.2fr 1fr;gap:36px}
+  .wl h3{margin:0 0 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:hsl(var(--muted-foreground));font-weight:600}
+  .rc{display:flex;align-items:center;gap:8px;height:30px;padding:0 8px;margin:0 -8px;border-radius:5px;cursor:pointer}
+  .rc:hover{background:hsl(var(--accent))}
+  .rc .p{flex:1}
+  .rc .p b{font-weight:500}
+  .rc .ago{font-family:var(--font-mono);font-size:11px;color:hsl(var(--muted-foreground))}
+  .sc{display:flex;align-items:center;height:28px}
+  .sc span{flex:1}
+  .rq{display:flex;align-items:center;gap:10px;height:30px;padding:0 8px;margin:0 -8px;border-radius:5px;cursor:pointer;font-family:var(--font-mono);font-size:12px}
+  .rq:hover{background:hsl(var(--accent))}
+  .rq .sql{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rq .sql .kw{color:hsl(var(--primary));font-weight:600}
+  .rq .srv{font-size:11px;color:hsl(var(--muted-foreground));font-family:var(--font-ui)}
+  .cta{display:flex;gap:8px;margin-top:18px}
+  .ctx{left:292px;top:440px;width:236px}
+  .ctx .mi .badge{margin-left:auto;font-size:9px;height:14px;padding:0 4px}
+  .badge.dx{background:hsl(var(--success)/.15);color:hsl(var(--success))}
+  .badge.ddl{background:hsl(var(--primary)/.12);color:hsl(var(--link))}
+  .badge.cf{background:hsl(var(--destructive)/.12);color:hsl(var(--destructive))}
+  .node .lock{color:hsl(var(--muted-foreground))}
+  .node .ctl{display:none;gap:2px;margin-left:2px}
+  .node:hover .ctl,.node.showctl .ctl{display:inline-flex}
+  .more{height:22px;display:flex;align-items:center;font-size:11.5px;color:hsl(var(--muted-foreground));font-style:italic}
+  .bg-grid{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(hsl(var(--foreground)/.06) 1px,transparent 1px);background-size:22px 22px;mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ic-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="ic-table" viewBox="0 0 24 24"><path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2ZM3 9h18M3 15h18M9 3v18"/></symbol>
+  <symbol id="ic-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></symbol>
+  <symbol id="ic-server" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01M6 18h.01"/></symbol>
+  <symbol id="ic-schema" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></symbol>
+  <symbol id="ic-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+  <symbol id="ic-view" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></symbol>
+  <symbol id="ic-fn" viewBox="0 0 24 24"><path d="M9 4c-1.5 0-2.5 1-2.5 3v10c0 2-1 3-2.5 3M4 11h6M14 11l6 8M20 11l-6 8"/></symbol>
+  <symbol id="ic-seq" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></symbol>
+  <symbol id="ic-type" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></symbol>
+  <symbol id="ic-ext" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M17.5 14v7M14 17.5h7"/></symbol>
+  <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="ic-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></symbol>
+  <symbol id="ic-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+  <symbol id="ic-code" viewBox="0 0 24 24"><path d="m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16"/></symbol>
+  <symbol id="ic-plug" viewBox="0 0 24 24"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a6 6 0 0 1-12 0V8Z"/></symbol>
+  <symbol id="ic-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></symbol>
+  <symbol id="ic-panel-l" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></symbol>
+  <symbol id="ic-panel-r" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></symbol>
+  <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+  <symbol id="ic-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="ic-power" viewBox="0 0 24 24"><path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.77.04"/></symbol>
+  <symbol id="ic-chevd" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="ic-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+</svg>
+
+<div class="app">
+  <!-- ===== title bar ===== -->
+  <header class="titlebar">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <div class="crumb"><span class="mono" style="font-weight:600;color:hsl(var(--foreground))">pgui</span></div>
+    <div class="palette-pill"><svg class="i"><use href="#ic-search"/></svg><span>Search objects or run a command</span><kbd>⌘K</kbd></div>
+    <div class="tb-actions">
+      <button class="iconbtn" title="Toggle sidebar ⌘B"><svg class="i lg"><use href="#ic-panel-l"/></svg></button>
+      <button class="iconbtn" title="Toggle inspector ⌘I"><svg class="i lg"><use href="#ic-panel-r"/></svg></button>
+      <button class="iconbtn" title="Theme ⌘⇧L"><svg class="i lg"><use href="#ic-sun"/></svg></button>
+      <button class="iconbtn" title="Settings ⌘,"><svg class="i lg"><use href="#ic-settings"/></svg></button>
+    </div>
+  </header>
+
+  <div class="body">
+    <!-- ===== sidebar ===== -->
+    <aside class="sidebar">
+      <div class="sb-filter"><svg class="i"><use href="#ic-search"/></svg><input placeholder="Filter connections &amp; objects"><kbd>⌘⇧F</kbd></div>
+      <div class="tree">
+
+        <div class="tree-group" style="--env-bar:var(--env-prod-bar)"><span class="chev"><svg class="i sm" style="transform:rotate(90deg)"><use href="#ic-chev"/></svg></span><span class="caps">Production</span><button class="iconbtn sm"><svg class="i sm"><use href="#ic-more"/></svg></button></div>
+
+        <div class="node d1 active showctl"><span class="chev open"><svg class="i sm"><use href="#ic-chev"/></svg></span><span class="dot on"></span><span class="lbl" style="font-weight:500">adminserver</span><span class="env prod">prod</span><span class="ctl"><button class="iconbtn sm" title="Disconnect"><svg class="i sm"><use href="#ic-power"/></svg></button><button class="iconbtn sm"><svg class="i sm"><use href="#ic-more"/></svg></button></span></div>
+
+        <div class="node d2 db"><span class="chev open"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-db"/></svg><span class="lbl">sqwiro</span><span class="meta">12.4 GB</span></div>
+        <div class="node d3"><span class="chev open"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-schema"/></svg><span class="lbl">public</span></div>
+        <div class="node d4"><span class="chev open"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-folder"/></svg><span class="lbl">Tables <span class="meta">(48)</span></span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-table"/></svg><span class="lbl">users</span><span class="meta">12k</span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-table"/></svg><span class="lbl">sessions</span><span class="meta">340k</span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-table"/></svg><span class="lbl">audit_log</span><span class="meta">8.1M</span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-view"/></svg><span class="lbl">Views <span class="meta">(3)</span></span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-view"/></svg><span class="lbl">Materialized Views <span class="meta">(1)</span></span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-fn"/></svg><span class="lbl">Functions <span class="meta">(12)</span></span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-seq"/></svg><span class="lbl">Sequences <span class="meta">(5)</span></span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-type"/></svg><span class="lbl">Types <span class="meta">(2)</span></span></div>
+
+        <div class="node d3"><span class="chev open"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-schema"/></svg><span class="lbl">sales</span></div>
+        <div class="node d4"><span class="chev open"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-folder"/></svg><span class="lbl">Tables <span class="meta">(14)</span></span></div>
+        <div class="node d5 sel"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-table"/></svg><span class="lbl">sales_customer</span><span class="meta">1.2M</span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-table"/></svg><span class="lbl">sales_order</span><span class="meta">98k</span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-table"/></svg><span class="lbl">sales_invoice</span><span class="meta">61k</span></div>
+        <div class="node d5"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-table"/></svg><span class="lbl">sales_groupcustomer</span><span class="meta">2.3k</span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-view"/></svg><span class="lbl">Views <span class="meta">(2)</span></span></div>
+        <div class="node d4"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-fn"/></svg><span class="lbl">Functions <span class="meta">(6)</span></span></div>
+
+        <div class="node d3"><span class="chev"><svg class="i sm spin"><use href="#ic-loader"/></svg></span><svg class="i ic"><use href="#ic-schema"/></svg><span class="lbl">crm</span><span class="meta">loading…</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-schema"/></svg><span class="lbl">billing</span></div>
+        <div class="node d3"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-ext"/></svg><span class="lbl">Extensions <span class="meta">(4)</span></span></div>
+
+        <div class="node d2 dim"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-db"/></svg><span class="lbl">analytics</span><span class="meta">6.1 GB</span></div>
+        <div class="node d2 dim"><span class="chev"><svg class="i sm" style="color:hsl(var(--destructive))"><use href="#ic-alert"/></svg></span><svg class="i ic"><use href="#ic-db"/></svg><span class="lbl">hr_prod</span><span class="meta" style="color:hsl(var(--destructive))">permission denied</span></div>
+        <div class="node d2 dim"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><svg class="i ic"><use href="#ic-db"/></svg><span class="lbl">avopro</span><span class="meta">2.7 GB</span></div>
+        <div class="more d2" style="padding-left:44px">… 27 more databases</div>
+
+        <div class="node d1"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><span class="dot off"></span><span class="lbl">cloudhubserver</span><span class="env prod">prod</span><span class="ctl showctl" style="display:inline-flex"><button class="iconbtn sm" title="Connect"><svg class="i sm"><use href="#ic-power"/></svg></button></span></div>
+
+        <div class="tree-group" style="--env-bar:var(--env-prod-bar)"><span class="chev"><svg class="i sm" style="transform:rotate(90deg)"><use href="#ic-chev"/></svg></span><span class="caps">Trading</span><button class="iconbtn sm"><svg class="i sm"><use href="#ic-more"/></svg></button></div>
+        <div class="node d1"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><span class="dot busy"></span><span class="lbl">tradingserver</span><svg class="i sm lock" title="Read-only connection"><use href="#ic-lock"/></svg><span class="env prod">prod</span></div>
+
+        <div class="tree-group" style="--env-bar:var(--env-local-bar)"><span class="chev"><svg class="i sm" style="transform:rotate(90deg)"><use href="#ic-chev"/></svg></span><span class="caps">Ungrouped (1)</span></div>
+        <div class="node d1"><span class="chev"><svg class="i sm"><use href="#ic-chev"/></svg></span><span class="dot off"></span><span class="lbl">local</span><span class="env local">local</span></div>
+      </div>
+      <div class="sb-footer">
+        <button class="btn sm ghost"><svg class="i"><use href="#ic-plus"/></svg>New connection</button>
+        <button class="btn sm ghost"><svg class="i"><use href="#ic-settings"/></svg>Manage</button>
+      </div>
+    </aside>
+
+    <!-- ===== context menu (opened on sales_customer) ===== -->
+    <div class="popover menu ctx">
+      <div class="mi"><span>Open data</span><kbd>↵</kbd></div>
+      <div class="mi"><span>Open structure</span><kbd>⌘↵</kbd></div>
+      <div class="mi"><span>Open document by id…</span></div>
+      <hr>
+      <div class="mi"><span>New query with SELECT</span><span class="badge ddl">DDL</span></div>
+      <div class="mi"><span>Generate SQL</span><span class="r"><svg class="i sm"><use href="#ic-chev"/></svg></span></div>
+      <hr>
+      <div class="mi"><span>Copy name</span></div>
+      <div class="mi"><span>Copy qualified name</span></div>
+      <hr>
+      <div class="mi"><span>Export data…</span></div>
+      <div class="mi"><span>Import from CSV…</span></div>
+      <div class="mi"><span>Rename…</span><span class="badge cf">CF</span></div>
+      <hr>
+      <div class="mi"><span>Truncate</span><span class="badge cf">CF</span></div>
+      <div class="mi danger"><span>Drop</span><span class="badge cf">CF</span></div>
+      <hr>
+      <div class="mi"><span>Refresh</span><span class="badge dx">DX</span></div>
+      <div class="mi"><span>Properties</span><kbd>⌘I</kbd></div>
+    </div>
+
+    <!-- ===== main ===== -->
+    <main class="main">
+      <div class="tabstrip">
+        <button class="tab-add" title="New query ⌘N"><svg class="i"><use href="#ic-plus"/></svg></button>
+        <span class="grow" style="flex:1"></span>
+        <button class="iconbtn sm" title="All tabs" style="margin-bottom:4px"><svg class="i sm"><use href="#ic-chevd"/></svg></button>
+      </div>
+      <div class="content">
+        <div class="welcome">
+          <div class="bg-grid"></div>
+          <div class="welcome-inner">
+            <div class="wordmark"><span class="mark">▤</span>pgui</div>
+            <div class="tagline">PostgreSQL workbench with document links · 3 servers · 44 databases</div>
+            <div class="cols">
+              <div class="wl">
+                <h3>Recent</h3>
+                <div class="rc"><span class="dot on"></span><span class="p"><b>adminserver</b> <span class="muted">› sqwiro</span></span><span class="env prod">prod</span><span class="ago">2h ago</span></div>
+                <div class="rc"><span class="dot busy"></span><span class="p"><b>tradingserver</b> <span class="muted">› ticks</span></span><span class="env prod">prod</span><span class="ago">1d ago</span></div>
+                <div class="rc"><span class="dot off"></span><span class="p"><b>cloudhubserver</b></span><span class="env prod">prod</span><span class="ago">3d ago</span></div>
+                <div class="rc"><span class="dot off"></span><span class="p"><b>local</b> <span class="muted">› postgres</span></span><span class="env local">local</span><span class="ago">6d ago</span></div>
+                <div class="cta">
+                  <button class="btn primary"><svg class="i"><use href="#ic-plus"/></svg>New connection</button>
+                  <button class="btn">Manage connections</button>
+                </div>
+                <h3 style="margin-top:28px">Recent queries</h3>
+                <div class="rq"><span class="sql"><span class="kw">SELECT</span> * <span class="kw">FROM</span> sales.sales_customer <span class="kw">WHERE</span> country = 'KE' …</span><span class="srv">adminserver · 10m</span></div>
+                <div class="rq"><span class="sql"><span class="kw">UPDATE</span> trading.positions <span class="kw">SET</span> qty = qty - 100 …</span><span class="srv">tradingserver · 1h</span></div>
+                <div class="rq"><span class="sql"><span class="kw">EXPLAIN</span> (ANALYZE) <span class="kw">SELECT</span> o._id, c.name <span class="kw">FROM</span> sales.sales_order o …</span><span class="srv">adminserver · 2h</span></div>
+              </div>
+              <div class="wl">
+                <h3>Shortcuts</h3>
+                <div class="sc"><span>New query</span><kbd>⌘N</kbd></div>
+                <div class="sc"><span>Command palette</span><kbd>⌘K</kbd></div>
+                <div class="sc"><span>Open table</span><kbd>⌘P</kbd></div>
+                <div class="sc"><span>Go to document</span><kbd>⌘⇧D</kbd></div>
+                <div class="sc"><span>Run query</span><kbd>⌘↵</kbd></div>
+                <div class="sc"><span>Run selection</span><kbd>⌘⇧↵</kbd></div>
+                <div class="sc"><span>Close tab</span><kbd>⌘W</kbd></div>
+                <div class="sc"><span>Reopen closed tab</span><kbd>⌘⇧T</kbd></div>
+                <div class="sc"><span>Toggle sidebar</span><kbd>⌘B</kbd></div>
+                <div class="sc"><span>Toggle inspector</span><kbd>⌘I</kbd></div>
+                <div class="sc"><span>Query history</span><kbd>⌘⇧H</kbd></div>
+                <div class="sc"><span>All shortcuts</span><kbd>⌘/</kbd></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== status bar ===== -->
+  <footer class="statusbar">
+    <span class="chip"><span class="dot on"></span>adminserver <span class="env prod">prod</span></span>
+    <span>sqwiro</span>
+    <span>Autocommit</span>
+    <span class="grow">Connected in 41 ms · catalog for public loaded (48 tables)</span>
+    <span class="mono">PostgreSQL 16.3</span>
+    <span class="chip"><svg class="i sm spin"><use href="#ic-loader"/></svg>1 running</span>
+  </footer>
+</div>
+
+<!-- ===== design notes ===== -->
+<div class="mock-note" style="left:296px;top:44px;max-width:520px">Title bar: breadcrumb of active tab (none here → app name). ⌘K pill is the palette entry point.</div>
+<div class="mock-note" style="left:296px;top:96px;max-width:240px">Group bar colour = majority env of its servers. Env badges are TEXT + colour (never colour alone).</div>
+<div class="mock-note" style="left:296px;top:186px;max-width:240px">Lazy tree: spinner sits in the chevron slot (crm). Errors show inline (hr_prod) with tooltip + Retry — never a modal.</div>
+<div class="mock-note" style="left:296px;top:290px;max-width:240px">Context menu action classes: DX = runs now, DDL = opens SQL in a tab, CF = confirm dialog with SQL (typed name on PROD).</div>
+<div class="mock-note" style="left:296px;top:372px;max-width:240px">Status dots: green = connected · amber pulse = connecting · ring = disconnected. Lock = read-only connection.</div>
+<div class="mock-note" style="left:1040px;top:112px;max-width:240px">Every shortcut listed here is wired in v2 (keybindings.ts). No aspirational shortcuts.</div>
+<div class="mock-note" style="left:1060px;top:730px;max-width:260px">First-run variant: Recent is replaced by a single “Add your first connection” CTA + “Import from URI”; the Shortcuts column stays.</div>
+<div class="mock-note" style="left:560px;top:790px;max-width:300px">Status bar: connection chip · db · TX state · transient message · server version · running-query spinner (click → cancel menu).</div>
+
+<script src="assets/pgui.js"></script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pgui v2 design mockups</title>
+<link rel="stylesheet" href="assets/pgui.css">
+<style>
+  body{overflow:auto}
+  .page{max-width:1120px;margin:0 auto;padding:48px 32px 120px}
+  .hero{position:relative;border:1px solid hsl(var(--border));border-radius:14px;padding:36px 40px;overflow:hidden;background:
+    radial-gradient(700px 320px at 0% 0%,hsl(var(--primary)/.18),transparent 60%),
+    radial-gradient(500px 260px at 100% 100%,hsl(var(--warning)/.14),transparent 60%),hsl(var(--card))}
+  .hero::after{content:"";position:absolute;inset:0;background-image:linear-gradient(hsl(var(--foreground)/.06) 1px,transparent 1px),linear-gradient(90deg,hsl(var(--foreground)/.06) 1px,transparent 1px);background-size:26px 26px;mask-image:linear-gradient(115deg,transparent 40%,#000);pointer-events:none}
+  .hero h1{font-size:30px;font-weight:600;letter-spacing:-.02em;margin:0 0 6px}
+  .hero p{max-width:66ch;color:hsl(var(--muted-foreground));font-size:14px;margin:0}
+  .hero .meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;font-size:12px;color:hsl(var(--muted-foreground))}
+  .hero .meta b{color:hsl(var(--foreground));font-weight:500}
+  .hero .kicker{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:hsl(var(--link));margin-bottom:10px}
+  h2{font-size:15px;font-weight:600;margin:36px 0 12px;display:flex;align-items:center;gap:10px}
+  h2 .n{font-family:var(--font-mono);font-size:11px;color:hsl(var(--muted-foreground));font-weight:500}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+  .mock{display:flex;flex-direction:column;gap:8px;padding:14px 16px;text-decoration:none;color:inherit;transition:transform .12s,box-shadow .12s;position:relative}
+  .mock:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:hsl(var(--primary)/.4)}
+  .mock .num{font-family:var(--font-mono);font-size:11px;color:hsl(var(--link));letter-spacing:.06em}
+  .mock h3{margin:0;font-size:14px;font-weight:600;color:hsl(var(--foreground))}
+  .mock p{margin:0;font-size:12.5px;color:hsl(var(--muted-foreground))}
+  .mock ul{margin:2px 0 0;padding-left:16px;font-size:12px;color:hsl(var(--muted-foreground))}
+  .mock ul li{margin:2px 0}
+  .mock .thumb{height:64px;border-radius:6px;border:1px solid hsl(var(--border));background:hsl(var(--sidebar));position:relative;overflow:hidden;margin-bottom:2px}
+  .thumb i{position:absolute;display:block;background:hsl(var(--foreground)/.10);border-radius:2px}
+  .thumb .bar{left:0;right:0;top:0;height:8px;background:hsl(var(--foreground)/.08);border-radius:0}
+  .thumb .side{left:0;top:8px;bottom:0;width:26%;background:hsl(var(--foreground)/.05);border-radius:0}
+  .thumb .accent{background:hsl(var(--primary)/.5)}
+  .thumb .red{background:hsl(var(--env-prod-bar)/.8)}
+  .thumb .amber{background:hsl(var(--pending)/.7)}
+  .principles{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .principles .card b{display:block;margin-bottom:4px;font-size:13px}
+  .principles .card{font-size:12.5px;color:hsl(var(--muted-foreground))}
+  .specs{display:flex;gap:12px;flex-wrap:wrap}
+  .specs a{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid hsl(var(--border));border-radius:8px;text-decoration:none;color:hsl(var(--foreground));background:hsl(var(--card));font-size:13px}
+  .specs a:hover{border-color:hsl(var(--primary)/.4)}
+  .specs a small{color:hsl(var(--muted-foreground))}
+  .howto{font-size:12.5px;color:hsl(var(--muted-foreground));border-left:3px solid hsl(var(--primary)/.5);padding:6px 12px;margin-top:8px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></symbol>
+  <symbol id="i-braces" viewBox="0 0 24 24"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1M16 21h1a2 2 0 0 0 2-2v-5a2 2 0 0 1 2-2 2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01M6 18h.01"/></symbol>
+  <symbol id="i-schema" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-panel-l" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></symbol>
+  <symbol id="i-panel-r" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><path d="m21 2-2 2m-7.6 7.6a5.5 5.5 0 1 1-7.8 7.8 5.5 5.5 0 0 1 7.8-7.8zm0 0L19 6l2-2-3-3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M3 21v-5h5"/></symbol>
+  <symbol id="i-fn" viewBox="0 0 24 24"><path d="M9 4h6M12 4v16M8 20h8"/></symbol>
+  <symbol id="i-cols" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="m6 3 14 9-14 9V3z"/></symbol>
+</svg>
+<div class="page">
+  <div class="hero">
+    <div class="kicker">pgui v2 · clean rewrite · design mockups</div>
+    <h1>A precision instrument for the sqwiro fleet</h1>
+    <p>Static HTML mockups for the redesigned PostgreSQL workbench: N simultaneous connections with environment-aware safety, a lazy catalog tree, streaming query results, inline table editing, a per-server overview, and ArangoDB-style document links (<span class="mono">schema_table/id</span>) that work everywhere — grid cells, nested jsonb, the JSON editor — with reverse references.</p>
+    <div class="meta"><span>Stack <b>Electron 31 · React 18 · shadcn (esm) + Tailwind</b></span><span>Fleet <b>adminserver · cloudhubserver · tradingserver</b></span><span>Theme <b>light + dark</b></span><span>Data <b>static, from the sqwiro schema</b></span></div>
+  </div>
+
+  <div class="howto">Every mockup has a floating bar at the bottom: <b>← Gallery</b>, <b>theme</b> toggle (key <kbd>t</kbd>) and <b>Notes</b> toggle (key <kbd>n</kbd>) for the yellow design annotations. Pages 07 and 08 have extra keys noted on the page. No external resources are loaded; open any file directly from disk.</div>
+
+  <h2>Screens <span class="n">.claude/designs/*.html</span></h2>
+  <div class="cards">
+    <a class="card mock" href="tokens.html"><div class="thumb"><i style="left:8px;top:10px;width:40px;height:18px" class="accent"></i><i style="left:54px;top:10px;width:40px;height:18px" class="red"></i><i style="left:100px;top:10px;width:40px;height:18px" class="amber"></i><i style="left:8px;top:36px;width:60%;height:6px"></i><i style="left:8px;top:48px;width:40%;height:6px"></i></div><span class="num">00 · TOKENS</span><h3>Design tokens</h3><p>The shared system: colours in both themes, env colours, data-type rendering, chips, type, spacing, state rules, accessibility.</p><ul><li>Live swatches read from the stylesheet</li><li>14 cell-rendering rules with examples</li><li>Empty / loading / error rules per surface</li></ul></a>
+    <a class="card mock" href="01-shell-welcome.html"><div class="thumb"><i class="bar"></i><i class="side"></i><i style="left:30%;top:16px;width:60px;height:8px" class="accent"></i><i style="left:30%;top:30px;width:50%;height:6px"></i><i style="left:30%;top:42px;width:35%;height:6px"></i></div><span class="num">01 · SHELL</span><h3>Shell &amp; welcome</h3><p>Title bar, connections tree with groups and env badges, tab strip, status bar, and the empty workspace with real shortcuts.</p><ul><li>Server → database → schema → object folders, lazy</li><li>PROD tabs get a red top border</li><li>Recents and shortcuts that are actually wired</li></ul></a>
+    <a class="card mock" href="02-connections.html"><div class="thumb"><i class="bar"></i><i style="left:8px;top:14px;width:30%;height:44px"></i><i style="left:40%;top:14px;width:52%;height:6px"></i><i style="left:40%;top:26px;width:52%;height:6px"></i><i style="left:40%;top:38px;width:30%;height:6px"></i><i style="left:40%;top:50px;width:40px;height:8px" class="accent"></i></div><span class="num">02 · CONNECTIONS</span><h3>Connection manager</h3><p>Master list and form: env label and colour, SSL mode, read-only, ask-every-time password, Test separate from Save, URI import.</p><ul><li>Test result states: idle / connecting / ok / error</li><li>Passwords go to the keychain, never to JSON</li><li>Duplicate, delete with confirm, groups</li></ul></a>
+    <a class="card mock" href="03-server-overview.html"><div class="thumb"><i class="bar"></i><i style="left:8px;top:14px;width:20%;height:16px"></i><i style="left:31%;top:14px;width:20%;height:16px"></i><i style="left:54%;top:14px;width:20%;height:16px"></i><i style="left:77%;top:14px;width:18%;height:16px"></i><i style="left:8px;top:36px;width:44%;height:22px"></i><i style="left:54%;top:36px;width:41%;height:22px" class="accent"></i></div><span class="num">03 · OVERVIEW</span><h3>Server overview</h3><p>KPI cards, databases with size bars, active sessions with cancel/terminate, blocking locks, slow queries, replication and TimescaleDB.</p><ul><li>Each panel loads and fails independently</li><li>Own session marked and unkillable</li><li>Auto-refresh 15 s while visible</li></ul></a>
+    <a class="card mock" href="04-query-editor.html"><div class="thumb"><i class="bar"></i><i class="side"></i><i style="left:30%;top:14px;width:62%;height:18px"></i><i style="left:30%;top:36px;width:62%;height:2px" class="accent"></i><i style="left:30%;top:42px;width:62%;height:18px"></i></div><span class="num">04 · QUERY</span><h3>Query editor</h3><p>Monaco with schema-aware completion, Run / Run selection / Explain / Format / Cancel, limit and autocommit controls, multi-result tabs, structured errors.</p><ul><li>Error squiggle from pg position → line/col</li><li>Result tabs per statement, Messages pane</li><li>Format only on demand, never on render</li></ul></a>
+    <a class="card mock" href="05-table-data.html"><div class="thumb"><i class="bar"></i><i class="side"></i><i style="left:30%;top:14px;width:62%;height:6px"></i><i style="left:30%;top:24px;width:62%;height:6px"></i><i style="left:30%;top:34px;width:62%;height:6px" class="amber"></i><i style="left:30%;top:44px;width:62%;height:6px"></i><i style="left:30%;top:54px;width:62%;height:6px"></i></div><span class="num">05 · DATA</span><h3>Table data</h3><p>Server-side paging with estimates, typed filter chips, virtualised grid with typed cells and link chips, inline editing with pending changes and Apply / Discard.</p><ul><li>Keyset paging on the PK, exact count on demand</li><li>Pending cells amber, ✎ gutter, Preview SQL</li><li>Delete selected goes through a confirm</li></ul></a>
+    <a class="card mock" href="06-table-structure.html"><div class="thumb"><i class="bar"></i><i class="side"></i><i style="left:30%;top:14px;width:62%;height:6px" class="accent"></i><i style="left:30%;top:26px;width:62%;height:6px"></i><i style="left:30%;top:36px;width:62%;height:6px"></i><i style="left:30%;top:46px;width:62%;height:6px" class="amber"></i></div><span class="num">06 · STRUCTURE</span><h3>Table structure</h3><p>Columns / Indexes / Constraints / Triggers / Relations / Partitions / DDL with pending ALTERs that are always previewed before running.</p><ul><li>Nullable and PK labelled correctly</li><li>Relations: references and referenced-by</li><li>Create-table dialog reuses the same grid</li></ul></a>
+    <a class="card mock" href="07-document-view.html"><div class="thumb"><i class="bar"></i><i class="side"></i><i style="left:30%;top:14px;width:36%;height:6px"></i><i style="left:30%;top:24px;width:36%;height:6px" class="accent"></i><i style="left:30%;top:34px;width:36%;height:6px"></i><i style="left:30%;top:44px;width:36%;height:6px" class="accent"></i><i style="left:70%;top:14px;width:22%;height:40px"></i></div><span class="num">07 · DOCUMENT</span><h3>Document view</h3><p>The signature screen: breadcrumb with history, tree/JSON views, link chips with hover previews, References and Referenced-by (FK + jsonb) panels, diff-based save.</p><ul><li>Tab keyed by connection/db/table/row id</li><li>Backlinks stream in, FK first, scans cancellable</li><li>Press <kbd>s</kbd> for the save diff sheet</li></ul></a>
+    <a class="card mock" href="08-dialogs-palette-settings.html"><div class="thumb"><i class="bar"></i><i class="side"></i><i style="left:36%;top:12px;width:50%;height:42px;background:hsl(var(--foreground)/.14)"></i><i style="left:40%;top:18px;width:20%;height:5px" class="red"></i><i style="left:40%;top:28px;width:40%;height:5px"></i><i style="left:40%;top:44px;width:14%;height:6px" class="red"></i></div><span class="num">08 · DIALOGS</span><h3>Dialogs, palette, settings</h3><p>Destructive confirm with typed name on prod, light confirm and in-dialog error, command palette modes, the full shortcut sheet, and the Settings tab.</p><ul><li>Region switcher at the top (keys 1–5)</li><li>Palette <span class="mono">#</span> mode resolves like a link</li><li>Safety settings drive which envs need typing</li></ul></a>
+  </div>
+
+  <h2>Design principles</h2>
+  <div class="principles">
+    <div class="card"><b>Dense desktop instrument</b>24 px tree rows, 28 px grid rows, 36 px toolbars. Every pixel of chrome earns its place; panes are hairline-separated, not boxed.</div>
+    <div class="card"><b>Monospace-forward data</b>Anything that came from Postgres is set in mono with type-specific alignment and colour. UI chrome uses a humanist sans so the two never blur.</div>
+    <div class="card"><b>Environment colour as safety</b>PROD is red on the server row, the tab edge, the status bar and inside every confirm. Typed confirmation is required there for anything destructive.</div>
+    <div class="card"><b>Links everywhere</b>Any string that parses as <span class="mono">[schema_]table/id</span> and resolves against the catalog becomes a chip — in grid cells, nested jsonb, the JSON editor, even SQL literals. Reverse references are one panel away.</div>
+    <div class="card"><b>Server-side truth</b>Paging, sorting, filtering and counts run on the server; the renderer never holds more than a capped page. The generated SQL is always one click away.</div>
+    <div class="card"><b>No silent destructive actions</b>Direct-execute is reserved for reads and refreshes. Writes preview their SQL; drops, truncates and terminates go through a confirm that shows numbers and dependants.</div>
+  </div>
+
+  <h2>Specifications</h2>
+  <div class="specs">
+    <a href="../specs/requirement.html"><svg class="i"><use href="#i-braces"/></svg>requirement.html <small>vision · review · stories · architecture · IPC · resolver · NFRs</small></a>
+    <a href="../specs/plan.html"><svg class="i"><use href="#i-activity"/></svg>plan.html <small>phases 0–7 · task cards · properties · verification</small></a>
+    <a href="assets/pgui.css"><svg class="i"><use href="#i-code"/></svg>assets/pgui.css <small>the shared token + component stylesheet</small></a>
+  </div>
+</div>
+<script src="assets/pgui.js"></script>
+</body>
+</html>

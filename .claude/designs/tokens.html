@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pgui · Design tokens</title>
+<link rel="stylesheet" href="assets/pgui.css">
+<style>
+  body{overflow:auto}
+  .page{max-width:1120px;margin:0 auto;padding:40px 32px 120px}
+  .page h1{font-size:26px;font-weight:600;letter-spacing:-.02em;margin:0 0 4px}
+  .page h2{font-size:15px;font-weight:600;margin:40px 0 10px;padding-bottom:6px;border-bottom:1px solid hsl(var(--border));display:flex;align-items:center;gap:10px}
+  .page h2 .n{font-family:var(--font-mono);font-size:11px;color:hsl(var(--muted-foreground));font-weight:500}
+  .lead{color:hsl(var(--muted-foreground));max-width:70ch;margin:0 0 18px;font-size:13.5px}
+  .tk{border-collapse:collapse;width:100%;font-size:12.5px}
+  .tk th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:hsl(var(--muted-foreground));font-weight:600;padding:6px 8px;border-bottom:1px solid hsl(var(--border));background:hsl(var(--grid-header))}
+  .tk td{padding:6px 8px;border-bottom:1px solid hsl(var(--grid-line));vertical-align:middle}
+  .tk td.m{font-family:var(--font-mono);font-size:11.5px}
+  .sw{display:inline-flex;align-items:center;gap:8px}
+  .sw i{width:28px;height:18px;border-radius:4px;border:1px solid hsl(var(--foreground)/.12);display:inline-block}
+  .pair{display:flex;gap:6px}
+  .pair .sw i{width:22px}
+  .grid-demo{border:1px solid hsl(var(--border));border-radius:6px;overflow:hidden;margin:8px 0 12px}
+  .grid-demo .grid{flex:none;overflow:visible}
+  .grid-demo td{white-space:normal;max-width:none;height:auto;padding:5px 8px}
+  .spec{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-end}
+  .spec .s{display:flex;flex-direction:column;gap:2px}
+  .spec .s small{font-family:var(--font-mono);font-size:10.5px;color:hsl(var(--muted-foreground))}
+  .space{display:flex;gap:10px;align-items:flex-end}
+  .space i{display:block;background:hsl(var(--primary)/.35);border:1px solid hsl(var(--primary)/.6)}
+  .space .s{display:flex;flex-direction:column;align-items:center;gap:4px;font-family:var(--font-mono);font-size:10.5px;color:hsl(var(--muted-foreground))}
+  .dens{display:flex;gap:16px;flex-wrap:wrap}
+  .dens .d{border:1px solid hsl(var(--border));border-radius:6px;overflow:hidden;width:220px}
+  .dens .d .r{display:flex;align-items:center;padding:0 10px;border-bottom:1px solid hsl(var(--grid-line));font-size:12.5px;gap:8px}
+  .dens .d .cap{font-size:10.5px;color:hsl(var(--muted-foreground));padding:5px 10px;font-family:var(--font-mono);background:hsl(var(--grid-header))}
+  .samples{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .states td{vertical-align:top;font-size:12px}
+  .chips{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .chips .c{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+  .chips .c small{font-family:var(--font-mono);font-size:10.5px;color:hsl(var(--muted-foreground))}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  @media (max-width:900px){.two{grid-template-columns:1fr}}
+  .a11y li{margin:4px 0}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></symbol>
+  <symbol id="i-braces" viewBox="0 0 24 24"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1M16 21h1a2 2 0 0 0 2-2v-5a2 2 0 0 1 2-2 2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01M6 18h.01"/></symbol>
+  <symbol id="i-schema" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-panel-l" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></symbol>
+  <symbol id="i-panel-r" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><path d="m21 2-2 2m-7.6 7.6a5.5 5.5 0 1 1-7.8 7.8 5.5 5.5 0 0 1 7.8-7.8zm0 0L19 6l2-2-3-3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M3 21v-5h5"/></symbol>
+  <symbol id="i-fn" viewBox="0 0 24 24"><path d="M9 4h6M12 4v16M8 20h8"/></symbol>
+  <symbol id="i-cols" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="m6 3 14 9-14 9V3z"/></symbol>
+</svg>
+<div class="page">
+  <div class="caps muted" style="margin-bottom:8px">pgui v2 · design system reference</div>
+  <h1>Design tokens</h1>
+  <p class="lead">One system for every surface: HSL triplets as CSS variables (shadcn convention), a humanist UI face for chrome and a monospace face for anything that comes from the database. Toggle the theme with the bar below (or <kbd>t</kbd>) — every swatch on this page reads its live value.</p>
+
+  <h2>Colour <span class="n">assets/pgui.css · :root and [data-theme=dark]</span></h2>
+  <table class="tk" id="tokens">
+    <tr><th>Token</th><th>Role</th><th>Light</th><th>Dark</th><th>Live</th></tr>
+  </table>
+
+  <h2>Environment colours <span class="n">--env-*-bg / -fg / -bar</span></h2>
+  <p class="lead">The env label is the app's main safety signal. It appears as a badge on the server row, as a 3 px bar on the group header, as a 2 px top border on every tab of a PROD connection, and inside every confirm dialog. Text always accompanies colour.</p>
+  <table class="tk" id="envs">
+    <tr><th>Env</th><th>Badge</th><th>Bar</th><th>Light bg / fg</th><th>Dark bg / fg</th><th>Used for</th></tr>
+    <tr><td>prod</td><td><span class="env prod">prod</span></td><td><i style="display:inline-block;width:40px;height:4px;border-radius:2px;background:hsl(var(--env-prod-bar))"></i></td><td class="m">0 84% 95% · 0 72% 40%</td><td class="m">0 60% 18% · 0 80% 78%</td><td>adminserver, cloudhubserver, tradingserver — typed confirmation required</td></tr>
+    <tr><td>staging</td><td><span class="env staging">staging</span></td><td><i style="display:inline-block;width:40px;height:4px;border-radius:2px;background:hsl(var(--env-staging-bar))"></i></td><td class="m">38 92% 93% · 30 80% 35%</td><td class="m">38 60% 16% · 40 90% 75%</td><td>pre-release copies</td></tr>
+    <tr><td>dev</td><td><span class="env dev">dev</span></td><td><i style="display:inline-block;width:40px;height:4px;border-radius:2px;background:hsl(var(--env-dev-bar))"></i></td><td class="m">142 60% 93% · 142 60% 28%</td><td class="m">142 40% 14% · 142 60% 70%</td><td>shared dev servers</td></tr>
+    <tr><td>local</td><td><span class="env local">local</span></td><td><i style="display:inline-block;width:40px;height:4px;border-radius:2px;background:hsl(var(--env-local-bar))"></i></td><td class="m">220 14% 93% · 220 9% 40%</td><td class="m">222 12% 18% · 218 10% 70%</td><td>localhost, Docker</td></tr>
+  </table>
+
+  <h2>Data-type rendering <span class="n">grid cells · document tree · preview cards</span></h2>
+  <p class="lead">Alignment, face and colour encode the Postgres type, so a column is readable before the header is. Numbers and dates are strings end-to-end (no precision loss); NULL is a word, never an empty cell.</p>
+  <div class="grid-demo"><div class="grid"><table>
+    <tr><th class="gut">#</th><th>type</th><th>rendering rule</th><th>example</th><th>notes</th></tr>
+    <tr><td class="gut">1</td><td class="mono">int4 · int8 · numeric · money</td><td>right-aligned, mono, <span class="mono">--num</span></td><td class="num">1,203,441.50</td><td class="muted">int8/numeric arrive as strings; formatted with locale separators on display only</td></tr>
+    <tr><td class="gut">2</td><td class="mono">text · varchar · citext</td><td>left, UI face (mono when "raw" toggled)</td><td>Acme Ltd</td><td class="muted">&gt;200 chars truncated with … and expand in inspector</td></tr>
+    <tr><td class="gut">3</td><td class="mono">NULL</td><td>italic, muted 70 %, literal text</td><td class="null">NULL</td><td class="muted">distinct from empty string, which renders nothing and shows a tooltip</td></tr>
+    <tr><td class="gut">4</td><td class="mono">boolean</td><td>mono, 6 px dot before value</td><td class="bool">true</td><td class="muted">false is muted with a grey dot: <span style="font-family:var(--font-mono);color:hsl(var(--muted-foreground))">● false</span></td></tr>
+    <tr><td class="gut">5</td><td class="mono">timestamptz · date · time</td><td>mono, <span class="mono">--time</span>, server tz by default</td><td class="time">2026-03-01 10:22:05</td><td class="muted">tz offset on hover; setting: server tz / local</td></tr>
+    <tr><td class="gut">6</td><td class="mono">uuid</td><td>mono 12 px, muted</td><td class="uuid">3f2c…9a1e</td><td class="muted">full value on hover / copy</td></tr>
+    <tr><td class="gut">7</td><td class="mono">json · jsonb</td><td>mono 12 px, one-line preview, key/string/number colouring</td><td class="json"><span>{</span><span class="k">tier:</span><span class="s">"gold"</span>, <span class="k">tags:</span>[<span class="n">2</span>]<span>}</span></td><td class="muted">click → 480×360 popover tree with clickable links</td></tr>
+    <tr><td class="gut">8</td><td class="mono">text[] · int[]</td><td>mono, braces, count badge</td><td class="mono">{a,b,c} <span class="badge">3</span></td><td class="muted">arrays of links render as chip lists</td></tr>
+    <tr><td class="gut">9</td><td class="mono">bytea</td><td>mono, muted, size</td><td class="mono muted">\x89504e47… (1.2 KB)</td><td class="muted">hex view in inspector</td></tr>
+    <tr><td class="gut">10</td><td class="mono">enum</td><td>UI face, 6 px dot in hashed hue</td><td><span class="dot" style="background:hsl(300 60% 55%)"></span> shipped</td><td class="muted">hue = hash(value) so the same value is the same colour everywhere</td></tr>
+    <tr><td class="gut">11</td><td class="mono">_id · table/id · FK</td><td>link chip (see below)</td><td><span class="chip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">sales_</span>customer/42</span></td><td class="muted">any string matching the DocRef grammar that resolves against the catalog</td></tr>
+    <tr><td class="gut">12</td><td class="mono">pending edit</td><td>3 px amber left bar, amber 12 % fill</td><td class="pending">Acme Limited</td><td class="muted">✎ mark in the row gutter; original value on hover</td></tr>
+    <tr><td class="gut">13</td><td class="mono">editing</td><td>2 px ring inset</td><td class="editing">Acme Lim|</td><td class="muted">Enter/Tab commits, Esc cancels</td></tr>
+    <tr><td class="gut">14</td><td class="mono">error row</td><td>3 px red bar, red 10 % fill</td><td class="err">duplicate key</td><td class="muted">after a failed Apply the offending op stays highlighted</td></tr>
+  </table></div></div>
+
+  <h2>Link chips <span class="n">.chip · .chip.derived · .chip.broken</span></h2>
+  <div class="chips">
+    <div class="c"><span class="chip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">sales_</span>customer/42</span><small>normal · resolved _id / table/id</small></div>
+    <div class="c"><span class="chip" style="background:hsl(var(--primary)/.14);text-decoration:underline dotted"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">sales_</span>customer/42</span><small>hover · bg 14 %, dotted underline</small></div>
+    <div class="c"><span class="chip derived"><svg class="i sm"><use href="#i-link"/></svg><span class="pre">billing_</span>account/7</span><small>derived · sole-column FK, dashed</small></div>
+    <div class="c"><span class="chip broken"><svg class="i sm"><use href="#i-link"/></svg>archive_customer/42</span><small>broken · target row not found</small></div>
+    <div class="c"><span class="chip lg"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">auth_</span>user/3</span><small>large · 20 px, preview card header</small></div>
+    <div class="c"><span style="display:inline-flex;gap:4px"><span class="chip"><svg class="i sm"><use href="#i-table"/></svg><span class="pre">crm_</span>tag/4</span><span class="badge">+2</span></span><small>array overflow in a grid cell</small></div>
+  </div>
+  <p class="lead" style="margin-top:12px">Anatomy: 18 px tall (20 comfortable), 4 px radius, mono 12 px, table icon 12 px, schema prefix in <span class="mono">--muted-foreground</span>, identifier in <span class="mono">--link</span>, background primary at 8 %, border primary at 20 %. Chips keep 4 px invisible padding so the hit target reaches 24 px.</p>
+
+  <div class="two">
+    <div>
+      <h2>Typography <span class="n">--font-ui · --font-mono</span></h2>
+      <div class="spec">
+        <div class="s"><span style="font-size:20px;font-weight:600">Page title</span><small>ui 20 / 600</small></div>
+        <div class="s"><span style="font-size:15px;font-weight:600">Section title</span><small>ui 15 / 600</small></div>
+        <div class="s"><span style="font-size:13px">Body &amp; controls</span><small>ui 13 / 400</small></div>
+        <div class="s"><span style="font-size:12px" class="muted">Secondary</span><small>ui 12</small></div>
+        <div class="s"><span style="font-size:11px" class="muted">Caption</span><small>ui 11</small></div>
+        <div class="s"><span class="caps muted">Group header</span><small>ui 10 / caps</small></div>
+      </div>
+      <div class="spec" style="margin-top:14px">
+        <div class="s"><span class="mono" style="font-size:13px">SELECT c._id FROM sales.customer c</span><small>mono 13 · editor</small></div>
+        <div class="s"><span class="mono" style="font-size:12px">sales_customer/42 · 1,203,441 · 2026-03-01</span><small>mono 12 · grid, chips, meta</small></div>
+      </div>
+      <p class="lead" style="margin-top:10px">Stacks: UI <span class="mono">"IBM Plex Sans", "SF Pro Text", -apple-system, "Segoe UI"</span>; data <span class="mono">"JetBrains Mono", "IBM Plex Mono", "SF Mono", Menlo</span>. No webfonts are loaded; the app ships Plex Sans + JetBrains Mono locally. Line-height 1.4; weights 400 / 500 / 600 only; ligatures on in the editor, off in grids.</p>
+    </div>
+    <div>
+      <h2>Spacing &amp; density <span class="n">2 · 4 · 6 · 8 · 12 · 16 · 24 · 32</span></h2>
+      <div class="space">
+        <div class="s"><i style="width:2px;height:2px"></i>2</div><div class="s"><i style="width:4px;height:4px"></i>4</div><div class="s"><i style="width:6px;height:6px"></i>6</div><div class="s"><i style="width:8px;height:8px"></i>8</div><div class="s"><i style="width:12px;height:12px"></i>12</div><div class="s"><i style="width:16px;height:16px"></i>16</div><div class="s"><i style="width:24px;height:24px"></i>24</div><div class="s"><i style="width:32px;height:32px"></i>32</div>
+      </div>
+      <div class="dens" style="margin-top:16px">
+        <div class="d"><div class="cap">compact · grid 24 · tree 22</div><div class="r" style="height:24px"><svg class="i sm"><use href="#i-table"/></svg>sales_order<span class="meta" style="margin-left:auto;font-family:var(--font-mono);font-size:11px;color:hsl(var(--muted-foreground))">98k</span></div><div class="r" style="height:24px"><svg class="i sm"><use href="#i-table"/></svg>sales_contact</div></div>
+        <div class="d"><div class="cap">default · grid 28 · tree 24</div><div class="r" style="height:28px"><svg class="i sm"><use href="#i-table"/></svg>sales_order<span style="margin-left:auto;font-family:var(--font-mono);font-size:11px;color:hsl(var(--muted-foreground))">98k</span></div><div class="r" style="height:28px"><svg class="i sm"><use href="#i-table"/></svg>sales_contact</div></div>
+        <div class="d"><div class="cap">comfortable · grid 32 · tree 28</div><div class="r" style="height:32px"><svg class="i sm"><use href="#i-table"/></svg>sales_order<span style="margin-left:auto;font-family:var(--font-mono);font-size:11px;color:hsl(var(--muted-foreground))">98k</span></div><div class="r" style="height:32px"><svg class="i sm"><use href="#i-table"/></svg>sales_contact</div></div>
+      </div>
+      <p class="lead" style="margin-top:10px">Controls 28 px (compact 24, comfortable 32); icon buttons 28×28; toolbar 36; tab strip 34 always; title bar 38; status bar 24; dialog padding 16; card padding 12. Borders 1 px <span class="mono">--border</span>; panes have no shadows; popovers <span class="mono">shadow-md</span>; dialogs <span class="mono">shadow-xl</span> over a 40 % backdrop.</p>
+    </div>
+  </div>
+
+  <h2>Controls <span class="n">.btn · .input · .select · .badge · .pill · .env · kbd</span></h2>
+  <div class="samples">
+    <button class="btn primary"><svg class="i sm"><use href="#i-play"/></svg>Run<kbd style="background:transparent;border-color:hsl(0 0% 100%/.3);color:inherit">⌘↵</kbd></button>
+    <button class="btn">Test</button>
+    <button class="btn warn">Apply 3 changes</button>
+    <button class="btn danger"><svg class="i sm"><use href="#i-trash"/></svg>Drop table</button>
+    <button class="btn ghost">Cancel</button>
+    <button class="btn" disabled>Disabled</button>
+    <button class="btn sm">Small</button>
+    <span class="input" style="width:180px"><svg class="i sm"><use href="#i-search"/></svg><input placeholder="Filter…"></span>
+    <span class="select" style="width:130px">prefer<svg class="i sm" style="transform:rotate(90deg)"><use href="#i-chev"/></svg></span>
+    <span class="seg"><button class="on">Tree</button><button>JSON</button></span>
+    <span class="switch on"></span>
+    <span class="check on"><i><svg class="i sm"><use href="#i-check"/></svg></i>CASCADE</span>
+    <span class="badge">12</span><span class="pill">idle</span><span class="pill ok">active</span><span class="pill warn">Lock</span><span class="pill bad">ERROR</span><span class="pill info">Go to document</span>
+    <kbd>⌘K</kbd><kbd>esc</kbd>
+    <span class="dot on"></span><span class="dot busy"></span><span class="dot off"></span><span class="dot err"></span>
+  </div>
+
+  <h2>Empty · loading · error rules <span class="n">per surface</span></h2>
+  <table class="tk states">
+    <tr><th>Surface</th><th>Empty</th><th>Loading</th><th>Error</th></tr>
+    <tr><td>Sidebar tree</td><td>"No connections" + New connection button</td><td>node-level spinner in the chevron slot; never a full-tree overlay</td><td>red icon on the node + tooltip + "Retry" context item; toast only on connect failure</td></tr>
+    <tr><td>Server overview</td><td>card-level "No data" (e.g. "No replication")</td><td>per-card skeleton (title + 3 lines); auto-refresh shows only a 1 px progress line</td><td>per-card red line + Retry; missing extension → hint card with the enabling SQL</td></tr>
+    <tr><td>Query results</td><td>"No rows" centred with the command tag (<span class="mono">UPDATE 0</span>)</td><td>10 skeleton rows; Run disabled; elapsed timer in footer</td><td>Messages tab auto-selected, error card, editor squiggle, tab icon red until next run</td></tr>
+    <tr><td>Table data</td><td>"Table is empty" + Row button; filtered: "No rows match · Clear filters"</td><td>skeleton rows preserving column widths; paging disabled; header stays</td><td>inline red bar above the grid with Retry; last good rows kept, greyed</td></tr>
+    <tr><td>Structure</td><td>"No indexes" etc. per sub-tab</td><td>per sub-tab skeleton</td><td>per sub-tab error line</td></tr>
+    <tr><td>Document</td><td>row not found → full-tab state with Open table / Close</td><td>header immediately (from the key); body skeleton 8 rows; panels skeleton independently</td><td>full-tab error with Retry / Close; save errors inline in the footer</td></tr>
+    <tr><td>Preview card</td><td>"Row not found"</td><td>3-line skeleton</td><td>one red line</td></tr>
+    <tr><td>Backlinks</td><td>"No references in scope · Widen scope"</td><td>progressive list + progress text; Cancel button</td><td>per-row <span class="mono">?</span> with retry tooltip; scan errors summarised at the bottom</td></tr>
+    <tr><td>Command palette</td><td>"No matches"</td><td>"Indexing 3 databases…" inline while results already show from loaded nodes</td><td>—</td></tr>
+    <tr><td>Connection Test</td><td>—</td><td>button spinner + Cancel link</td><td>red line + Copy + Details (raw error)</td></tr>
+    <tr><td>Confirm dialog</td><td>—</td><td>dependants skeleton; executing state locks the dialog</td><td>error card inside the dialog; it stays open</td></tr>
+    <tr><td>Global</td><td colspan="3">error boundary per tab ("This tab crashed" + Reload tab + Copy error) and app-level with Restart; on launch the shell renders first, tabs hibernate until their connection is back. Toasts bottom-right, 4 s (errors persist), max 3 stacked; never toast for information visible inline.</td></tr>
+  </table>
+  <div style="margin-top:12px;display:flex;gap:12px;align-items:center"><span class="sk" style="width:180px"></span><span class="sk" style="width:120px"></span><span class="sk" style="width:80px"></span><span class="muted small">skeleton shimmer (disabled under reduced motion)</span></div>
+
+  <h2>Accessibility &amp; density notes</h2>
+  <ul class="a11y" style="font-size:12.5px;max-width:80ch">
+    <li><b>Focus ring</b>: 2 px <span class="mono">--ring</span> outset with 2 px offset on buttons; inset on tree rows and grid cells. Focus is never removed without a replacement.</li>
+    <li><b>Icon-only buttons</b> carry <span class="mono">aria-label</span> and a 600 ms tooltip that also shows the shortcut.</li>
+    <li><b>Tree</b> uses <span class="mono">role=tree / treeitem</span>, <span class="mono">aria-expanded</span>, <span class="mono">aria-level</span>, roving tabindex; <b>grid</b> uses <span class="mono">role=grid</span> with row/col indexes, arrow navigation, Home/End, PageUp/Down; selection announced via a live region.</li>
+    <li><b>Hit targets</b>: 24×24 minimum in compact, 28×28 default; rows are full-width targets; chips pad invisibly to 24 px.</li>
+    <li><b>Colour is never the only signal</b>: env badges carry text, pending cells carry a ✎ gutter mark, link chips carry an icon, NULL is a word.</li>
+    <li><b>Contrast</b> ≥ 4.5:1 for all text in both themes; alt-row tint ≤ 3 % luminance so it never competes with selection.</li>
+    <li><b>Reduced motion</b>: pulsing dots, shimmer and flashes are disabled; static state colours remain.</li>
+    <li><b>Dialogs</b> trap focus, restore it on close, Esc closes any non-executing dialog; the typed-confirmation input is auto-focused and labelled.</li>
+    <li><b>Text scaling</b>: the UI font-size setting applies at the root; controls use rem, hairlines use px.</li>
+  </ul>
+</div>
+<script src="assets/pgui.js"></script>
+<script>
+(function(){
+  var rows=[
+    ['--background','page ground','0 0% 100%','222 14% 9%'],
+    ['--foreground','primary text','222 20% 12%','210 20% 92%'],
+    ['--card','cards','0 0% 100%','222 14% 11%'],
+    ['--popover','menus, dialogs','0 0% 100%','222 14% 12%'],
+    ['--muted','subtle fills','220 14% 96%','222 12% 15%'],
+    ['--muted-foreground','secondary text','220 9% 46%','218 10% 62%'],
+    ['--accent','hover / selection fill','220 14% 93%','222 12% 18%'],
+    ['--primary','buttons, active tab icon, links','226 70% 50%','222 85% 66%'],
+    ['--primary-foreground','text on primary','0 0% 100%','222 14% 9%'],
+    ['--destructive','danger','0 72% 51%','0 70% 60%'],
+    ['--warning','pending, light confirm','38 92% 50%','40 95% 60%'],
+    ['--success','connected, ok','142 71% 40%','142 60% 50%'],
+    ['--border','hairlines','220 13% 89%','222 12% 20%'],
+    ['--input','input borders','220 13% 86%','222 12% 24%'],
+    ['--ring','focus ring','226 70% 50%','222 85% 66%'],
+    ['--sidebar','sidebar ground','220 14% 97%','222 14% 8%'],
+    ['--titlebar','title bar','220 14% 95%','222 14% 7%'],
+    ['--statusbar','status bar','220 14% 95%','222 14% 7%'],
+    ['--grid-header','sticky headers','220 14% 97%','222 14% 12%'],
+    ['--grid-row-alt','zebra rows','220 14% 98.5%','222 14% 10%'],
+    ['--grid-line','cell hairlines','220 13% 92%','222 12% 17%'],
+    ['--grid-selected','selected row (10–16 %)','226 70% 50%','222 85% 66%'],
+    ['--pending','edited cell','38 92% 50%','40 95% 60%'],
+    ['--link','link chips','226 70% 46%','222 90% 74%'],
+    ['--num','numbers','210 90% 38%','210 90% 72%'],
+    ['--bool','booleans','142 60% 32%','142 60% 65%'],
+    ['--time','dates/times','280 50% 45%','280 60% 78%'],
+    ['--str','json strings','142 50% 35%','142 55% 68%']
+  ];
+  var t=document.getElementById('tokens');
+  rows.forEach(function(x){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td class="m">'+x[0]+'</td><td>'+x[1]+'</td><td class="m">'+x[2]+'</td><td class="m">'+x[3]+'</td>'+
+      '<td><span class="sw"><i style="background:hsl(var('+x[0]+'))"></i></span></td>';
+    t.appendChild(tr);
+  });
+})();
+</script>
+</body>
+</html>

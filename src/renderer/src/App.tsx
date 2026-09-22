@@ -1,50 +1,49 @@
-import Versions from './components/Versions';
-import electronLogo from './assets/electron.svg';
-import INITIAL_STATE from '@src/renderer/context/INITIAL_STATE';
-import { ThemeProvider } from '@cloudhub-ux/min';
+import { useEffect } from 'react';
+import { Toaster } from 'sonner';
+import { TooltipProvider } from '@cloudhub-ux/shadcn/esm/components/ui/tooltip';
+import { boot } from './boot';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { UpdateToast } from './features/updates/UpdateToast';
+import { ThemeProvider, useTheme } from './lib/theme';
+import { installToastPolicy } from './lib/toastPolicy';
+import { Shell } from './shell/Shell';
 
-import { AppContextProvider } from '@cloudhub-ux/zstore';
-import LocationProvider from '@cloudhub-ux/mui/dist/customhooks/LocationProvider';
-import ShadcnThemeProvider from '@cloudhub-ux/shadcn/esm/theme/ShadcnThemeProvider';
-import { fonts, sizes } from '@src/renderer/theme';
-import MainPage from '@src/renderer/app/mainpage/MainPage';
-
-// Define process if it doesn't exist
-if (typeof window !== 'undefined' && !window.process) {
-  window.process = { env: { NODE_ENV: 'production' } };
-}
-
-function App(): JSX.Element {
-  const ipcHandle = (): void => window.electron.ipcRenderer.send('ping');
-
-  const ColorTheme = 'slateTheme';
-
+function ThemedToaster(): JSX.Element {
+  const { resolved } = useTheme();
   return (
-    <AppContextProvider
-      APP_INITIAL_STATE={{
-        ...INITIAL_STATE,
-        authContext: {},
-        databaseContext: {}
+    <Toaster
+      theme={resolved}
+      position="bottom-right"
+      duration={4000}
+      visibleToasts={3}
+      closeButton
+      toastOptions={{
+        classNames: {
+          toast: 'group toast bg-popover text-foreground border-border shadow-md text-[12.5px]',
+          description: 'text-muted-foreground',
+          actionButton: 'bg-primary text-primary-foreground',
+          cancelButton: 'bg-muted text-muted-foreground'
+        }
       }}
-    >
-      <LocationProvider>
-        <ShadcnThemeProvider
-          fonts={fonts}
-          sizes={sizes}
-          defaultTheme={ColorTheme || 'defaultTheme'}
-        >
-          <ThemeProvider
-            defaultTheme={ColorTheme || 'defaultTheme'}
-            fonts={fonts}
-            sizes={sizes}
-            CONFIG={{}}
-          >
-            <MainPage />
-          </ThemeProvider>
-        </ShadcnThemeProvider>
-      </LocationProvider>
-    </AppContextProvider>
+    />
   );
 }
 
-export default App;
+installToastPolicy();
+
+export default function App(): JSX.Element {
+  useEffect(() => {
+    void boot();
+  }, []);
+  return (
+    <ThemeProvider>
+      <TooltipProvider delayDuration={600}>
+        <ErrorBoundary>
+          <Shell />
+        </ErrorBoundary>
+        <ThemedToaster />
+        <UpdateToast />
+      </TooltipProvider>
+    </ThemeProvider>
+  );
+}
