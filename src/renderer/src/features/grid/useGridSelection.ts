@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { readGridState, writeGridState } from './gridSessionState';
 
 export interface CellPos {
   row: number;
@@ -6,10 +7,16 @@ export interface CellPos {
 }
 
 /** Row selection (checkbox / shift ranges / ⌘A) and a single focused cell with keyboard navigation. */
-export function useGridSelection(rowCount: number, colCount: number, pageRows = 20) {
-  const [selected, setSelected] = useState<Set<number>>(() => new Set());
-  const [anchor, setAnchor] = useState<number | null>(null);
-  const [focus, setFocus] = useState<CellPos | null>(null);
+export function useGridSelection(rowCount: number, colCount: number, pageRows = 20, stateKey?: string) {
+  const saved = readGridState(stateKey);
+  const [selected, setSelected] = useState<Set<number>>(() => new Set(saved?.selected ?? []));
+  const [anchor, setAnchor] = useState<number | null>(saved?.anchor ?? null);
+  const [focus, setFocus] = useState<CellPos | null>(saved?.focus ?? null);
+
+  // Remember where this grid was left, so returning to the tab restores it.
+  useEffect(() => {
+    writeGridState(stateKey, { selected: [...selected], anchor, focus });
+  }, [stateKey, selected, anchor, focus]);
 
   const clear = useCallback(() => {
     setSelected(new Set());

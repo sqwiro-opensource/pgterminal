@@ -165,6 +165,7 @@ export default function QueryTab({ tab }: { tab: Tab }): JSX.Element {
         <PanelResizeHandle className="h-px bg-border data-[resize-handle-active]:bg-primary" />
         <Panel minSize={15} className="min-h-0">
           <ResultsPanel
+            tabId={tab.id}
             rt={rt}
             density={density}
             onView={actions.setView}

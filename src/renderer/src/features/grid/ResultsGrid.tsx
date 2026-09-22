@@ -8,6 +8,7 @@ import { GUTTER_WIDTH, buildColumns, rowToJson, sortRows, type GridColumn } from
 import { useColumnSizing } from './useColumnSizing';
 import { useGridSelection } from './useGridSelection';
 import { GridLinkContext, type GridLinkContextValue } from './cells/linkContext';
+import { readGridState, writeGridState } from './gridSessionState';
 import { GridErrorCard, GridSkeleton } from './GridStates';
 
 const NO_LINK_CTX: GridLinkContextValue = {};
@@ -31,6 +32,8 @@ export interface ResultsGridProps {
   onCellActivate?(rowIndex: number, colId: string): void;
   onSelectionChange?(rowIndexes: number[]): void;
   onFocusRow?(rowIndex: number | null): void;
+  /** Stable id for this grid; when set, selection, focus and scroll survive a tab switch. */
+  sessionKey?: string;
   onOpenLink?(value: string): void;
   /** Connection/database the values belong to; enables document-link chips in cells. */
   linkCtx?: GridLinkContextValue;
@@ -71,9 +74,33 @@ export function ResultsGrid(p: ResultsGridProps) {
 
   const rows = useMemo(() => (controlled ? p.rows : sortRows(p.rows, columns, sort)), [controlled, p.rows, columns, sort]);
   const { widthOf, total, setSizing } = useColumnSizing(columns, p.sizingKey);
-  const sel = useGridSelection(rows.length, columns.length);
+  const sel = useGridSelection(rows.length, columns.length, 20, p.sessionKey);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Restore the scroll offset with the selection: a selected row you cannot see is no better
+  // than a lost one. The grid emits a scroll event at 0 while mounting, so writes stay disabled
+  // until the restore for this key has run — otherwise that event overwrites the saved offset.
+  const restoredFor = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !p.sessionKey || rows.length === 0 || restoredFor.current === p.sessionKey) return;
+    const saved = readGridState(p.sessionKey);
+    const frame = requestAnimationFrame(() => {
+      if (saved && (saved.scrollTop > 0 || saved.scrollLeft > 0)) {
+        el.scrollTop = saved.scrollTop;
+        el.scrollLeft = saved.scrollLeft;
+      }
+      restoredFor.current = p.sessionKey;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [p.sessionKey, rows.length]);
+
+  const onScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el || restoredFor.current !== p.sessionKey) return;
+    writeGridState(p.sessionKey, { scrollTop: el.scrollTop, scrollLeft: el.scrollLeft });
+  }, [p.sessionKey]);
   const rowVirtualizer = useVirtualizer({ count: rows.length, getScrollElement: () => scrollRef.current, estimateSize: () => rowHeight, overscan: 8 });
   const colVirtualizer = useVirtualizer({
     horizontal: true,
@@ -174,6 +201,7 @@ export function ResultsGrid(p: ResultsGridProps) {
     <GridLinkContext.Provider value={p.editingCell ? { ...(p.linkCtx ?? NO_LINK_CTX), editing: true } : (p.linkCtx ?? NO_LINK_CTX)}>
     <div
       ref={scrollRef}
+      onScroll={onScroll}
       role="grid"
       aria-rowcount={rows.length}
       aria-colcount={columns.length}

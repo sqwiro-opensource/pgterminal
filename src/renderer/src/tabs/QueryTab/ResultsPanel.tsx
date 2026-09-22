@@ -19,6 +19,8 @@ export interface ResultsPanelProps {
   onShowInEditor(error: PgErrorInfo): void;
   /** Connection/database context so link-shaped values render as document chips. */
   linkCtx?: GridLinkContextValue;
+  /** Owning tab id, used to key per-result grid state across tab switches. */
+  tabId: string;
 }
 
 function resultLabel(r: ResultSet, i: number): string {
@@ -136,6 +138,7 @@ export function ResultsPanel(p: ResultsPanelProps): JSX.Element {
                 error={active.error ?? null}
                 emptyText={active.command ? `No rows · ${active.command}` : 'No rows'}
                 linkCtx={p.linkCtx}
+                sessionKey={`${p.tabId}:${active.statementIndex}`}
                 onFocusRow={setFocusRow}
                 sizingKey={`query:${active.fields.map((f) => f.name).join(',')}`}
                 className="min-h-0 flex-1"

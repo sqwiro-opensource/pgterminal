@@ -86,15 +86,30 @@ describe.skipIf(skip)('ConnectionRegistry (integration)', () => {
   });
 
   it('disconnect ends every backend tagged pgui within 1 s', async () => {
-    await reg.getPool(meta.id, database).query('SELECT 1');
-    await reg.getPool(meta.id, 'postgres').query('SELECT 1');
-    expect(await pguiBackends()).toBeGreaterThan(0);
+    // Count only the backends this registry opened: other test files (and a running app) use
+    // the same application_name, so a global count makes this assertion order-dependent.
+    const mine = async (): Promise<number[]> => {
+      const rows = await Promise.all(
+        [database, 'postgres'].map(async (db) => {
+          const r = await reg.getPool(meta.id, db).query<{ pid: number }>('SELECT pg_backend_pid() AS pid');
+          return Number(r.rows[0]?.pid);
+        })
+      );
+      return rows;
+    };
+    const pids = await mine();
+    expect(pids.length).toBeGreaterThan(0);
+    const stillAlive = async (): Promise<number> =>
+      withTestPool(async (pool) => {
+        const r = await pool.query<{ n: string }>('SELECT count(*)::text AS n FROM pg_stat_activity WHERE pid = ANY($1)', [pids]);
+        return Number(r.rows[0]?.n ?? 0);
+      }, 1);
     await reg.disconnect(meta.id);
     const deadline = Date.now() + 1000;
-    let n = await pguiBackends();
+    let n = await stillAlive();
     while (n > 0 && Date.now() < deadline) {
       await sleep(50);
-      n = await pguiBackends();
+      n = await stillAlive();
     }
     expect(n).toBe(0);
     expect(reg.listDatabasesWithPools(meta.id)).toEqual([]);

@@ -193,6 +193,7 @@ export default function TableDataTab({ tab: anyTab }: { tab: Tab }) {
             onSelectionChange={setSelection}
             onFocusRow={setFocusRow}
             linkCtx={{ connectionId, database, fromTabId: tab.id }}
+            sessionKey={tab.id}
             sizingKey={`${connectionId}/${database}/${schema}.${table}`}
             editable={!readOnly}
             rowKeys={rowKeys}
