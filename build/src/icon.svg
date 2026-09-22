@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="tile" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#1E2517"/>
+      <stop offset="1" stop-color="#0A0D06"/>
+    </linearGradient>
+    <linearGradient id="slash" x1="0" y1="1" x2="0.6" y2="0">
+      <stop offset="0" stop-color="#9CB24E"/>
+      <stop offset="1" stop-color="#D3E47B"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.62" cy="0.44" r="0.5">
+      <stop offset="0" stop-color="#C8DC79" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#C8DC79" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#tile)"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#glow)"/>
+  <rect x="101.5" y="101.5" width="821" height="821" rx="183.5" fill="none" stroke="#C8DC79" stroke-opacity="0.16" stroke-width="3"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="324,392 426,512 324,632" stroke="#7F9C43" stroke-width="72"/>
+    <line x1="570" y1="656" x2="694" y2="368" stroke="url(#slash)" stroke-width="84"/>
+  </g>
+</svg>

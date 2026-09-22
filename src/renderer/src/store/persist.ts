@@ -1,5 +1,5 @@
 import type { WorkspaceSnapshot } from '@shared/ipc';
-import { getPgui } from '../lib/ipc';
+import { getApi } from '../lib/ipc';
 import { activeConnectionId } from './workspace.slice';
 import { useStore } from './index';
 
@@ -27,7 +27,7 @@ export function startWorkspacePersistence(): () => void {
 
   const flush = (): void => {
     timer = null;
-    const save = getPgui()['workspace:save'];
+    const save = getApi()['workspace:save'];
     save(buildSnapshot()).catch((err: Error) => console.warn('workspace:save failed', err.message));
   };
 

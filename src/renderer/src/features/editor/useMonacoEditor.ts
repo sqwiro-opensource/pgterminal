@@ -84,7 +84,7 @@ export function useMonacoEditor(opts: UseMonacoEditorOptions): {
   onChangeRef.current = opts.onChange;
   onCursorRef.current = opts.onCursor;
   const { resolved } = useTheme();
-  const themeName = resolved === 'dark' ? 'pgui-dark' : 'pgui-light';
+  const themeName = resolved === 'dark' ? 'pgterminal-dark' : 'pgterminal-light';
 
   useLayoutEffect(() => {
     const el = containerRef.current;
@@ -156,7 +156,7 @@ export function useMonacoEditor(opts: UseMonacoEditorOptions): {
   useEffect(() => {
     const model = editor?.getModel();
     if (!model) return;
-    monaco.editor.setModelMarkers(model, 'pgui', toMonacoMarkers(model, opts.markers ?? []));
+    monaco.editor.setModelMarkers(model, 'pgterminal', toMonacoMarkers(model, opts.markers ?? []));
   }, [editor, opts.markers]);
 
   return { containerRef, editor };

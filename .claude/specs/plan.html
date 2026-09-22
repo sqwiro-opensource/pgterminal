@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>pgui v2 Implementation Plan</title>
+<title>PgTerminal v2 Implementation Plan</title>
 <link rel="stylesheet" href="spec.css">
 <style>
   .task .tb .k{white-space:nowrap}
@@ -18,7 +18,7 @@
 <button class="theme-toggle" id="themeToggle" type="button">Theme: auto</button>
 <div class="page">
   <nav class="toc">
-    <div class="brand">pgui v2 · plan</div>
+    <div class="brand">PgTerminal v2 · plan</div>
     <a href="#dashboard"><span class="n">■</span>Status dashboard</a>
     <a href="#howto"><span class="n">■</span>How to use this plan</a>
     <a href="#stories"><span class="n">■</span>Story &amp; property index</a>
@@ -48,8 +48,8 @@
   <main>
     <header class="hero">
       <div class="kicker">Implementation plan · v2</div>
-      <h1>pgui v2 — Implementation Plan</h1>
-      <p>A clean rewrite of pgui as a secure, multi-connection PostgreSQL workbench with first-class document links. This plan turns the <a href="requirement.html">requirements spec</a> and the <a href="../designs/index.html">design mockups</a> into 53 ordered tasks across eight phases, each with files, acceptance criteria and a verification recipe.</p>
+      <h1>PgTerminal v2 — Implementation Plan</h1>
+      <p>A clean rewrite of PgTerminal as a secure, multi-connection PostgreSQL workbench with first-class document links. This plan turns the <a href="requirement.html">requirements spec</a> and the <a href="../designs/index.html">design mockups</a> into 53 ordered tasks across eight phases, each with files, acceptance criteria and a verification recipe.</p>
       <div class="meta">
         <span>Owner <b>Bernard Gaitho</b></span>
         <span>Date <b>2026-09-22</b></span>
@@ -193,7 +193,7 @@
           <li>Node ≥ 20.14 and yarn 1.x (the repo already uses <code>yarn.lock</code>); Electron 31 stays.</li>
           <li>Docker Desktop running for the integration database (<code>postgres:16</code>).</li>
           <li>Tailscale up, with the three fleet connections (adminserver, cloudhubserver, tradingserver) reachable for the Phase 6 manual checks. Use a read-only role for those checks.</li>
-          <li>Decide the data directory name: <code>app.getPath('userData')</code> is <code>pgui</code>; the legacy <code>electron-dev-storage.json</code> is not migrated (owner will re-enter the three connections).</li>
+          <li>Decide the data directory name: <code>app.getPath('userData')</code> is <code>PgTerminal</code>; the legacy <code>electron-dev-storage.json</code> is not migrated (owner will re-enter the three connections).</li>
         </ul>
       </span></div>
     </section>
@@ -208,7 +208,7 @@
         <!-- ---------------- PHASE 0 ---------------- -->
         <div class="phase" id="p0">
           <div class="ph"><h3>Phase 0 · Scaffold + security</h3><span class="badge todo">TODO</span><span class="goal">Empty but hardened shell, typed IPC contract, test harness. No database code yet.</span></div>
-          <div class="exit"><b>Exit criteria:</b> app opens a blank shell with zero CSP violations; <code>window.pgui</code> exists and <code>window.require</code>/<code>process</code> are undefined in the renderer; <code>yarn typecheck</code>, <code>yarn test:unit</code> and <code>yarn build</code> pass; Docker Postgres seeds successfully.</div>
+          <div class="exit"><b>Exit criteria:</b> app opens a blank shell with zero CSP violations; <code>window.pgterminal</code> exists and <code>window.require</code>/<code>process</code> are undefined in the renderer; <code>yarn typecheck</code>, <code>yarn test:unit</code> and <code>yarn build</code> pass; Docker Postgres seeds successfully.</div>
 
           <div class="task" id="p0-1">
             <div class="th"><span class="tid">P0.1</span><h4>Move legacy code aside and reset TypeScript projects</h4><span class="badge todo">TODO</span></div>
@@ -323,18 +323,18 @@
           </div>
 
           <div class="task" id="p0-7">
-            <div class="th"><span class="tid">P0.7</span><h4>Preload: allow-listed <code>window.pgui</code> API</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P0.7</span><h4>Preload: allow-listed <code>window.pgterminal</code> API</h4><span class="badge todo">TODO</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/preload/index.ts</code>, <code>src/preload/api.ts</code>, <code>src/preload/index.d.ts</code></span>
               <span class="k">Port from</span><span>— (the legacy preload re-exports the raw <code>ipcRenderer</code>; nothing to keep)</span>
               <span class="k">Subtasks</span><ul class="subtasks">
                 <li><code>createApi()</code> builds one <code>invoke</code> wrapper per entry of <code>INVOKE_CHANNELS</code></li>
                 <li><code>on(channel, cb)</code> rejects channels not in <code>PUSH_CHANNELS</code>; returns an unsubscribe function</li>
-                <li><code>contextBridge.exposeInMainWorld('pgui', api)</code> only; no <code>electron</code>, no <code>process</code></li>
-                <li><code>declare global { interface Window { pgui: PguiApi } }</code></li>
+                <li><code>contextBridge.exposeInMainWorld('PgTerminal', api)</code> only; no <code>electron</code>, no <code>process</code></li>
+                <li><code>declare global { interface Window { PgTerminal: PgTerminalApi } }</code></li>
               </ul>
               <span class="k">Covers</span><span>all</span>
-              <span class="k">Accept</span><span>In the renderer console <code>Object.keys(window.pgui).length === INVOKE_CHANNELS.length + 1</code> and <code>window.electron === undefined</code>.</span>
+              <span class="k">Accept</span><span>In the renderer console <code>Object.keys(window.pgterminal).length === INVOKE_CHANNELS.length + 1</code> and <code>window.electron === undefined</code>.</span>
               <span class="k">Verify</span><span>TC; MC</span>
               <span class="k">Notes</span><span>Sandboxed preloads cannot use most Node modules; keep this file dependency-free.</span>
             </div>
@@ -349,7 +349,7 @@
                 <li>CSP meta: <code>default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-src 'none'</code></li>
                 <li>Providers: theme, <code>sonner</code> Toaster, app-level ErrorBoundary</li>
                 <li><code>react-resizable-panels</code> layout: sidebar | main | optional inspector; sizes persisted later (P2.1)</li>
-                <li><code>lib/ipc.ts</code>: <code>pgui</code> typed helper and <code>useIpcEvent(channel, cb)</code> hook</li>
+                <li><code>lib/ipc.ts</code>: <code>PgTerminal</code> typed helper and <code>useIpcEvent(channel, cb)</code> hook</li>
                 <li>Title bar, tab bar and status bar as static shells matching <code>../designs/01-shell-welcome.html</code></li>
               </ul>
               <span class="k">Covers</span><span>US-28 · US-29 (shell)</span>
@@ -366,7 +366,7 @@
               <span class="k">Port from</span><span>—</span>
               <span class="k">Subtasks</span><ul class="subtasks">
                 <li>Two vitest projects: <code>unit</code> (node) and <code>integration</code> (node, skipped when <code>PG_TEST_URL</code> is unset)</li>
-                <li>Compose file: <code>postgres:16</code>, port 54329, <code>POSTGRES_PASSWORD=pgui</code>, seed mounted into <code>/docker-entrypoint-initdb.d</code></li>
+                <li>Compose file: <code>postgres:16</code>, port 54329, <code>POSTGRES_PASSWORD=PgTerminal</code>, seed mounted into <code>/docker-entrypoint-initdb.d</code></li>
                 <li>Seed as specified in <a href="#seed">Seed schema</a>; <code>public.big</code> generated with <code>generate_series</code></li>
                 <li><code>setup.ts</code> exports a <code>withTestPool()</code> helper and truncates mutable tables between tests</li>
               </ul>
@@ -399,7 +399,7 @@
         <!-- ---------------- PHASE 1 ---------------- -->
         <div class="phase" id="p1">
           <div class="ph"><h3>Phase 1 · Connections, vault, registry, catalog</h3><span class="badge todo">TODO</span><span class="goal">Save encrypted connections, connect to several servers, browse a lazy catalog tree.</span></div>
-          <div class="exit"><b>Exit criteria:</b> three fleet connections saved with encrypted passwords (<code>vault.json</code> has no plaintext, <code>connections.json</code> has no <code>password</code> key); each connects and lists databases; expanding schema → tables → columns/indexes/constraints/triggers works lazily; disconnect ends all backends with <code>application_name='pgui'</code>.</div>
+          <div class="exit"><b>Exit criteria:</b> three fleet connections saved with encrypted passwords (<code>vault.json</code> has no plaintext, <code>connections.json</code> has no <code>password</code> key); each connects and lists databases; expanding schema → tables → columns/indexes/constraints/triggers works lazily; disconnect ends all backends with <code>application_name='PgTerminal'</code>.</div>
 
           <div class="task" id="p1-1">
             <div class="th"><span class="tid">P1.1</span><h4>Persistent stores (electron-store)</h4><span class="badge todo">TODO</span></div>
@@ -430,7 +430,7 @@
               </ul>
               <span class="k">Covers</span><span>US-01</span>
               <span class="k">Accept</span><span>A saved password is never present in plaintext in any file under <code>userData</code>.</span>
-              <span class="k">Verify</span><span>UT; MC (<code>grep -r &lt;password&gt; ~/Library/Application\ Support/pgui</code> → no hits)</span>
+              <span class="k">Verify</span><span>UT; MC (<code>grep -r &lt;password&gt; ~/Library/Application\ Support/PgTerminal</code> → no hits)</span>
               <span class="k">Notes</span><span>Passwords cross IPC exactly once (save/test/connect with an explicit password) and appear in no response.</span>
             </div>
           </div>
@@ -443,13 +443,13 @@
               <span class="k">Subtasks</span><ul class="subtasks">
                 <li>Per-pool <code>types</code> object: int8/numeric/money/date/time/timestamp(tz)/interval → identity strings; their array oids via <code>postgres-array</code> with identity elements; bytea → <code>\x</code> hex</li>
                 <li><code>toPgErrorInfo(err, statementText, statementIndex)</code> copies code/severity/detail/hint/position/…/constraint and computes line/col</li>
-                <li>Pool config: <code>max 4</code>, <code>idleTimeoutMillis 30000</code>, <code>connectionTimeoutMillis 5000</code>, <code>application_name 'pgui'</code>, <code>keepAlive</code>, ssl by mode, <code>options: '-c statement_timeout=…'</code></li>
+                <li>Pool config: <code>max 4</code>, <code>idleTimeoutMillis 30000</code>, <code>connectionTimeoutMillis 5000</code>, <code>application_name 'PgTerminal'</code>, <code>keepAlive</code>, ssl by mode, <code>options: '-c statement_timeout=…'</code></li>
                 <li>Registry: <code>getPool(connectionId, database)</code> lazy; <code>pool.on('error')</code> → <code>push('connections:event')</code>; idle reaper (10 min); <code>disconnect</code>; <code>closeAll()</code> with 2 s race</li>
                 <li>IT: same pool identity, disconnect ends backends within 1 s, closeAll bounded, error event does not throw</li>
               </ul>
               <span class="k">Covers</span><span>US-03, PROP-12, PROP-13, PROP-15</span>
               <span class="k">Accept</span><span>Killing a pooled backend from psql emits an event and the app keeps running.</span>
-              <span class="k">Verify</span><span>UT (pgError); IT (registry); MC (<code>SELECT pg_terminate_backend(pid)</code> on an idle pgui backend)</span>
+              <span class="k">Verify</span><span>UT (pgError); IT (registry); MC (<code>SELECT pg_terminate_backend(pid)</code> on an idle PgTerminal backend)</span>
               <span class="k">Notes</span><span><code>pool.on('error')</code> is mandatory: the legacy app crashes main on idle-client errors. Type parsers must be per pool, never <code>pg.types.setTypeParser</code>.</span>
             </div>
           </div>
@@ -899,7 +899,7 @@
               <span class="k">Files</span><span><code>src/renderer/src/features/editor/jsonDocLinks.ts</code>, <code>sqlDocLinks.ts</code> (registered from <code>monacoSetup.ts</code>)</span>
               <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/components/editor/MonacoJsonEditor.tsx</code> (replaced; its per-mount provider and accumulating decorations are not ported)</span>
               <span class="k">Subtasks</span><ul class="subtasks">
-                <li>Scan string tokens, unescape, <code>parseDocRef</code>, resolvable → <code>ILink</code> with <code>pgui-doc://&lt;encoded raw&gt;</code></li>
+                <li>Scan string tokens, unescape, <code>parseDocRef</code>, resolvable → <code>ILink</code> with <code>pgterminal-doc://&lt;encoded raw&gt;</code></li>
                 <li><code>registerOpener</code> intercepts and calls <code>useDocLinks().open()</code>; F12 also opens</li>
                 <li>Hover widget renders the preview card</li>
                 <li>Dispose on app unload/HMR</li>
@@ -1403,7 +1403,7 @@ END LOOP; END $$;</code></pre>
 (function(){
   var root=document.documentElement,btn=document.getElementById('themeToggle');
   var modes=['auto','light','dark'];
-  function get(){try{return localStorage.getItem('pgui-spec-theme')||'auto'}catch(e){return 'auto'}}
+  function get(){try{return localStorage.getItem('pgterminal-spec-theme')||'auto'}catch(e){return 'auto'}}
   function apply(m){
     if(m==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',m)}
     btn.textContent='Theme: '+m;
@@ -1411,7 +1411,7 @@ END LOOP; END $$;</code></pre>
   var cur=get();apply(cur);
   btn.addEventListener('click',function(){
     cur=modes[(modes.indexOf(cur)+1)%modes.length];
-    try{localStorage.setItem('pgui-spec-theme',cur)}catch(e){}
+    try{localStorage.setItem('pgterminal-spec-theme',cur)}catch(e){}
     apply(cur);
   });
 })();

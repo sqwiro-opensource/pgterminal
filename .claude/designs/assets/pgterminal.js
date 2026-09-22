@@ -4,10 +4,10 @@
   function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
   function set(k,v){try{localStorage.setItem(k,v)}catch(e){}}
   var q=/[?&]theme=(dark|light)/.exec(location.search);
-  var theme=(q&&q[1])||get('pgui-mock-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
-  if(/[?&]notes=off/.test(location.search))set('pgui-mock-notes','off');
+  var theme=(q&&q[1])||get('pgterminal-mock-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  if(/[?&]notes=off/.test(location.search))set('pgterminal-mock-notes','off');
   root.setAttribute('data-theme',theme);
-  var notes=get('pgui-mock-notes')!=='off';
+  var notes=get('pgterminal-mock-notes')!=='off';
   root.classList.toggle('no-notes',!notes);
   function build(){
     var bar=document.createElement('div');bar.className='mock-bar';
@@ -16,8 +16,8 @@
       '<button data-act="notes" class="'+(notes?'on':'')+'">Notes</button>';
     bar.addEventListener('click',function(e){
       var b=e.target.closest('button');if(!b)return;
-      if(b.dataset.act==='theme'){theme=theme==='dark'?'light':'dark';root.setAttribute('data-theme',theme);set('pgui-mock-theme',theme);b.textContent=theme==='dark'?'☾ Dark':'☀ Light';}
-      if(b.dataset.act==='notes'){notes=!notes;root.classList.toggle('no-notes',!notes);b.classList.toggle('on',notes);set('pgui-mock-notes',notes?'on':'off');}
+      if(b.dataset.act==='theme'){theme=theme==='dark'?'light':'dark';root.setAttribute('data-theme',theme);set('pgterminal-mock-theme',theme);b.textContent=theme==='dark'?'☾ Dark':'☀ Light';}
+      if(b.dataset.act==='notes'){notes=!notes;root.classList.toggle('no-notes',!notes);b.classList.toggle('on',notes);set('pgterminal-mock-notes',notes?'on':'off');}
     });
     document.body.appendChild(bar);
     var st=document.createElement('style');st.textContent='.no-notes .mock-note{display:none}';document.head.appendChild(st);

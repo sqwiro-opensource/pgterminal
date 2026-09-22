@@ -4,7 +4,7 @@ import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import type { ServerOverview } from '@shared/types/stats';
 import type { EnvLabel } from '@shared/types/connection';
 import { confirm } from '@renderer/components/ui/ConfirmDialog';
-import { getPgui } from '@renderer/lib/ipc';
+import { getApi } from '@renderer/lib/ipc';
 import { formatDuration, sessionSecondary, sortActivity } from '@renderer/features/overview/overviewModel';
 import { useTick } from '@renderer/features/overview/useOverviewPolling';
 import { useStore } from '@renderer/store';
@@ -34,7 +34,7 @@ export function killBackend(ctx: KillContext, pid: number, terminate: boolean): 
     buildSql: () => `SELECT ${terminate ? 'pg_terminate_backend' : 'pg_cancel_backend'}(${pid});`,
     ...(typed ? { typedName: String(pid) } : {}),
     onConfirm: async () => {
-      const r = await getPgui()['stats:cancelBackend']({ connectionId: ctx.connectionId, pid, terminate });
+      const r = await getApi()['stats:cancelBackend']({ connectionId: ctx.connectionId, pid, terminate });
       if (!r.ok) throw new Error(`Backend ${pid} did not acknowledge the ${terminate ? 'terminate' : 'cancel'} request`);
       toast.success(`${terminate ? 'Terminated' : 'Cancelled'} backend ${pid}`);
       await ctx.refresh();

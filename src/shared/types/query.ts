@@ -28,7 +28,7 @@ export interface PgErrorInfo {
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [k: string]: JsonValue };
 
 /** Marker meaning "use the column DEFAULT" in an insert/update. Consumes no parameter. */
-export const DEFAULT_SENTINEL = { __pguiDefault: true } as const;
+export const DEFAULT_SENTINEL = { __pgtDefault: true } as const;
 
 /** Type of DEFAULT_SENTINEL. */
 export type DefaultSentinel = typeof DEFAULT_SENTINEL;
@@ -49,7 +49,7 @@ export type CellValue = JsonValue | DefaultSentinel;
 
 /** True when a value is the DEFAULT sentinel. */
 export function isDefaultSentinel(v: unknown): v is DefaultSentinel {
-  return typeof v === 'object' && v !== null && (v as { __pguiDefault?: unknown }).__pguiDefault === true;
+  return typeof v === 'object' && v !== null && (v as { __pgtDefault?: unknown }).__pgtDefault === true;
 }
 
 /** Column metadata for a result set (pg FieldDef subset plus the resolved type name). */

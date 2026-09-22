@@ -1,6 +1,6 @@
 /**
  * Monaco link provider for JSON models: every string token that parses as a document reference and resolves in
- * the editor's database becomes a `pgui-doc://` link (⌘-click / F12 opens it through the shared opener).
+ * the editor's database becomes a `pgterminal-doc://` link (⌘-click / F12 opens it through the shared opener).
  * Registered once from `setupMonaco()`.
  */
 import { parseDocRef } from '@shared/doclink/parseDocRef';

@@ -4,7 +4,7 @@ import { analyzeSqlContext } from '../../../src/renderer/src/features/editor/sql
 import { buildCompletions, lookupColumnType, resolveRelation } from '../../../src/renderer/src/features/editor/sqlCompletion';
 
 const index: CompletionIndex = {
-  searchPath: ['pgui', 'public'],
+  searchPath: ['pgterminal', 'public'],
   builtAt: 0,
   relations: [
     { schema: 'sales', name: 'sales_customer', kind: 'table', columns: [{ name: 'name', type: 'text', isPk: false }, { name: 'id', type: 'integer', isPk: true }] },

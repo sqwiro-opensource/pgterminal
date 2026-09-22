@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import type { CellValue, PgErrorInfo, QueryEvent, RunQueryRequest } from '@shared/types/query';
 import type { Tab } from '@shared/types/workspace';
 import { classifyStatement, splitStatements } from '@shared/sql/statementSplitter';
-import { getPgui } from '@renderer/lib/ipc';
+import { getApi } from '@renderer/lib/ipc';
 import { useStore } from '@renderer/store';
 import { confirm, useConfirmStore } from '@renderer/components/ui/ConfirmDialog';
 import { initialRunState, reduceQueryEvent, startingRunState, type QueryRunState } from './queryRuntime';
@@ -154,7 +154,7 @@ function ensureSubscribed(): void {
   if (subscribed) return;
   subscribed = true;
   try {
-    getPgui().on('query:event', onEvent);
+    getApi().on('query:event', onEvent);
   } catch (err) {
     subscribed = false;
     console.warn('query:event subscription failed', (err as Error).message);
@@ -220,7 +220,7 @@ async function disposeTab(tabId: string): Promise<void> {
   const sess = sessions.get(tabId);
   sessions.delete(tabId);
   useStore.getState().clearTabRuntime(tabId);
-  if (sess?.opened) await getPgui()['session:close']({ sessionId: sess.sessionId }).catch(() => undefined);
+  if (sess?.opened) await getApi()['session:close']({ sessionId: sess.sessionId }).catch(() => undefined);
   try {
     const { disposeEditorModel } = await import('@renderer/features/editor/editorModels');
     disposeEditorModel(tabId);
@@ -233,8 +233,8 @@ async function ensureSession(tab: Tab<'query'>): Promise<string> {
   const { connectionId, database, sessionId } = tab.params;
   const sess = sessions.get(tab.id);
   if (sess?.opened && sess.sessionId === sessionId) return sessionId;
-  if (sess?.opened && sess.sessionId !== sessionId) await getPgui()['session:close']({ sessionId: sess.sessionId }).catch(() => undefined);
-  await getPgui()['session:open']({ sessionId, connectionId, database });
+  if (sess?.opened && sess.sessionId !== sessionId) await getApi()['session:close']({ sessionId: sess.sessionId }).catch(() => undefined);
+  await getApi()['session:open']({ sessionId, connectionId, database });
   sessions.set(tab.id, { sessionId, opened: true });
   return sessionId;
 }
@@ -272,7 +272,7 @@ export async function runQuery(tabId: string, sql: string, opts: { mode: 'script
       continueOnError: false,
       ...(opts.explain ? { explain: opts.explain } : {})
     };
-    await getPgui()['query:run'](req);
+    await getApi()['query:run'](req);
     await waitForRun(runId);
     const done = getRuntime(tabId).run;
     trackTransaction(tabId, script, done.results.some((r) => Boolean(r.error)));
@@ -309,14 +309,14 @@ export async function runAux(tabId: string, sql: string): Promise<CellValue[][]>
   const p = new Promise<CellValue[][]>((resolve, reject) => {
     runs.set(runId, { kind: 'aux', tabId, rows: [], resolve, reject });
   });
-  await getPgui()['query:run']({ runId, connectionId: tab.params.connectionId, database: tab.params.database, sessionId, sql, mode: 'single', rowCap: 1000, pageSize: 1000 });
+  await getApi()['query:run']({ runId, connectionId: tab.params.connectionId, database: tab.params.database, sessionId, sql, mode: 'single', rowCap: 1000, pageSize: 1000 });
   return p;
 }
 
 export async function cancelRun(tabId: string): Promise<void> {
   const rt = getRuntime(tabId);
   if (!rt.run.runId || !rt.run.running) return;
-  await getPgui()['query:cancel']({ runId: rt.run.runId });
+  await getApi()['query:cancel']({ runId: rt.run.runId });
 }
 
 export async function commitTx(tabId: string): Promise<void> {
@@ -337,7 +337,7 @@ export async function exactCount(tabId: string, statementIndex: number): Promise
   const res = rt.run.results.find((r) => r.statementIndex === statementIndex);
   if (!res) return;
   const inner = res.statementText.trim().replace(/;\s*$/, '');
-  const rows = await runAux(tabId, `SELECT count(*)::text AS count FROM (${inner}) AS pgui_q`);
+  const rows = await runAux(tabId, `SELECT count(*)::text AS count FROM (${inner}) AS pgt_q`);
   const count = String(rows[0]?.[0] ?? '?');
   patchRuntime(tabId, { exactCounts: { ...getRuntime(tabId).exactCounts, [statementIndex]: count } });
 }
@@ -348,7 +348,7 @@ export async function switchDatabase(tabId: string, database: string): Promise<v
   if (!tab || tab.params.database === database) return;
   const sess = sessions.get(tabId);
   sessions.delete(tabId);
-  if (sess?.opened) await getPgui()['session:close']({ sessionId: sess.sessionId }).catch(() => undefined);
+  if (sess?.opened) await getApi()['session:close']({ sessionId: sess.sessionId }).catch(() => undefined);
   useStore.getState().updateParams<'query'>(tabId, { database, sessionId: crypto.randomUUID() });
   patchRuntime(tabId, { tx: { state: 'none', statements: 0, startedAt: null }, run: initialRunState, view: 0 });
 }

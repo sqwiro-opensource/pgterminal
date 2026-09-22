@@ -1,5 +1,5 @@
 /**
- * The typed IPC contract between main and renderer. The preload derives `window.pgui`
+ * The typed IPC contract between main and renderer. The preload derives `window.pgterminal`
  * from INVOKE_CHANNELS / PUSH_CHANNELS, so a channel absent from these maps cannot be called.
  */
 import type {
@@ -158,8 +158,8 @@ export type IpcRes<K extends InvokeChannel> = IpcInvokeMap[K]['res'];
 /** Unsubscribe function returned by `on`. */
 export type Unsubscribe = () => void;
 
-/** The API exposed on `window.pgui`: one invoke wrapper per channel plus `on`. */
-export type PguiApi = {
+/** The API exposed on `window.pgterminal`: one invoke wrapper per channel plus `on`. */
+export type PgTerminalApi = {
   [K in InvokeChannel]: IpcReq<K> extends void ? () => Promise<IpcRes<K>> : (req: IpcReq<K>) => Promise<IpcRes<K>>;
 } & {
   on<K extends PushChannel>(channel: K, cb: (payload: IpcPushMap[K]) => void): Unsubscribe;

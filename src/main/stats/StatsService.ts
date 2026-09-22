@@ -7,7 +7,7 @@ import { timescaleSummarySql } from '@main/catalog/sql/timescale.sql';
 export interface OverviewOptions {
   /** Per-section `SET LOCAL statement_timeout` in ms (default 5000). */
   statementTimeoutMs?: number;
-  /** Marks activity rows that belong to this app; defaults to application_name = 'pgui'. */
+  /** Marks activity rows that belong to this app; defaults to application_name = 'pgterminal'. */
   isOwn?: (row: { app: string; pid: number }) => boolean;
 }
 
@@ -317,7 +317,7 @@ export async function getOverview(pool: Pool, connectionId: string, opts: Overvi
 export interface CancelBackendOptions {
   pid: number;
   terminate: boolean;
-  /** Backends this app owns must never be cancelled from the overview; defaults to application_name = 'pgui'. */
+  /** Backends this app owns must never be cancelled from the overview; defaults to application_name = 'pgterminal'. */
   isOwn?: (row: { app: string; pid: number }) => boolean;
 }
 
@@ -327,7 +327,7 @@ export async function cancelBackend(pool: Pool, opts: CancelBackendOptions): Pro
   const who = await pool.query<{ app: string | null }>(`SELECT application_name AS app FROM pg_stat_activity WHERE pid = $1`, [opts.pid]);
   const row = who.rows[0];
   if (!row) return { ok: false, reason: `No backend with pid ${opts.pid}` };
-  if (isOwn({ app: row.app ?? '', pid: opts.pid })) return { ok: false, reason: 'That backend belongs to pgui; cancel it from its own tab instead' };
+  if (isOwn({ app: row.app ?? '', pid: opts.pid })) return { ok: false, reason: 'That backend belongs to pgterminal; cancel it from its own tab instead' };
   const fn = opts.terminate ? 'pg_terminate_backend' : 'pg_cancel_backend';
   const r = await pool.query<{ ok: boolean }>(`SELECT ${fn}($1) AS ok`, [opts.pid]);
   return { ok: Boolean(r.rows[0]?.ok) };

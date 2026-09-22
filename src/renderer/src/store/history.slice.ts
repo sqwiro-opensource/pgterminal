@@ -1,5 +1,5 @@
 import type { HistoryEntry } from '@shared/ipc';
-import { getPgui } from '../lib/ipc';
+import { getApi } from '../lib/ipc';
 import type { SliceCreator } from './index';
 
 export interface HistorySlice {
@@ -21,7 +21,7 @@ export const createHistorySlice: SliceCreator<HistorySlice> = (set, get) => ({
 
   async loadHistory(connectionId) {
     const search = get().historySearch.trim();
-    const history = await getPgui()['history:list']({
+    const history = await getApi()['history:list']({
       ...(connectionId ? { connectionId } : {}),
       ...(search ? { search } : {}),
       limit: 500
@@ -30,7 +30,7 @@ export const createHistorySlice: SliceCreator<HistorySlice> = (set, get) => ({
   },
 
   async clearHistory(connectionId) {
-    await getPgui()['history:clear']({ ...(connectionId ? { connectionId } : {}) });
+    await getApi()['history:clear']({ ...(connectionId ? { connectionId } : {}) });
     await get().loadHistory();
   },
 

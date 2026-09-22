@@ -22,8 +22,8 @@ const fakeSafe: SafeStorageLike = {
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
-/** Pids of live backends with application_name = 'pgui' (other test files may leave short-lived ones). */
-async function pguiPids(): Promise<number[]> {
+/** Pids of live backends with application_name = 'pgterminal' (other test files may leave short-lived ones). */
+async function pgtPids(): Promise<number[]> {
   return withTestPool(async (pool) => {
     const r = await pool.query<{ pid: number }>(
       `SELECT pid FROM pg_stat_activity WHERE application_name = $1 AND pid <> pg_backend_pid()`,
@@ -65,7 +65,7 @@ describe.skipIf(skip)('connections IPC handlers (integration)', () => {
   const password = inputFromUrl('x').password;
 
   beforeAll(() => {
-    dir = mkdtempSync(join(tmpdir(), 'pgui-conn-'));
+    dir = mkdtempSync(join(tmpdir(), 'pgterminal-conn-'));
     stores = getStores({ cwd: dir });
     registry = new ConnectionRegistry({ emit: (e) => events.push(e), reaperIntervalMs: 0 });
     h = createConnectionsHandlers({
@@ -80,6 +80,31 @@ describe.skipIf(skip)('connections IPC handlers (integration)', () => {
     await registry.closeAll();
   });
 
+  it('a secret the keychain can no longer decrypt fails with an answerable message', async () => {
+    // What a renamed app, a reset keychain or a copied vault.json looks like: the entry is there,
+    // the key that wrote it is not.
+    const dir2 = mkdtempSync(join(tmpdir(), 'pgterminal-lostkey-'));
+    const stores2 = getStores({ cwd: dir2 });
+    const registry2 = new ConnectionRegistry({ emit: () => undefined, reaperIntervalMs: 0 });
+    const lostKey: SafeStorageLike = {
+      ...fakeSafe,
+      decryptString: () => {
+        throw new Error('Error while decrypting the ciphertext provided to safeStorage.decryptString.');
+      }
+    };
+    const h2 = createConnectionsHandlers({
+      stores: stores2,
+      vault: new CredentialVault(lostKey, stores2.vault, 'darwin'),
+      registry: registry2,
+      emit: () => undefined
+    });
+    const meta = await h2.save(inputFromUrl('lost-key'));
+    await expect(h2.connect({ connectionId: meta.id })).rejects.toThrow(/could not be read from the OS keychain/);
+    // An explicitly supplied password still connects.
+    await expect(h2.connect({ connectionId: meta.id, password: inputFromUrl('x').password })).resolves.toBeTruthy();
+    await registry2.closeAll();
+  });
+
   it('save → list: hasPassword true and no plaintext password in any file', async () => {
     const meta = await h.save(inputFromUrl('docker'));
     savedId = meta.id;
@@ -88,7 +113,7 @@ describe.skipIf(skip)('connections IPC handlers (integration)', () => {
     const list = await h.list();
     expect(list.map((c) => c.name)).toEqual(['docker']);
     expect(list[0]?.hasPassword).toBe(true);
-    // The test password happens to equal the user name, so check structurally, not by substring.
+    // The test password happens to equal the user name (the Docker fixture keeps its own), so check structurally.
     const conn = JSON.parse(readFileSync(join(dir, 'connections.json'), 'utf8'));
     expect(JSON.stringify(conn).includes('"password"')).toBe(false);
     expect(conn.items[savedId].user).toBe('pgui');
@@ -128,7 +153,7 @@ describe.skipIf(skip)('connections IPC handlers (integration)', () => {
   });
 
   it('connect returns databases (with sizes) and search_path; listDatabases works', async () => {
-    const before = await pguiPids();
+    const before = await pgtPids();
     const res = await h.connect({ connectionId: savedId });
     expect(res.server.versionNum).toBeGreaterThanOrEqual(160000);
     expect(res.searchPath).toContain('public');
@@ -140,13 +165,13 @@ describe.skipIf(skip)('connections IPC handlers (integration)', () => {
     expect(events.some((e) => e.type === 'connected' && e.connectionId === savedId)).toBe(true);
     const again = await h.listDatabases({ connectionId: savedId });
     expect(again.map((d) => d.name)).toContain('pgui_test');
-    ownPids = (await pguiPids()).filter((pid) => !before.includes(pid));
+    ownPids = (await pgtPids()).filter((pid) => !before.includes(pid));
     expect(ownPids.length).toBeGreaterThan(0);
   });
 
-  it('disconnect ends every pgui backend within 1 s', async () => {
+  it('disconnect ends every pgterminal backend within 1 s', async () => {
     await h.disconnect({ connectionId: savedId });
-    const remaining = async () => (await pguiPids()).filter((pid) => ownPids.includes(pid)).length;
+    const remaining = async () => (await pgtPids()).filter((pid) => ownPids.includes(pid)).length;
     let n = await remaining();
     for (let i = 0; i < 10 && n > 0; i++) {
       await sleep(100);

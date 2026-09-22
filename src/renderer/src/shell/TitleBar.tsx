@@ -1,5 +1,6 @@
 import { Moon, PanelLeft, PanelRight, Search, Settings, Sun } from 'lucide-react';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
+import { BrandMark } from '../components/BrandMark';
 import { IconButton } from '../components/ui/IconButton';
 import { useTheme } from '../lib/theme';
 
@@ -35,7 +36,10 @@ export function TitleBar({
     >
       <div className="flex min-w-0 items-center gap-1.5 text-[12px] text-muted-foreground">
         {crumbs.length === 0 ? (
-          <span className="font-semibold text-foreground">pgui</span>
+          <>
+            <BrandMark size={13} className="text-primary" />
+            <span className="font-semibold text-foreground">PgTerminal</span>
+          </>
         ) : (
           crumbs.map((c, i) => (
             <span key={`${c}-${i}`} className="flex items-center gap-1.5">

@@ -19,7 +19,7 @@ export interface PaletteItem {
 }
 
 const FIRST_PAGE: PageSpec = { mode: 'keyset', after: null };
-const RECENT_KEY = 'pgui.palette.recent';
+const RECENT_KEY = 'pgterminal.palette.recent';
 const RECENT_CAP = 10;
 
 export interface RecentRef {

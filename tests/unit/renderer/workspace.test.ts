@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TabParamsByKind, WorkspaceSnapshot } from '../../../src/shared/types/workspace';
 
-// Minimal preload stand-in: the store calls window.pgui lazily.
+// Minimal preload stand-in: the store calls window.pgterminal lazily.
 const saved: WorkspaceSnapshot[] = [];
 let loadResult: WorkspaceSnapshot | null = null;
 vi.stubGlobal('window', {
-  pgui: {
+  pgterminal: {
     'workspace:load': async () => loadResult,
     'workspace:save': async (s: WorkspaceSnapshot) => {
       saved.push(s);

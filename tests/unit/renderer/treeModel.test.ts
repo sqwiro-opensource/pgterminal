@@ -17,14 +17,14 @@ const k = (c: string, n: string): NodeKey => `${c}:${n}`;
 function fixture(): TreeState {
   const schemaSales: SchemaNode = {
     id: nodeIds.schema('sqwiro', 'sales'), kind: 'schema', name: 'sales', parentId: nodeIds.database('sqwiro'),
-    hasChildren: true, owner: 'pgui', comment: null,
+    hasChildren: true, owner: 'pgterminal', comment: null,
     children: [
       { id: nodeIds.group('tablesGroup', 'sqwiro', 'sales'), kind: 'tablesGroup', name: 'Tables', parentId: null, hasChildren: true, count: 2 },
       { id: nodeIds.group('viewsGroup', 'sqwiro', 'sales'), kind: 'viewsGroup', name: 'Views', parentId: null, hasChildren: true, count: 1 },
       { id: nodeIds.group('functionsGroup', 'sqwiro', 'sales'), kind: 'functionsGroup', name: 'Functions', parentId: null, hasChildren: false, count: 0 }
     ]
   };
-  const schemaPublic: SchemaNode = { id: nodeIds.schema('sqwiro', 'public'), kind: 'schema', name: 'public', parentId: null, hasChildren: true, owner: 'pgui', comment: null };
+  const schemaPublic: SchemaNode = { id: nodeIds.schema('sqwiro', 'public'), kind: 'schema', name: 'public', parentId: null, hasChildren: true, owner: 'pgterminal', comment: null };
   const db: DatabaseNode = {
     id: nodeIds.database('sqwiro'), kind: 'database', name: 'sqwiro', parentId: null, hasChildren: true,
     schemas: [schemaPublic, schemaSales], searchPath: ['public'],
@@ -55,9 +55,9 @@ function fixture(): TreeState {
       c1: {
         state: 'connected', openDatabases: ['sqwiro'],
         databases: [
-          { name: 'sqwiro', owner: 'pgui', encoding: 'UTF8', sizeBytes: '13314398618', isTemplate: false, allowConn: true },
-          { name: 'analytics', owner: 'pgui', encoding: 'UTF8', sizeBytes: null, isTemplate: false, allowConn: true },
-          { name: 'template0', owner: 'pgui', encoding: 'UTF8', sizeBytes: null, isTemplate: true, allowConn: false }
+          { name: 'sqwiro', owner: 'pgterminal', encoding: 'UTF8', sizeBytes: '13314398618', isTemplate: false, allowConn: true },
+          { name: 'analytics', owner: 'pgterminal', encoding: 'UTF8', sizeBytes: null, isTemplate: false, allowConn: true },
+          { name: 'template0', owner: 'pgterminal', encoding: 'UTF8', sizeBytes: null, isTemplate: true, allowConn: false }
         ]
       },
       c2: { state: 'idle', openDatabases: [] }

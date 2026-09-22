@@ -2,8 +2,8 @@ import { Pool, type PoolConfig } from 'pg';
 import type { ConnectionMeta, ServerInfo } from '@shared/ipc';
 import { createTypeParsers } from './typeParsers';
 
-/** Every pgui backend is tagged with this application_name (used by disconnect checks and tests). */
-export const APPLICATION_NAME = 'pgui';
+/** Every pgterminal backend is tagged with this application_name (used by disconnect checks and tests). */
+export const APPLICATION_NAME = 'pgterminal';
 
 /** Translate ConnectionMeta into a pg PoolConfig. Password is injected separately by the registry. */
 export function buildPoolConfig(meta: ConnectionMeta, database: string, password: string | undefined): PoolConfig {

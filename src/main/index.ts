@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from 'electron';
 import { electronApp } from '@electron-toolkit/utils';
 import { readFile, writeFile } from 'fs/promises';
+import { join } from 'path';
 import { registerIpc } from './ipc/register';
 import { getMainWindow } from './ipc/handle';
 import { createMainWindow } from './window';
@@ -10,7 +11,7 @@ import { installShutdownHook } from './db/ConnectionRegistry';
 import { installAutoUpdate } from './updates/autoUpdate';
 
 if (!app.requestSingleInstanceLock()) {
-  process.stderr.write('[main] another pgui instance holds the single-instance lock; quitting\n');
+  process.stderr.write('[main] another pgterminal instance holds the single-instance lock; quitting\n');
   app.quit();
 } else {
   app.on('second-instance', () => {
@@ -29,7 +30,11 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.whenReady().then(() => {
-    electronApp.setAppUserModelId('com.cloudhub.pgui');
+    electronApp.setAppUserModelId('com.pgterminal.app');
+    // Packaged builds take the icon from the bundle; a dev run would otherwise show Electron's.
+    if (process.platform === 'darwin' && !app.isPackaged) {
+      app.dock?.setIcon(join(app.getAppPath(), 'resources', 'icon.png'));
+    }
     initStores({ cwd: app.getPath('userData'), projectVersion: app.getVersion() });
     installShutdownHook();
     registerIpc();
@@ -57,12 +62,12 @@ if (!app.requestSingleInstanceLock()) {
 
 /**
  * Automated verification hooks (never active in normal use):
- * - PGUI_SCREENSHOT=<path>: capture the window 1.5 s after load, write a PNG, then quit.
- * - PGUI_SMOKE=1 (without a screenshot path): quit 2 s after load with exit code 0.
+ * - PGT_SCREENSHOT=<path>: capture the window 1.5 s after load, write a PNG, then quit.
+ * - PGT_SMOKE=1 (without a screenshot path): quit 2 s after load with exit code 0.
  */
 function installSmokeHooks(win: BrowserWindow): void {
-  const screenshotPath = process.env.PGUI_SCREENSHOT;
-  const smoke = process.env.PGUI_SMOKE === '1';
+  const screenshotPath = process.env.PGT_SCREENSHOT;
+  const smoke = process.env.PGT_SMOKE === '1';
   if (!screenshotPath && !smoke) return;
 
   win.webContents.once('did-finish-load', () => {
@@ -71,10 +76,10 @@ function installSmokeHooks(win: BrowserWindow): void {
         try {
           if (!win.isVisible()) win.show();
           const dom = await win.webContents.executeJavaScript(
-            `JSON.stringify({ ready: document.readyState, rootChildren: document.getElementById('root')?.childElementCount ?? -1, bodyText: document.body.innerText.slice(0, 120), pgui: typeof window.pgui, require: typeof require })`
+            `JSON.stringify({ ready: document.readyState, rootChildren: document.getElementById('root')?.childElementCount ?? -1, bodyText: document.body.innerText.slice(0, 120), pgterminal: typeof window.pgterminal, require: typeof require })`
           );
           process.stdout.write(`[smoke] dom ${dom}\n`);
-          const scriptPath = process.env.PGUI_SMOKE_SCRIPT;
+          const scriptPath = process.env.PGT_SMOKE_SCRIPT;
           if (scriptPath) {
             const src = await readFile(scriptPath, 'utf8');
             // The script must evaluate to a value or a promise; the result is printed as JSON.
@@ -96,7 +101,7 @@ function installSmokeHooks(win: BrowserWindow): void {
               win.webContents.sendInputEvent({ type: 'mouseUp', x: clickAt.x, y: clickAt.y, button: 'left', clickCount: 1, modifiers });
               win.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Meta' });
               await new Promise((r) => setTimeout(r, 2500));
-              const after = await win.webContents.executeJavaScript('window.__pguiSmokeAfter ? window.__pguiSmokeAfter() : null');
+              const after = await win.webContents.executeJavaScript('window.__pgtSmokeAfter ? window.__pgtSmokeAfter() : null');
               process.stdout.write(`[smoke] after-click ${JSON.stringify(after)}\n`);
             }
             await new Promise((r) => setTimeout(r, 800));

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ServerOverview } from '@shared/types/stats';
-import { getPgui } from '@renderer/lib/ipc';
+import { getApi } from '@renderer/lib/ipc';
 import { useStore } from '@renderer/store';
 import { useTabRuntime } from '@renderer/tabs/useTab';
 import { totalCommits, type TpsSample } from './overviewModel';
@@ -47,7 +47,7 @@ export function useOverviewPolling(tabId: string, connectionId: string): Overvie
     inflight.current = true;
     update({ loading: true });
     try {
-      const overview = await getPgui()['stats:overview']({ connectionId });
+      const overview = await getApi()['stats:overview']({ connectionId });
       const prev = (useStore.getState().tabRuntime[tabId] as OverviewRuntime | undefined)?.prevSample ?? null;
       const sample: TpsSample = { commits: totalCommits(overview.databases), at: overview.collectedAt };
       const dt = prev ? (sample.at - prev.at) / 1000 : 0;

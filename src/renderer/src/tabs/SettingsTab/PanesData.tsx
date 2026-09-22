@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Check, Copy, ExternalLink } from 'lucide-react';
 import type { AppInfo, AppSettings, BacklinkScopeMode, ConnectionInput } from '@shared/ipc';
-import { getPgui } from '@renderer/lib/ipc';
+import { getApi } from '@renderer/lib/ipc';
 import { useStore } from '@renderer/store';
 import { Button, NumberInput, Row, Select, Switch, TextInput } from './controls';
 import { exportConnections, parseConnectionImport } from './settingsModel';
@@ -97,7 +97,7 @@ export function HistoryPane({ settings, num }: PaneProps): JSX.Element {
           disabled={busy}
           onClick={() => {
             setBusy(true);
-            void getPgui()['history:clear']({})
+            void getApi()['history:clear']({})
               .then(() => toast.success('Query history cleared'))
               .catch((e: Error) => toast.error('Could not clear history', { description: e.message, duration: Infinity }))
               .finally(() => setBusy(false));
@@ -192,7 +192,7 @@ export function AboutPane({ settings, set }: PaneProps): JSX.Element {
   const [info, setInfo] = useState<AppInfo | null>(null);
   useEffect(() => {
     let cancelled = false;
-    void getPgui()['app:info']()
+    void getApi()['app:info']()
       .then((i) => {
         if (!cancelled) setInfo(i);
       })
@@ -205,7 +205,7 @@ export function AboutPane({ settings, set }: PaneProps): JSX.Element {
   return (
     <>
       <Row label="Version">
-        <span className="font-mono text-[12px]">pgui {info?.version ?? '—'}</span>
+        <span className="font-mono text-[12px]">PgTerminal {info?.version ?? '—'}</span>
       </Row>
       <Row label="Runtime">
         <span className="font-mono text-[12px] text-muted-foreground">
@@ -223,7 +223,7 @@ export function AboutPane({ settings, set }: PaneProps): JSX.Element {
       <Row label="Check for updates now">
         <Button
           onClick={() => {
-            void getPgui()['app:checkForUpdates']()
+            void getApi()['app:checkForUpdates']()
               .then(() => toast.success('Checking for updates'))
               .catch((e: Error) => toast.error('Update check failed', { description: e.message, duration: Infinity }));
           }}
@@ -234,7 +234,7 @@ export function AboutPane({ settings, set }: PaneProps): JSX.Element {
       <Row label="Documentation" description="The specification and design mockups that describe this build.">
         <Button
           onClick={() => {
-            void getPgui()['app:openExternal']({ url: 'https://www.postgresql.org/docs/16/index.html' }).catch(() => undefined);
+            void getApi()['app:openExternal']({ url: 'https://www.postgresql.org/docs/16/index.html' }).catch(() => undefined);
           }}
         >
           <ExternalLink size={14} strokeWidth={1.75} />

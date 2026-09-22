@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { DocTarget } from '@shared/types/doclink';
 import type { CellValue, FieldInfo, PgErrorInfo } from '@shared/types/query';
-import { pgui } from '@renderer/lib/ipc';
+import { pgterminal } from '@renderer/lib/ipc';
 import { useStore } from '@renderer/store';
 import { docLinks } from '@renderer/features/doclink/docLinksService';
 import { buildUpdateOp, cellsEqual, rowToObject, type Row } from './documentModel';
@@ -55,7 +55,7 @@ export function useDocument(tabId: string, connectionId: string, database: strin
     setError(null);
     setNotFound(false);
     try {
-      const page = await pgui['rows:fetch']({
+      const page = await pgterminal['rows:fetch']({
         connectionId,
         database,
         schema: target.schema,
@@ -115,14 +115,14 @@ export function useDocument(tabId: string, connectionId: string, database: strin
     setSaving(true);
     setSaveError(null);
     try {
-      const res = await pgui['rows:mutate']({ connectionId, database, schema: target.schema, table: target.table, ops: [op] });
+      const res = await pgterminal['rows:mutate']({ connectionId, database, schema: target.schema, table: target.table, ops: [op] });
       if (!res.ok || !res.results) {
         setSaveError(res.error ?? { message: 'Save failed' });
         return false;
       }
       const r = res.results[0];
       if (r && r.rowCount === 0) {
-        setSaveError({ message: 'Row changed on the server (0 rows updated). Reload and retry.', code: 'PGUI_CONFLICT' });
+        setSaveError({ message: 'Row changed on the server (0 rows updated). Reload and retry.', code: 'PGT_CONFLICT' });
         return false;
       }
       const returned = r?.returning?.[0];
@@ -145,7 +145,7 @@ export function useDocument(tabId: string, connectionId: string, database: strin
 
   const remove = useCallback(async (): Promise<boolean> => {
     if (!row) return false;
-    const res = await pgui['rows:mutate']({ connectionId, database, schema: target.schema, table: target.table, ops: [{ op: 'delete', pk: pk() }] });
+    const res = await pgterminal['rows:mutate']({ connectionId, database, schema: target.schema, table: target.table, ops: [{ op: 'delete', pk: pk() }] });
     if (!res.ok) throw new Error(res.error?.message ?? 'Delete failed');
     docLinks.clearCache(connectionId, database);
     return true;

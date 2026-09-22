@@ -1,5 +1,5 @@
 /**
- * The `pgui-doc:` url a Monaco link carries, and its parser.
+ * The `pgterminal-doc:` url a Monaco link carries, and its parser.
  *
  * Kept free of any monaco import so it can be tested in node: the link provider needs a
  * browser, these strings do not.
@@ -20,7 +20,7 @@ export interface DocLinkUrlPayload extends DocLinkUrlContext {
   raw: string;
 }
 
-export const DOC_LINK_SCHEME = 'pgui-doc';
+export const DOC_LINK_SCHEME = 'pgterminal-doc';
 
 /** Builds the link url, carrying the connection context so the opener needs no editor lookup. */
 export function docLinkUrl(raw: string, ctx: DocLinkUrlContext): string {

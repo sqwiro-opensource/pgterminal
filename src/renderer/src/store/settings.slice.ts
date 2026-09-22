@@ -1,5 +1,5 @@
 import { DEFAULT_SETTINGS, type AppSettings } from '@shared/ipc';
-import { getPgui } from '../lib/ipc';
+import { getApi } from '../lib/ipc';
 import type { SliceCreator } from './index';
 
 export interface SettingsSlice {
@@ -14,14 +14,14 @@ export const createSettingsSlice: SliceCreator<SettingsSlice> = (set) => ({
   settingsLoaded: false,
 
   async loadSettings() {
-    const settings = await getPgui()['settings:get']();
+    const settings = await getApi()['settings:get']();
     set({ settings: { ...DEFAULT_SETTINGS, ...settings }, settingsLoaded: true });
   },
 
   async updateSettings(patch) {
     // Optimistic local merge; main returns the authoritative merged settings.
     set((s) => ({ settings: { ...s.settings, ...patch } }));
-    const settings = await getPgui()['settings:set'](patch);
+    const settings = await getApi()['settings:set'](patch);
     set({ settings: { ...DEFAULT_SETTINGS, ...settings } });
   }
 });

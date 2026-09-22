@@ -81,13 +81,13 @@ export function MonacoSqlEditor(props: MonacoSqlEditorProps): JSX.Element {
     onReady?.(editor);
     const subs: monaco.IDisposable[] = [
       editor.addAction({
-        id: 'pgui.run',
+        id: 'pgterminal.run',
         label: 'Run',
         keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
         run: () => onRun?.('all')
       }),
       editor.addAction({
-        id: 'pgui.runSelection',
+        id: 'pgterminal.runSelection',
         label: 'Run selection or statement',
         keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter],
         run: (ed) => {
@@ -96,19 +96,19 @@ export function MonacoSqlEditor(props: MonacoSqlEditorProps): JSX.Element {
         }
       }),
       editor.addAction({
-        id: 'pgui.format',
+        id: 'pgterminal.format',
         label: 'Format SQL',
         keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF],
         run: () => onFormat?.()
       }),
       editor.addAction({
-        id: 'pgui.explain',
+        id: 'pgterminal.explain',
         label: 'Explain',
         keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyE],
         run: () => onExplain?.()
       }),
       editor.addAction({
-        id: 'pgui.cancel',
+        id: 'pgterminal.cancel',
         label: 'Cancel running query',
         keybindings: [monaco.KeyCode.Escape],
         precondition: NO_WIDGETS,

@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
 /**
- * contextBridge exposes `window.pgui` with frozen, non-configurable properties. A Proxy `get`
+ * contextBridge exposes `window.pgterminal` with frozen, non-configurable properties. A Proxy `get`
  * trap must return such values unchanged, so the wrapper has to build a plain object instead.
  * This test reproduces the frozen shape that broke the app at runtime.
  */
-describe('getPgui over a contextBridge-shaped object', () => {
+describe('getApi over a contextBridge-shaped object', () => {
   function frozenApi(impl: Record<string, unknown>): Record<string, unknown> {
     const api: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(impl)) {
@@ -20,14 +20,14 @@ describe('getPgui over a contextBridge-shaped object', () => {
       'connections:connect': () => Promise.reject(new Error('boom')),
       on: () => () => undefined
     });
-    vi.stubGlobal('window', { pgui: api });
-    const { getPgui, setIpcErrorObserver } = await import('@renderer/lib/ipc');
+    vi.stubGlobal('window', { pgterminal: api });
+    const { getApi, setIpcErrorObserver } = await import('@renderer/lib/ipc');
 
-    await expect(getPgui()['settings:get']()).resolves.toEqual({ ok: true });
+    await expect(getApi()['settings:get']()).resolves.toEqual({ ok: true });
 
     const seen: string[] = [];
     const dispose = setIpcErrorObserver((info) => seen.push(info.channel));
-    await expect(getPgui()['connections:connect']({ connectionId: 'c1' })).rejects.toThrow('boom');
+    await expect(getApi()['connections:connect']({ connectionId: 'c1' })).rejects.toThrow('boom');
     expect(seen).toEqual(['connections:connect']);
     dispose();
     vi.unstubAllGlobals();

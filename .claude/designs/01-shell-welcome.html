@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>pgui · Shell &amp; Welcome</title>
+<title>PgTerminal · Shell &amp; Welcome</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="assets/pgui.css">
+<link rel="stylesheet" href="assets/pgterminal.css">
 <style>
   /* page-specific */
   .welcome{flex:1;display:grid;place-items:center;overflow:auto;position:relative;padding-left:250px}
@@ -75,7 +75,7 @@
   <!-- ===== title bar ===== -->
   <header class="titlebar">
     <div class="lights"><i></i><i></i><i></i></div>
-    <div class="crumb"><span class="mono" style="font-weight:600;color:hsl(var(--foreground))">pgui</span></div>
+    <div class="crumb"><span class="mono" style="font-weight:600;color:hsl(var(--foreground))">PgTerminal</span></div>
     <div class="palette-pill"><svg class="i"><use href="#ic-search"/></svg><span>Search objects or run a command</span><kbd>⌘K</kbd></div>
     <div class="tb-actions">
       <button class="iconbtn" title="Toggle sidebar ⌘B"><svg class="i lg"><use href="#ic-panel-l"/></svg></button>
@@ -173,7 +173,7 @@
         <div class="welcome">
           <div class="bg-grid"></div>
           <div class="welcome-inner">
-            <div class="wordmark"><span class="mark">▤</span>pgui</div>
+            <div class="wordmark"><span class="mark">▤</span>PgTerminal</div>
             <div class="tagline">PostgreSQL workbench with document links · 3 servers · 44 databases</div>
             <div class="cols">
               <div class="wl">
@@ -234,6 +234,6 @@
 <div class="mock-note" style="left:1060px;top:730px;max-width:260px">First-run variant: Recent is replaced by a single “Add your first connection” CTA + “Import from URI”; the Shortcuts column stays.</div>
 <div class="mock-note" style="left:560px;top:790px;max-width:300px">Status bar: connection chip · db · TX state · transient message · server version · running-query spinner (click → cancel menu).</div>
 
-<script src="assets/pgui.js"></script>
+<script src="assets/pgterminal.js"></script>
 </body>
 </html>

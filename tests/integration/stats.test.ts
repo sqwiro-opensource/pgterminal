@@ -13,7 +13,7 @@ describe.skipIf(skip)('StatsService (integration)', () => {
 
   beforeAll(() => {
     pool = new Pool({ connectionString: PG_TEST_URL, max: 3, application_name: APPLICATION_NAME });
-    other = new Pool({ connectionString: PG_TEST_URL, max: 2, application_name: 'pgui-stats-test' });
+    other = new Pool({ connectionString: PG_TEST_URL, max: 2, application_name: 'pgterminal-stats-test' });
   });
 
   afterAll(async () => {
@@ -21,7 +21,7 @@ describe.skipIf(skip)('StatsService (integration)', () => {
   });
 
   it('overview lists the test database with a numeric size and the app backend', async () => {
-    await pool.query('SELECT 1'); // make sure a pgui backend exists
+    await pool.query('SELECT 1'); // make sure a pgterminal backend exists
     const o = await getOverview(pool, 'c1');
     expect(o.connectionId).toBe('c1');
     expect(o.server.versionNum).toBeGreaterThanOrEqual(160000);
@@ -81,7 +81,7 @@ describe.skipIf(skip)('StatsService (integration)', () => {
     const own = await pool.query<{ pid: number }>('SELECT pg_backend_pid() AS pid');
     const r = await cancelBackend(pool, { pid: Number(own.rows[0]!.pid), terminate: true });
     expect(r.ok).toBe(false);
-    expect(r.reason).toMatch(/belongs to pgui/);
+    expect(r.reason).toMatch(/belongs to pgterminal/);
     const still = await pool.query('SELECT 1 AS one');
     expect(still.rows[0]).toEqual({ one: 1 });
   });

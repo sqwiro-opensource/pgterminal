@@ -1,5 +1,5 @@
 /**
- * Monaco link provider for SQL models: `'sales_customer/42'` string literals become `pgui-doc://` links so a
+ * Monaco link provider for SQL models: `'sales_customer/42'` string literals become `pgterminal-doc://` links so a
  * WHERE clause literal is navigable like a grid cell. Registered once from `setupMonaco()`.
  */
 import { monaco, SQL_LANGUAGE } from './monacoSetup';

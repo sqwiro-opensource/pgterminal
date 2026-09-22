@@ -1,4 +1,4 @@
-/* pgui v2 design system — shared by every mockup under .claude/designs
+/* PgTerminal v2 design system — shared by every mockup under .claude/designs
    Tokens are HSL triplets (shadcn convention). Light is default; [data-theme="dark"] overrides. */
 
 :root{

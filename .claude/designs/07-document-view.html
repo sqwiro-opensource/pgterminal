@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>pgui · Document view</title>
-<link rel="stylesheet" href="assets/pgui.css">
+<title>PgTerminal · Document view</title>
+<link rel="stylesheet" href="assets/pgterminal.css">
 <style>
   /* page-specific */
   .doc{display:grid;grid-template-rows:40px 1fr 30px;min-height:0;flex:1}
@@ -335,7 +335,7 @@
   <div class="mock-note" style="top:700px;left:640px;max-width:380px;white-space:normal">Monaco JSON view: string literals that resolve get a dotted underline + ⌘-click; _id is a read-only range</div>
   <div class="mock-note" style="top:96px;right:24px;pointer-events:auto;cursor:pointer" onclick="document.getElementById('sheet').classList.toggle('hidden')">Save → diff sheet (click here, or press s)</div>
 </div>
-<script src="assets/pgui.js"></script>
+<script src="assets/pgterminal.js"></script>
 <script>
   // mock: hide diff sheet by default; toggle with "s"
   if(!/[?&]sheet=1/.test(location.search))document.getElementById('sheet').classList.add('hidden');

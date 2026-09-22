@@ -7,7 +7,7 @@ import { parseDocRef, rankCandidates } from '@shared/doclink';
 import type { DocLinkResolution, DocRef, DocTarget } from '@shared/types/doclink';
 import type { Filter } from '@shared/types/rows';
 import { toast } from 'sonner';
-import { pgui } from '@renderer/lib/ipc';
+import { pgterminal } from '@renderer/lib/ipc';
 import { setLinkDetector } from '@renderer/lib/format';
 import { useStore } from '@renderer/store';
 import { parseDocLinkUrl } from '@renderer/features/editor/docLinkUrl';
@@ -85,7 +85,7 @@ async function resolve(
   if (running) return running;
   const p = (async () => {
     try {
-      const res = await pgui['doclink:resolve']({
+      const res = await pgterminal['doclink:resolve']({
         connectionId: ctx.connectionId,
         database: ctx.database,
         ref,
@@ -187,7 +187,7 @@ function targetSql(target: DocTarget): string {
   return `SELECT * FROM ${q(target.schema)}.${q(target.table)} WHERE ${q(target.keyColumn)}::text = '${target.keyValue.replace(/'/g, "''")}';`;
 }
 
-/** Parse a `pgui-doc://<raw>?conn=…&db=…&tab=…` link produced by the Monaco link providers. */
+/** Parse a `pgterminal-doc://<raw>?conn=…&db=…&tab=…` link produced by the Monaco link providers. */
 function openFromUrl(url: string): void {
   const payload = parseDocLinkUrl(url);
   if (!payload) return;
@@ -221,10 +221,10 @@ export type DocLinks = typeof docLinks;
 // pipeline. Harmless in production — the renderer is sandboxed and has no Node access.
 declare global {
   interface Window {
-    __pguiDocLinks?: typeof docLinks;
+    __pgtDocLinks?: typeof docLinks;
   }
 }
-if (typeof window !== 'undefined') window.__pguiDocLinks = docLinks;
+if (typeof window !== 'undefined') window.__pgtDocLinks = docLinks;
 
 // ---- wiring at module init ------------------------------------------------------------------------------
 setLinkDetector((v) => isRef(v) !== null);

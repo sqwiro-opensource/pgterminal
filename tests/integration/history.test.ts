@@ -10,7 +10,7 @@ const NOW = Date.now();
 
 // Pure store logic: no database needed, but it lives with the runner tests it complements.
 describe('QueryHistory', () => {
-  const stores = getStores({ cwd: mkdtempSync(join(tmpdir(), 'pgui-history-')), projectVersion: '2.0.0' });
+  const stores = getStores({ cwd: mkdtempSync(join(tmpdir(), 'pgterminal-history-')), projectVersion: '2.0.0' });
   const history = new QueryHistory(stores);
 
   it('records and lists newest first, filtered by connection and substring', () => {

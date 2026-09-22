@@ -398,7 +398,7 @@ export function createTreeActions(ui: { editConnection(id: string): void; newCon
               title: `Drop database ${row.label}`,
               verb: 'Drop database',
               variant: 'destructive',
-              summary: `This permanently deletes the database ${row.label}${row.meta ? ` (${row.meta})` : ''}. Active sessions must be terminated first; pgui will refuse while its own pools are open.`,
+              summary: `This permanently deletes the database ${row.label}${row.meta ? ` (${row.meta})` : ''}. Active sessions must be terminated first; pgterminal will refuse while its own pools are open.`,
               database: metaOf(row.connectionId)?.defaultDatabase ?? 'postgres',
               typedName: row.label,
               options: [{ key: 'ifExists', label: 'IF EXISTS', checked: false }],

@@ -15,7 +15,7 @@ let downloaded = false;
 
 /** Update checks only run in a packaged app; the env var lets a local generic server be tested. */
 function updatesEnabled(): boolean {
-  return app.isPackaged || process.env.PGUI_FORCE_UPDATE_CHECK === '1';
+  return app.isPackaged || process.env.PGT_FORCE_UPDATE_CHECK === '1';
 }
 
 function logError(err: unknown): void {

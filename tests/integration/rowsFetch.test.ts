@@ -29,7 +29,7 @@ const customers = (over: Partial<FetchRowsRequest>): FetchRowsRequest => ({
 describe.skipIf(skip)('rows:fetch / rows:count (integration)', () => {
   let pool: Pool;
   beforeAll(() => {
-    pool = new Pool({ connectionString: PG_TEST_URL, max: 2, application_name: 'pgui-test' });
+    pool = new Pool({ connectionString: PG_TEST_URL, max: 2, application_name: 'pgterminal-test' });
   });
   afterAll(async () => {
     await pool.end();

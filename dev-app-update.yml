@@ -1,5 +1,5 @@
-# Local update-server target for `PGUI_FORCE_UPDATE_CHECK=1` runs.
+# Local update-server target for `PGT_FORCE_UPDATE_CHECK=1` runs.
 # Serve a directory containing latest-mac.yml and the built artifacts on this port.
 provider: generic
 url: http://127.0.0.1:8788/
-updaterCacheDirName: pgui-updater
+updaterCacheDirName: pgterminal-updater

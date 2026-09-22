@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import type { CellValue, FieldInfo, PgErrorInfo } from '@shared/types/query';
 import type { MutateRowsResult, RowOp } from '@shared/types/rows';
 import { qualify, quoteIdent } from '@shared/sql/quote';
-import { pgui } from '@renderer/lib/ipc';
+import { pgterminal } from '@renderer/lib/ipc';
 import { useStore } from '@renderer/store';
 import { confirm, useConfirmStore } from '@renderer/components/ui/ConfirmDialog';
 import { quoteLiteral } from '@renderer/features/grid/gridModel';
@@ -28,7 +28,7 @@ export async function applyOps(ref: TableRef, ops: RowOp[]): Promise<ApplyOutcom
   const meta = s.connections[ref.connectionId];
   const needsConfirm = meta && s.settings.confirmOnEnv.includes(meta.env);
   if (needsConfirm) {
-    const dry = await pgui['rows:mutate']({ ...ref, ops, dryRun: true });
+    const dry = await pgterminal['rows:mutate']({ ...ref, ops, dryRun: true });
     const ok = await askConfirm({
       title: `Apply ${ops.length} change${ops.length === 1 ? '' : 's'} to ${qualify(ref.schema, ref.table)}`,
       verb: 'Apply changes',
@@ -41,7 +41,7 @@ export async function applyOps(ref: TableRef, ops: RowOp[]): Promise<ApplyOutcom
     });
     if (!ok) return { ok: false };
   }
-  const result = await pgui['rows:mutate']({ ...ref, ops });
+  const result = await pgterminal['rows:mutate']({ ...ref, ops });
   if (!result.ok) return { ok: false, error: result.error, result };
   toast.success(`Applied ${ops.length} change${ops.length === 1 ? '' : 's'} · ${result.results?.reduce((n, r) => n + r.rowCount, 0) ?? 0} rows`);
   return { ok: true, result };
@@ -115,7 +115,7 @@ export async function deleteRows(ref: TableRef, fields: FieldInfo[], pkColumns: 
     typedName: prod && s.settings.typedConfirmOnProd && rows.length > 10 ? String(rows.length) : undefined
   });
   if (!ok) return false;
-  const result = await pgui['rows:mutate']({ ...ref, ops });
+  const result = await pgterminal['rows:mutate']({ ...ref, ops });
   if (!result.ok) {
     toast.error('Delete failed', { description: result.error?.hint ? `${result.error.message} — ${result.error.hint}` : result.error?.message });
     return false;

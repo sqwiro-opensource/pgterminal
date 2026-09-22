@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>pgui · Dialogs, palette, settings</title>
-<link rel="stylesheet" href="assets/pgui.css">
+<title>PgTerminal · Dialogs, palette, settings</title>
+<link rel="stylesheet" href="assets/pgterminal.css">
 <style>
   .settings{display:grid;grid-template-columns:180px 1fr;min-height:0}
   .snav{border-right:1px solid hsl(var(--border));padding:10px 8px;display:flex;flex-direction:column;gap:2px;background:hsl(var(--sidebar))}
@@ -158,7 +158,7 @@
             <div class="card"><h3>Links</h3><div class="muted small">FK columns as links on · Link unresolved <span class="mono">table/id</span> strings off · Hover preview delay 400 ms · Backlink default scope FK + jsonb same schema · jsonb scan cap 5 s/table</div></div>
             <div class="card"><h3>History</h3><div class="muted small">Retention 30 days · max 5,000 entries · exclude connections ▸ · Clear history</div></div>
             <div class="card"><h3>Connections</h3><div class="muted small">Password storage: Keychain (safeStorage) · Export connections (no passwords) · Import</div></div>
-            <div class="card"><h3>About</h3><div class="muted small">pgui 2.0.0 · Electron 31 · Check for updates · Open logs folder</div></div>
+            <div class="card"><h3>About</h3><div class="muted small">PgTerminal 2.0.0 · Electron 31 · Check for updates · Open logs folder</div></div>
           </div>
         </div>
       </div>
@@ -324,7 +324,7 @@
   <button data-r="">Settings tab</button>
   <button data-r="r-keys">Shortcut sheet</button>
 </div>
-<script src="assets/pgui.js"></script>
+<script src="assets/pgterminal.js"></script>
 <script>
   document.querySelector('.regions').addEventListener('click',function(e){
     var b=e.target.closest('button');if(!b)return;

@@ -75,7 +75,7 @@ describe.skipIf(skip)('ConnectionRegistry (integration)', () => {
     expect(r.rows[0]).toEqual({ b: '9007199254740993', n: '1.10', a: ['1.10'] });
   });
 
-  it('disconnect ends every backend tagged pgui within 1 s', async () => {
+  it('disconnect ends every backend tagged pgterminal within 1 s', async () => {
     // Count only the backends this registry opened: other test files (and a running app) use
     // the same application_name, so a global count makes this assertion order-dependent.
     const mine = async (): Promise<number[]> => {

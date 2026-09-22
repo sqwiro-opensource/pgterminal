@@ -83,7 +83,7 @@ export function createMainWindow(): BrowserWindow {
 
   win.on('ready-to-show', () => {
     win.show();
-    if (is.dev && process.env.PGUI_DEVTOOLS === '1') win.webContents.openDevTools({ mode: 'detach' });
+    if (is.dev && process.env.PGT_DEVTOOLS === '1') win.webContents.openDevTools({ mode: 'detach' });
   });
 
   win.on('closed', () => setMainWindow(null));
@@ -97,7 +97,7 @@ export function createMainWindow(): BrowserWindow {
     return { action: 'deny' };
   });
 
-  if (process.env.PGUI_SMOKE === '1') {
+  if (process.env.PGT_SMOKE === '1') {
     win.webContents.on('console-message', (_event, level, message) => {
       const levels = ['verbose', 'info', 'warning', 'error'] as const;
       process.stdout.write(`[renderer:${levels[level] ?? level}] ${message}\n`);

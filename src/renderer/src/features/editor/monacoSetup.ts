@@ -57,7 +57,7 @@ function cssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name);
 }
 
-/** (Re)define `pgui-light`/`pgui-dark` from the current CSS tokens. Safe to call repeatedly. */
+/** (Re)define `pgterminal-light`/`pgterminal-dark` from the current CSS tokens. Safe to call repeatedly. */
 export function defineEditorThemes(): void {
   const t = (name: string, fb: string): string => hslTokenToHex(cssVar(name), fb);
   const build = (dark: boolean): monaco.editor.IStandaloneThemeData => ({
@@ -99,8 +99,8 @@ export function defineEditorThemes(): void {
       'scrollbarSlider.background': t('--muted-foreground', dark ? '#9aa3b2' : '#6b7280') + '55'
     }
   });
-  monaco.editor.defineTheme('pgui-light', build(false));
-  monaco.editor.defineTheme('pgui-dark', build(true));
+  monaco.editor.defineTheme('pgterminal-light', build(false));
+  monaco.editor.defineTheme('pgterminal-dark', build(true));
 }
 
 const KIND_MAP: Record<CompletionItem['kind'], monaco.languages.CompletionItemKind> = {
@@ -173,7 +173,7 @@ function registerHoverProvider(): monaco.IDisposable {
 function registerLinkOpener(): monaco.IDisposable {
   return monaco.editor.registerLinkOpener({
     open(resource) {
-      if (resource.scheme !== 'pgui-doc') return false;
+      if (resource.scheme !== 'pgterminal-doc') return false;
       editorHooks.onOpenDocLink?.(resource.toString());
       return true;
     }

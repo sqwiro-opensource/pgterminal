@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>pgui v2 Requirements</title>
+<title>PgTerminal v2 Requirements</title>
 <link rel="stylesheet" href="spec.css">
 </head>
 <body>
 <button class="theme-toggle" id="themeToggle">Theme: auto</button>
 <div class="page">
 <nav class="toc">
-  <div class="brand">pgui v2 · Requirements</div>
+  <div class="brand">PgTerminal v2 · Requirements</div>
   <a href="#s1"><span class="n">01</span>Vision &amp; scope</a>
   <a href="#s2"><span class="n">02</span>Current-state assessment</a>
   <a href="#s3"><span class="n">03</span>Glossary</a>
@@ -45,8 +45,8 @@
 <main>
 <header class="hero">
   <div class="kicker">Specification · v2</div>
-  <h1>pgui v2 — a PostgreSQL workbench with document links</h1>
-  <p>A clean rewrite of pgui: an Electron desktop tool for browsing, querying and editing the sqwiro
+  <h1>PgTerminal v2 — a PostgreSQL workbench with document links</h1>
+  <p>A clean rewrite of PgTerminal: an Electron desktop tool for browsing, querying and editing the sqwiro
   PostgreSQL fleet, with the ArangoDB-style ability to follow any <code>schema_table/id</code> value to
   the row it names and to see who points back at it. This document records the current-state review,
   the requirements as user stories with EARS acceptance criteria, the target architecture and IPC
@@ -56,14 +56,14 @@
     <span><b>Date</b> 2026-09-22</span>
     <span><b>Status</b> Draft</span>
     <span><b>Companion</b> <a href="plan.html">plan.html</a> · <a href="../designs/index.html">designs/index.html</a></span>
-    <span><b>Repo</b> <code>~/@cloudhub/pgui</code></span>
+    <span><b>Repo</b> <code>~/@cloudhub/PgTerminal</code></span>
   </div>
 </header>
 
 <!-- ============================================================ 1 -->
 <section id="s1">
   <div class="sec-h"><span class="num">01</span><h2>Vision &amp; scope</h2></div>
-  <p>pgui v2 is a desktop workbench for PostgreSQL aimed at one operator who runs a small fleet of
+  <p>PgTerminal v2 is a desktop workbench for PostgreSQL aimed at one operator who runs a small fleet of
   production servers and wants the density and directness of TablePlus or DBeaver together with the
   one thing those tools lack: first-class <em>document links</em>. The sqwiro schemas were migrated from
   ArangoDB, and every table carries a generated <code>_id</code> column whose value is
@@ -250,7 +250,7 @@
   <table>
     <thead><tr><th>Area</th><th>Severity</th><th>v2 answer</th></tr></thead>
     <tbody>
-      <tr><td>Renderer security posture</td><td><span class="badge must">must fix</span></td><td>Sandbox on, node off, strict CSP, typed <code>window.pgui</code> only (§6)</td></tr>
+      <tr><td>Renderer security posture</td><td><span class="badge must">must fix</span></td><td>Sandbox on, node off, strict CSP, typed <code>window.pgterminal</code> only (§6)</td></tr>
       <tr><td>Credentials</td><td><span class="badge must">must fix</span></td><td><code>safeStorage</code> vault in main; passwords cross IPC once (§6)</td></tr>
       <tr><td>Connection lifecycle</td><td><span class="badge must">must fix</span></td><td>ConnectionRegistry with limits, error handler, reaper, close on quit (§6)</td></tr>
       <tr><td>Write SQL by interpolation</td><td><span class="badge must">must fix</span></td><td>All writes built in main with <code>pg-format %I</code> + <code>$n</code> (§9, §11)</td></tr>
@@ -307,7 +307,7 @@
     <thead><tr><th>Server</th><th>Engines</th><th>Databases</th><th>Notes</th></tr></thead>
     <tbody>
       <tr><td><code>adminserver</code></td><td>PostgreSQL</td><td>31</td><td>Main tenant databases; production.</td></tr>
-      <tr><td><code>cloudhubserver</code></td><td>PostgreSQL (+ ArangoDB 3.10, not managed by pgui)</td><td>6</td><td>Production.</td></tr>
+      <tr><td><code>cloudhubserver</code></td><td>PostgreSQL (+ ArangoDB 3.10, not managed by PgTerminal)</td><td>6</td><td>Production.</td></tr>
       <tr><td><code>tradingserver</code></td><td>PostgreSQL + TimescaleDB</td><td>7</td><td>Hypertables; <code>_timescaledb_*</code> schemas hidden by default.</td></tr>
       <tr><td>local</td><td>PostgreSQL 16</td><td>varies</td><td>Development and the integration-test container.</td></tr>
     </tbody>
@@ -579,20 +579,20 @@
     <thead><tr><th>Process</th><th>Owns</th><th>Never does</th></tr></thead>
     <tbody>
       <tr><td><b>main</b></td><td>pg pools and clients, credential vault, catalog cache, SQL generation for writes and paging, DDL extraction, server stats, persistence (electron-store), auto-update, window security policy</td><td>render; hold React state</td></tr>
-      <tr><td><b>preload</b></td><td>a typed, allow-listed <code>window.pgui</code> API generated from <code>shared/ipc.ts</code></td><td>expose <code>ipcRenderer</code>, <code>process</code> or any Node API</td></tr>
+      <tr><td><b>preload</b></td><td>a typed, allow-listed <code>window.pgterminal</code> API generated from <code>shared/ipc.ts</code></td><td>expose <code>ipcRenderer</code>, <code>process</code> or any Node API</td></tr>
       <tr><td><b>renderer</b></td><td>React UI, zustand store, Monaco, grids, tab workspace; only sends typed requests</td><td>build write SQL, see passwords after save, touch the filesystem</td></tr>
       <tr><td><b>shared</b></td><td>TypeScript types and pure functions used by both sides (DocRef parser, statement splitter, nodeId codec, display quoting)</td><td>import <code>electron</code>, <code>pg</code>, React</td></tr>
     </tbody>
   </table>
 
   <div class="diagram">
-    <div class="box"><h5>renderer</h5><ul><li>shell, tabs registry, features/*</li><li>zustand slices</li><li>Monaco (providers once)</li><li>calls <code>window.pgui.*</code></li></ul></div>
+    <div class="box"><h5>renderer</h5><ul><li>shell, tabs registry, features/*</li><li>zustand slices</li><li>Monaco (providers once)</li><li>calls <code>window.pgterminal.*</code></li></ul></div>
     <div class="arrow">⇄</div>
-    <div class="box"><h5>preload</h5><ul><li><code>contextBridge.exposeInMainWorld('pgui')</code></li><li>one fn per invoke channel</li><li><code>on()</code> limited to push channels</li></ul></div>
+    <div class="box"><h5>preload</h5><ul><li><code>contextBridge.exposeInMainWorld('PgTerminal')</code></li><li>one fn per invoke channel</li><li><code>on()</code> limited to push channels</li></ul></div>
     <div class="arrow">⇄</div>
     <div class="box"><h5>main</h5><ul><li>ipc/*.ipc.ts (typed handle/push)</li><li>ConnectionRegistry · SessionManager · QueryRunner</li><li>CatalogService · DdlService · StatsService</li><li>DocLinkResolver · BacklinkFinder</li><li>CredentialVault · stores · autoUpdate</li></ul></div>
     <div class="arrow">⇄</div>
-    <div class="box"><h5>PostgreSQL fleet</h5><ul><li>one Pool per (connection, database)</li><li>one dedicated client per query session</li><li><code>application_name = pgui</code></li></ul></div>
+    <div class="box"><h5>PostgreSQL fleet</h5><ul><li>one Pool per (connection, database)</li><li>one dedicated client per query session</li><li><code>application_name = PgTerminal</code></li></ul></div>
   </div>
 
   <h3>Directory layout</h3>
@@ -627,7 +627,7 @@ tests/{unit,integration}/   docker-compose.test.yml   vitest.config.ts</code></p
   <h4>ConnectionRegistry · poolFactory · typeParsers</h4>
   <p><code>Map&lt;connectionId, {meta, pools: Map&lt;database, Pool&gt;}&gt;</code>. Pools are created lazily with the password fetched from the vault at that moment and never kept on the entry.</p>
   <ul>
-    <li>Pool config: <code>max 4</code>, <code>idleTimeoutMillis 30 000</code>, <code>connectionTimeoutMillis 5 000</code>, <code>application_name 'pgui'</code>, <code>keepAlive</code>, SSL by <code>sslMode</code>, <code>statement_timeout</code> through <code>options</code>, per-pool <code>types</code>.</li>
+    <li>Pool config: <code>max 4</code>, <code>idleTimeoutMillis 30 000</code>, <code>connectionTimeoutMillis 5 000</code>, <code>application_name 'PgTerminal'</code>, <code>keepAlive</code>, SSL by <code>sslMode</code>, <code>statement_timeout</code> through <code>options</code>, per-pool <code>types</code>.</li>
     <li>Type parsers (per pool, not global): <code>int8</code>, <code>numeric</code>, <code>money</code>, <code>date</code>, <code>timestamp(tz)</code>, <code>time(tz)</code>, <code>interval</code> and their arrays → strings; <code>bytea</code> → <code>\x</code>-hex; <code>json/jsonb</code> → parsed.</li>
     <li><code>pool.on('error')</code> → push <code>connections:event {poolError}</code>; a reaper ends pools idle for 10 min; <code>closeAll()</code> is awaited in <code>before-quit</code> with a 2 s race.</li>
   </ul>
@@ -667,7 +667,7 @@ tests/{unit,integration}/   docker-compose.test.yml   vitest.config.ts</code></p
 <!-- ============================================================ 7 -->
 <section id="s7">
   <div class="sec-h"><span class="num">07</span><h2>IPC contract</h2></div>
-  <p>All channels live in <code>src/shared/ipc.ts</code>. The preload derives <code>window.pgui</code> from
+  <p>All channels live in <code>src/shared/ipc.ts</code>. The preload derives <code>window.pgterminal</code> from
   the channel list, so a channel that is not in the map cannot be called.</p>
   <div class="tbl-wrap"><table>
     <thead><tr><th>Invoke channel</th><th>Request</th><th>Response</th><th>Notes</th></tr></thead>
@@ -731,7 +731,7 @@ export interface PgErrorInfo {
   statementIndex?: number; line?: number; col?: number;
 }
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [k: string]: JsonValue };
-export const DEFAULT_SENTINEL = { __pguiDefault: true } as const;
+export const DEFAULT_SENTINEL = { ____pgtDefault: true } as const;
 export type CellValue = JsonValue | typeof DEFAULT_SENTINEL;      // null === SQL NULL; int8/numeric/dates are strings
 export interface FieldInfo { name: string; dataTypeID: number; dataType: string; tableID: number; columnID: number }
 
@@ -1055,7 +1055,7 @@ table-structure:{conn}/{db}/{schema}.{table}   document:{conn}/{db}/{schema}.{ta
     <div class="card property" id="prop-12"><span class="id">PROP-12 <span class="tag">IT</span></span><h3>Numeric precision</h3><p><code>9007199254740993::int8</code>, <code>0.1::numeric + 0.2::numeric</code>, <code>12345678901234567890.123456789::numeric(30,9)</code> arrive as exact strings; editing a <code>numeric(30,10)</code> cell with <code>1.0000000001</code> and re-fetching yields the same string; CSV/JSON export emits them verbatim.</p><span class="cite">US-16 · US-18 · P1.3 · P5.5</span></div>
     <div class="card property" id="prop-13"><span class="id">PROP-13 <span class="tag">IT</span></span><h3>Array element parsing</h3><p><code>'{9007199254740993}'::int8[]</code> → <code>['9007199254740993']</code>.</p><span class="cite">P1.3</span></div>
     <div class="card property" id="prop-14"><span class="id">PROP-14 <span class="tag">UT</span></span><h3>Workspace round-trip</h3><p><code>JSON.parse(JSON.stringify(snapshot))</code> deep-equals the snapshot and contains no functions or React elements; restore(load(save(s))) yields identical tabs, active tab and expanded nodes; opening document key 42 twice yields one tab, key 43 a second.</p><span class="cite">US-28 · P2.1</span></div>
-    <div class="card property" id="prop-15"><span class="id">PROP-15 <span class="tag">IT</span></span><h3>Registry lifecycle</h3><p>Same <code>(connection, database)</code> → same Pool; different databases → different pools; disconnect ends all backends with <code>application_name = 'pgui'</code> within 1 s; <code>closeAll()</code> resolves within 2 s even with a busy client; a pool <code>error</code> emits an event and never throws; delete removes the vault entry.</p><span class="cite">US-03 · US-34 · P1.3</span></div>
+    <div class="card property" id="prop-15"><span class="id">PROP-15 <span class="tag">IT</span></span><h3>Registry lifecycle</h3><p>Same <code>(connection, database)</code> → same Pool; different databases → different pools; disconnect ends all backends with <code>application_name = 'PgTerminal'</code> within 1 s; <code>closeAll()</code> resolves within 2 s even with a busy client; a pool <code>error</code> emits an event and never throws; delete removes the vault entry.</p><span class="cite">US-03 · US-34 · P1.3</span></div>
     <div class="card property" id="prop-16"><span class="id">PROP-16 <span class="tag">IT</span></span><h3>Session persistence</h3><p><code>BEGIN</code> persists across two runs on the same <code>sessionId</code> and is rolled back on <code>session:close</code>; a dead session reconnects transparently and reports the reset.</p><span class="cite">US-13 · P3.1</span></div>
     <div class="card property" id="prop-17"><span class="id">PROP-17 <span class="tag">IT</span></span><h3>Runner event ordering</h3><p>Events are strictly <code>start → (fields? → rows* → statementDone | error)+ → done | cancelled</code>; every <code>rows</code> follows a <code>fields</code> with the same index; total rows ≤ cap; <code>truncated</code> iff the cap was hit.</p><span class="cite">US-09 · US-10 · P3.1</span></div>
   </div>
@@ -1135,7 +1135,7 @@ INSERT INTO public.big (n, b, j) SELECT g * 1.0000000001, 9007199254740993 + g, 
 </section>
 
 <footer class="muted small sans" style="border-top:1px solid hsl(var(--line));padding-top:16px">
-  pgui v2 requirements · generated 2026-09-22 · companion documents: <a href="plan.html">plan.html</a>, <a href="../designs/index.html">design mockups</a>.
+  PgTerminal v2 requirements · generated 2026-09-22 · companion documents: <a href="plan.html">plan.html</a>, <a href="../designs/index.html">design mockups</a>.
 </footer>
 </main>
 </div>
@@ -1143,9 +1143,9 @@ INSERT INTO public.big (n, b, j) SELECT g * 1.0000000001, 9007199254740993 + g, 
 (function(){
   var root=document.documentElement,btn=document.getElementById('themeToggle');
   var modes=['auto','light','dark'],cur='auto';
-  try{cur=localStorage.getItem('pgui-spec-theme')||'auto'}catch(e){}
+  try{cur=localStorage.getItem('pgterminal-spec-theme')||'auto'}catch(e){}
   function apply(){ if(cur==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',cur)} btn.textContent='Theme: '+cur; }
-  btn.addEventListener('click',function(){cur=modes[(modes.indexOf(cur)+1)%modes.length];try{localStorage.setItem('pgui-spec-theme',cur)}catch(e){}apply();});
+  btn.addEventListener('click',function(){cur=modes[(modes.indexOf(cur)+1)%modes.length];try{localStorage.setItem('pgterminal-spec-theme',cur)}catch(e){}apply();});
   apply();
 })();
 </script>

@@ -1,4 +1,4 @@
-/* pgui v2 spec documents — shared stylesheet for requirement.html and plan.html */
+/* PgTerminal v2 spec documents — shared stylesheet for requirement.html and plan.html */
 :root{
   --bg:40 30% 98%; --fg:222 22% 14%; --muted:220 10% 45%; --line:220 14% 88%;
   --card:0 0% 100%; --accent:226 70% 50%; --accent-soft:226 70% 50%;

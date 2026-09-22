@@ -4,7 +4,7 @@ import { setIpcErrorObserver, setIpcSuccessObserver } from '@renderer/lib/ipc';
 import { isConnectionLost, useStore } from '@renderer/store';
 
 /** Event the active tab listens for to reload itself after a successful reconnect. */
-export const REFRESH_TAB_EVENT = 'pgui:refresh-tab';
+export const REFRESH_TAB_EVENT = 'pgterminal:refresh-tab';
 
 /** Asks whichever tab is mounted to reload its data. */
 export function requestTabRefresh(connectionId: string): void {

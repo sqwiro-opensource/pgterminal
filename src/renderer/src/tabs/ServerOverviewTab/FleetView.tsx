@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import type { ServerOverview } from '@shared/types/stats';
 import type { ConnectionMeta } from '@shared/types/connection';
-import { getPgui } from '@renderer/lib/ipc';
+import { getApi } from '@renderer/lib/ipc';
 import { formatBytes } from '@renderer/features/tree/treeModel';
 import { cacheHitPercent, formatUptime, sessionsSummary, totalSize } from '@renderer/features/overview/overviewModel';
 import { useStore } from '@renderer/store';
@@ -43,7 +43,7 @@ export function FleetView({ tabId }: { tabId: string }) {
         for (const id of connectedIds.split(',').filter(Boolean)) {
           if (cancelled) break;
           try {
-            const overview = await getPgui()['stats:overview']({ connectionId: id });
+            const overview = await getApi()['stats:overview']({ connectionId: id });
             const cur = (useStore.getState().tabRuntime[tabId] as FleetRuntime | undefined)?.entries ?? {};
             update({ entries: { ...cur, [id]: { overview, at: Date.now() } } });
           } catch (err) {

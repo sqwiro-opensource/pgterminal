@@ -6,7 +6,7 @@ import type {
   ServerInfo,
   TestResult
 } from '@shared/ipc';
-import { getPgui } from '../lib/ipc';
+import { getApi } from '../lib/ipc';
 import type { SliceCreator } from './index';
 
 /** Runtime state of one saved connection (never persisted). */
@@ -95,14 +95,14 @@ export const createConnectionsSlice: SliceCreator<ConnectionsSlice> = (set, get)
   status: {},
 
   async loadConnections() {
-    const list = await getPgui()['connections:list']();
+    const list = await getApi()['connections:list']();
     const connections: Record<string, ConnectionMeta> = {};
     for (const c of list) connections[c.id] = c;
     set({ connections, connectionsLoaded: true });
   },
 
   async saveConnection(input) {
-    const meta = await getPgui()['connections:save'](input);
+    const meta = await getApi()['connections:save'](input);
     set((s) => ({ connections: { ...s.connections, [meta.id]: meta } }));
     return meta;
   },
@@ -111,12 +111,12 @@ export const createConnectionsSlice: SliceCreator<ConnectionsSlice> = (set, get)
     const st = get().status[id];
     if (st && st.state === 'connected') {
       try {
-        await getPgui()['connections:disconnect']({ connectionId: id });
+        await getApi()['connections:disconnect']({ connectionId: id });
       } catch {
         /* best effort */
       }
     }
-    await getPgui()['connections:delete']({ connectionId: id });
+    await getApi()['connections:delete']({ connectionId: id });
     set((s) => {
       const connections = { ...s.connections };
       const status = { ...s.status };
@@ -127,7 +127,7 @@ export const createConnectionsSlice: SliceCreator<ConnectionsSlice> = (set, get)
   },
 
   testConnection(input) {
-    return getPgui()['connections:test'](input);
+    return getApi()['connections:test'](input);
   },
 
   async connect(id, password) {
@@ -135,7 +135,7 @@ export const createConnectionsSlice: SliceCreator<ConnectionsSlice> = (set, get)
     if (!meta) throw new Error(`Unknown connection ${id}`);
     set((s) => ({ status: { ...s.status, [id]: { ...IDLE, state: 'connecting' } } }));
     try {
-      const res = await getPgui()['connections:connect']({ connectionId: id, password });
+      const res = await getApi()['connections:connect']({ connectionId: id, password });
       set((s) => ({
         status: {
           ...s.status,
@@ -156,7 +156,7 @@ export const createConnectionsSlice: SliceCreator<ConnectionsSlice> = (set, get)
 
   async disconnect(id) {
     try {
-      await getPgui()['connections:disconnect']({ connectionId: id });
+      await getApi()['connections:disconnect']({ connectionId: id });
     } finally {
       set((s) => ({ status: { ...s.status, [id]: { ...IDLE } } }));
     }
@@ -206,7 +206,7 @@ export const createConnectionsSlice: SliceCreator<ConnectionsSlice> = (set, get)
       const previous = get().status[id];
       set((s) => ({ status: { ...s.status, [id]: { ...(s.status[id] ?? IDLE), reconnecting: true } } }));
       try {
-        const res = await getPgui()['connections:connect']({ connectionId: id });
+        const res = await getApi()['connections:connect']({ connectionId: id });
         set((s) => ({
           status: {
             ...s.status,

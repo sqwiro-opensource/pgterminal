@@ -1,6 +1,6 @@
 import type { CatalogNode, CompletionIndex } from '@shared/types/catalog';
 import { decodeNodeId, nodeIdMatches } from '@shared/catalog/nodeId';
-import { pgui, useIpcEvent } from '@renderer/lib/ipc';
+import { pgterminal, useIpcEvent } from '@renderer/lib/ipc';
 import type { SliceCreator } from './index';
 import { useStore } from './index';
 
@@ -55,7 +55,7 @@ export const createCatalogSlice: SliceCreator<CatalogSlice> = (set, get) => ({
     if (state.loading[key]) return undefined;
     set((s) => ({ loading: { ...s.loading, [key]: true }, errors: { ...s.errors, [key]: undefined } }));
     try {
-      const node = await pgui['catalog:getNode']({ connectionId, database, nodeId, refresh });
+      const node = await pgterminal['catalog:getNode']({ connectionId, database, nodeId, refresh });
       set((s) => ({ nodes: { ...s.nodes, [key]: node }, loading: { ...s.loading, [key]: false } }));
       return node;
     } catch (err) {
@@ -119,7 +119,7 @@ export const createCatalogSlice: SliceCreator<CatalogSlice> = (set, get) => ({
     const cached = get().completionIndex[k];
     if (cached && !refresh) return cached;
     try {
-      const index = await pgui['catalog:completionIndex']({ connectionId, database, refresh });
+      const index = await pgterminal['catalog:completionIndex']({ connectionId, database, refresh });
       set((s) => ({ completionIndex: { ...s.completionIndex, [k]: index } }));
       return index;
     } catch (err) {

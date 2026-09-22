@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ColumnSizingState } from '@tanstack/react-table';
 import type { GridColumn } from './gridModel';
 
-const PREFIX = 'pgui.grid.sizing.';
+const PREFIX = 'pgterminal.grid.sizing.';
 
 function load(key: string | undefined): ColumnSizingState {
   if (!key) return {};

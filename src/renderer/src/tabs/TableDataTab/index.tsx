@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import type { Tab } from '@shared/types/workspace';
 import type { CellValue, PgErrorInfo } from '@shared/types/query';
 import { useStore } from '@renderer/store';
-import { pgui } from '@renderer/lib/ipc';
+import { pgterminal } from '@renderer/lib/ipc';
 import { IconButton } from '@renderer/components/ui/IconButton';
 import { ResultsGrid, RowDetail, useRowDetailSettings } from '@renderer/features/grid';
 import { rowKeyOf } from '@renderer/features/grid/gridModel';
@@ -124,7 +124,7 @@ export default function TableDataTab({ tab: anyTab }: { tab: Tab }) {
     const all: CellValue[][] = [];
     let after: Record<string, CellValue> | null = null;
     for (let i = 0; i < 1000; i++) {
-      const res = await pgui['rows:fetch']({ ...ref, filters, sort: [], limit: 5000, page: { mode: 'keyset', after } });
+      const res = await pgterminal['rows:fetch']({ ...ref, filters, sort: [], limit: 5000, page: { mode: 'keyset', after } });
       all.push(...res.rows);
       onProgress(all.length);
       if (!res.hasMore || all.length >= 200_000) break;
@@ -232,7 +232,7 @@ export default function TableDataTab({ tab: anyTab }: { tab: Tab }) {
           </>
         )}
       </PanelGroup>
-      {buf.dirty && <EditFooter count={buf.count} applying={applying} error={applyError} previewSql={async () => (await pgui['rows:mutate']({ ...ref, ops: ops(), dryRun: true })).sqlText} onDiscard={() => { buf.clear(); setApplyError(null); setErrorRows(new Set()); }} onApply={() => void apply()} />}
+      {buf.dirty && <EditFooter count={buf.count} applying={applying} error={applyError} previewSql={async () => (await pgterminal['rows:mutate']({ ...ref, ops: ops(), dryRun: true })).sqlText} onDiscard={() => { buf.clear(); setApplyError(null); setErrorRows(new Set()); }} onApply={() => void apply()} />}
       <Pager page={page} pageIndex={rt.pageIndex} limit={limit} keyset={keyset} count={rt.count} countLoading={rt.countLoading} loading={rt.loading} onPrev={prev} onNext={next} onFirst={first} onGoTo={goTo} onPageSize={(n) => void updateSettings({ gridPageSize: n as 50 | 100 | 200 | 500 | 1000 })} onRefresh={refresh} onExactCount={() => void loadCount(true)} />
     </div>
   );

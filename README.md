@@ -1,9 +1,9 @@
-# pgui
+# PgTerminal
 
 A PostgreSQL workbench for the sqwiro fleet, with first-class **document links**.
 
 Every sqwiro table carries a generated `_id` column holding `schema_table/id` (for example
-`sales_customer/42`). pgui treats any value shaped like `table/id` or `schema_table/id` — in a
+`sales_customer/42`). PgTerminal treats any value shaped like `table/id` or `schema_table/id` — in a
 grid cell, inside nested `jsonb`, in a SQL string literal — as a link you can follow to the row it
 names, and every document can show you what references it, through foreign keys and through
 `jsonb` scans.
@@ -125,14 +125,14 @@ bun run build:mac      # or build:win / build:linux → dist/
 Before shipping:
 
 1. **Replace the update URL.** `electron-builder.yml` publishes to
-   `https://updates.example.invalid/pgui`, a deliberate placeholder. Point it at the real host.
+   `https://updates.pgterminal.com/`. Serve `latest-mac.yml` and the artifacts there before shipping.
 2. **Code signing.** macOS builds use the hardened runtime with
    `build/entitlements.mac.plist` (JIT and unsigned-memory entitlements only — no camera or
    microphone). Set `CSC_LINK` and `CSC_KEY_PASSWORD`, and set `mac.notarize` to your notarization
    config, to distribute outside your own machine.
 3. Auto-update is silent: the app downloads in the background and shows a toast with a **Restart**
    action. There are no modal dialogs. Update checks are skipped in development unless you set
-   `PGUI_FORCE_UPDATE_CHECK=1`, which uses `dev-app-update.yml` (a local server on port 8788).
+   `PGT_FORCE_UPDATE_CHECK=1`, which uses `dev-app-update.yml` (a local server on port 8788).
 
 ## Architecture
 
@@ -141,18 +141,18 @@ src/shared/    types, the IPC contract, and pure logic used by both sides
                (document-link parser/ranker, statement splitter, identifier quoting)
 src/main/      connection registry and pools, credential vault, query runner, catalog service,
                DDL and stats services, row fetch/mutation builders, persistence
-src/preload/   the only bridge: an allow-listed window.pgui built from the contract
+src/preload/   the only bridge: an allow-listed window.pgterminal built from the contract
 src/renderer/  React UI — shell, tabs, grid, Monaco editor, zustand store
 ```
 
 **Security posture.** `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`, a
 strict Content-Security-Policy (`script-src 'self'`, no eval, no remote origins), navigation
 blocked, external links restricted to http(s), and a single-instance lock. The renderer never sees
-the raw `ipcRenderer`: `window.pgui` exposes exactly the channels in `src/shared/ipc.ts`. The
+the raw `ipcRenderer`: `window.pgterminal` exposes exactly the channels in `src/shared/ipc.ts`. The
 renderer also never builds SQL for writes — identifiers are quoted with `pg-format` and values are
 always bound parameters, in the main process.
 
-**Data directory** (`app.getPath('userData')`, e.g. `~/Library/Application Support/pgui`):
+**Data directory** (`app.getPath('userData')`, e.g. `~/Library/Application Support/PgTerminal`):
 
 | File | Contents |
 | --- | --- |
@@ -162,5 +162,5 @@ always bound parameters, in the main process.
 | `workspace.json` | open tabs, active tab, sidebar state |
 | `history.json` | query history (capped by count and age) |
 
-If the OS keychain is unavailable (for example a Linux `basic_text` backend), pgui refuses to
+If the OS keychain is unavailable (for example a Linux `basic_text` backend), PgTerminal refuses to
 write the password to disk and keeps it in memory for the session only.

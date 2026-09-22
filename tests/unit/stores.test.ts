@@ -27,7 +27,7 @@ function meta(id: string, name = id): ConnectionMeta {
     name,
     host: 'localhost',
     port: 5432,
-    user: 'pgui',
+    user: 'pgterminal',
     defaultDatabase: 'postgres',
     sslMode: 'disable',
     env: 'local',
@@ -50,7 +50,7 @@ describe('stores', () => {
   let cwd: string;
   let s: Stores;
   beforeEach(() => {
-    cwd = mkdtempSync(join(tmpdir(), 'pgui-stores-'));
+    cwd = mkdtempSync(join(tmpdir(), 'pgterminal-stores-'));
     s = getStores({ cwd });
   });
 

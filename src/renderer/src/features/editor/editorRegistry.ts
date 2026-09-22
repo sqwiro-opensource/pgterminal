@@ -5,7 +5,7 @@
 import type { CompletionIndex } from '@shared/types/catalog';
 
 const MODEL_SCHEME = 'inmemory';
-const MODEL_AUTHORITY = 'pgui';
+const MODEL_AUTHORITY = 'pgterminal';
 
 /** Stable URI for a model key; the completion provider maps a model back to its key through this. */
 export function modelUriString(modelKey: string, ext: 'sql' | 'json'): string {
@@ -13,7 +13,7 @@ export function modelUriString(modelKey: string, ext: 'sql' | 'json'): string {
 }
 
 export function modelKeyFromUri(uri: string): string | null {
-  const m = /^inmemory:\/\/pgui\/(.+)\.(sql|json)$/.exec(uri);
+  const m = /^inmemory:\/\/pgterminal\/(.+)\.(sql|json)$/.exec(uri);
   return m && m[1] ? decodeURIComponent(m[1]) : null;
 }
 
@@ -29,7 +29,7 @@ export function getEditorIndex(modelKey: string): CompletionIndex | undefined {
   return indexes.get(modelKey);
 }
 
-/** Where a model's values live, so link providers can build `pgui-doc://` urls with the right database. */
+/** Where a model's values live, so link providers can build `pgterminal-doc://` urls with the right database. */
 export interface EditorContext {
   connectionId: string;
   database: string;
@@ -54,6 +54,6 @@ export const linkResolver: { isResolvable(raw: string, connectionId: string, dat
 
 /** Hooks wired by other features (Phase 4 wires document links). */
 export const editorHooks: {
-  /** Called when the user activates a `pgui-doc://…` link inside any editor. */
+  /** Called when the user activates a `pgterminal-doc://…` link inside any editor. */
   onOpenDocLink?: (url: string) => void;
 } = {};

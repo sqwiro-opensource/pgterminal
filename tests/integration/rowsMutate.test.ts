@@ -21,7 +21,7 @@ const asObjects = (p: Awaited<ReturnType<typeof fetchRows>>) =>
 describe.skipIf(skip)('rows:mutate (integration)', () => {
   let pool: Pool;
   beforeAll(async () => {
-    pool = new Pool({ connectionString: PG_TEST_URL, max: 2, application_name: 'pgui-test' });
+    pool = new Pool({ connectionString: PG_TEST_URL, max: 2, application_name: 'pgterminal-test' });
     await pool.query(`DROP TABLE IF EXISTS public.${T}`);
     await pool.query(
       `CREATE TABLE public.${T} (id serial PRIMARY KEY, t text, t2 text, j jsonb, n numeric(30,10), arr int8[], b bool, req text NOT NULL DEFAULT 'x')`

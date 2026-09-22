@@ -1,8 +1,8 @@
 import { useRef } from 'react';
 import { toast } from 'sonner';
-import { pgui, useIpcEvent } from '@renderer/lib/ipc';
+import { pgterminal, useIpcEvent } from '@renderer/lib/ipc';
 
-const TOAST_ID = 'pgui-update';
+const TOAST_ID = 'pgterminal-update';
 
 /**
  * Surfaces `app:updateEvent` as toasts. Renders nothing; mounted once from App.
@@ -37,7 +37,7 @@ export function UpdateToast(): null {
       action: {
         label: 'Restart',
         onClick: () => {
-          void pgui['app:quitAndInstall']().catch((err: Error) =>
+          void pgterminal['app:quitAndInstall']().catch((err: Error) =>
             toast.error('Restart failed', { description: err.message })
           );
         }

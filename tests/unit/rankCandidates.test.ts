@@ -76,7 +76,7 @@ describe('rankCandidates (PROP-05)', () => {
   });
 
   it('appends public to the search path when absent and expands nothing else', () => {
-    const c = rankCandidates(ref('users/1'), index([['public', 'users']], ['pgui']));
+    const c = rankCandidates(ref('users/1'), index([['public', 'users']], ['pgterminal']));
     expect(c[0]).toMatchObject({ schema: 'public', reason: 'searchPath' });
   });
 });

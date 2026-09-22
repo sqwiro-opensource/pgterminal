@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "pgui",
+      "name": "pgterminal",
       "dependencies": {
         "@electron-toolkit/utils": "^3.0.0",
         "electron-store": "^8.2.0",

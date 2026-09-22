@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { Tab } from '@shared/types/workspace';
 import type { CountResult, PageSpec, RowsPage } from '@shared/types/rows';
 import type { CellValue, PgErrorInfo } from '@shared/types/query';
-import { pgui } from '@renderer/lib/ipc';
+import { pgterminal } from '@renderer/lib/ipc';
 import { useStore } from '@renderer/store';
 import { useTabRuntime } from '@renderer/tabs/useTab';
 import { isKeysetSort } from './filterModel';
@@ -48,7 +48,7 @@ export function useTableData(tab: Tab<'table-data'>) {
       const n = ++seq.current;
       update({ loading: true, error: null });
       try {
-        const res = await pgui['rows:fetch']({ connectionId, database, schema, table, filters, sort, limit, page: spec });
+        const res = await pgterminal['rows:fetch']({ connectionId, database, schema, table, filters, sort, limit, page: spec });
         if (n !== seq.current) return;
         update({ page: res, loading: false, pageIndex, fetchedAt: Date.now() });
       } catch (err) {
@@ -70,7 +70,7 @@ export function useTableData(tab: Tab<'table-data'>) {
     async (exact: boolean) => {
       update({ countLoading: true });
       try {
-        const count = await pgui['rows:count']({ connectionId, database, schema, table, filters, exact });
+        const count = await pgterminal['rows:count']({ connectionId, database, schema, table, filters, exact });
         update({ count, countLoading: false });
       } catch {
         update({ countLoading: false });

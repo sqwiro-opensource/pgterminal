@@ -20,7 +20,7 @@ describe('CredentialVault', () => {
   let cwd: string;
   let s: Stores;
   beforeEach(() => {
-    cwd = mkdtempSync(join(tmpdir(), 'pgui-vault-'));
+    cwd = mkdtempSync(join(tmpdir(), 'pgterminal-vault-'));
     s = getStores({ cwd });
   });
 

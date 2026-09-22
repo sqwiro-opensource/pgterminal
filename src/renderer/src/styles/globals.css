@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* pgui v2 tokens — mirrors .claude/designs/assets/pgui.css. Light is :root, dark is .dark on <html>. */
+/* pgterminal v2 tokens — mirrors .claude/designs/assets/pgterminal.css. Light is :root, dark is .dark on <html>. */
 @layer base {
   :root {
     --background: 0 0% 100%; --foreground: 222 20% 12%;

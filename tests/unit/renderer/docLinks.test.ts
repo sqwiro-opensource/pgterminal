@@ -3,7 +3,7 @@ import type { CompletionIndex } from '../../../src/shared/types/catalog';
 import type { DocLinkResolution } from '../../../src/shared/types/doclink';
 
 const index: CompletionIndex = {
-  searchPath: ['pgui', 'public'],
+  searchPath: ['pgterminal', 'public'],
   relations: [
     { schema: 'sales', name: 'sales_customer', kind: 'table', columns: [{ name: 'id', type: 'int4', isPk: true }] },
     { schema: 'public', name: 'users', kind: 'table', columns: [{ name: 'id', type: 'uuid', isPk: true }] }
@@ -14,7 +14,7 @@ const index: CompletionIndex = {
 const resolveMock = vi.fn<(req: unknown) => Promise<DocLinkResolution>>();
 const on = vi.fn(() => () => undefined);
 
-vi.stubGlobal('window', { pgui: { 'doclink:resolve': resolveMock, on }, __pguiStore: undefined, addEventListener: () => undefined });
+vi.stubGlobal('window', { pgterminal: { 'doclink:resolve': resolveMock, on }, __pgtStore: undefined, addEventListener: () => undefined });
 vi.stubGlobal('document', undefined);
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));

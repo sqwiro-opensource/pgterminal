@@ -35,7 +35,7 @@ export async function setupTestDb(): Promise<{ skip: boolean; url: string }> {
 
 /** Creates a Pool for the test database, runs `fn`, always ends the pool. */
 export async function withTestPool<T>(fn: (pool: Pool) => Promise<T>, max = 4): Promise<T> {
-  const pool = new Pool({ connectionString: PG_TEST_URL, max, application_name: 'pgui-test' });
+  const pool = new Pool({ connectionString: PG_TEST_URL, max, application_name: 'pgterminal-test' });
   try {
     return await fn(pool);
   } finally {

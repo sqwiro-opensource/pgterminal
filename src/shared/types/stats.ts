@@ -48,7 +48,7 @@ export interface ServerOverview {
     durationMs: number | null;
     query: string;
     blockedBy: number[];
-    /** Backend opened by this app (application_name = 'pgui'); never cancellable from the UI. */
+    /** Backend opened by this app (application_name = 'pgterminal'); never cancellable from the UI. */
     isOwn?: boolean;
   }>;
   locks: Array<{

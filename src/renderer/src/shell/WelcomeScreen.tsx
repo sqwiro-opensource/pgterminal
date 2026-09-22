@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
-import { Database, Plus, Radar, Settings2 } from 'lucide-react';
+import { Plus, Radar, Settings2 } from 'lucide-react';
 import { useHistoryEntry } from '../features/history/HistoryDrawer';
 import { toast } from 'sonner';
 import { useShallow } from 'zustand/react/shallow';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import { useStore } from '../store';
 import { BINDINGS, displayKeys } from '../lib/keybindings';
+import { BrandMark } from '../components/BrandMark';
 
 /** Real bindings only, in the order the welcome screen should teach them. */
 const WELCOME_BINDING_IDS = [
@@ -72,10 +73,10 @@ export function WelcomeScreen({ onNewConnection, onManageConnections }: WelcomeS
       <div className="relative mt-[12vh] w-full max-w-[880px] px-8 pb-12 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
         <div className="flex items-center gap-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Database size={20} strokeWidth={1.75} />
+            <BrandMark size={22} />
           </div>
           <div>
-            <div className="font-mono text-[30px] font-bold leading-none tracking-tight">pgui</div>
+            <div className="font-mono text-[30px] font-bold leading-none tracking-tight">PgTerminal</div>
             <div className="mt-1.5 text-[13px] text-muted-foreground">PostgreSQL workbench with document links</div>
           </div>
         </div>

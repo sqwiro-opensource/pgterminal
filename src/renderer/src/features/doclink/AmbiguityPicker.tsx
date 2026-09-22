@@ -41,7 +41,7 @@ let root: Root | null = null;
 function ensureHost(): void {
   if (root || typeof document === 'undefined') return;
   const el = document.createElement('div');
-  el.id = 'pgui-doclink-picker';
+  el.id = 'pgterminal-doclink-picker';
   document.body.appendChild(el);
   root = createRoot(el);
   root.render(<AmbiguityPickerHost />);

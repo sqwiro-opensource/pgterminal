@@ -42,7 +42,7 @@ describe('doc link urls', () => {
   it('reads the url back after Monaco percent-encoded the query separators', () => {
     // Exactly what the opener receives: `?raw=a&conn=b` re-serialised as `?raw%3Da%26conn%3Db`.
     const built = docLinkUrl('magneta_application/cron', ctx);
-    const mangled = `pgui-doc:/open?${encodeURIComponent(built.slice(built.indexOf('?') + 1))}`;
+    const mangled = `pgterminal-doc:/open?${encodeURIComponent(built.slice(built.indexOf('?') + 1))}`;
     expect(parseDocLinkUrl(mangled)).toEqual({
       raw: 'magneta_application/cron',
       connectionId: 'c1',
@@ -52,6 +52,6 @@ describe('doc link urls', () => {
 
   it('rejects urls of another scheme or without context', () => {
     expect(parseDocLinkUrl('https://example.com/a/1?conn=c&db=d')).toBeNull();
-    expect(parseDocLinkUrl('pgui-doc:/open?raw=a/1')).toBeNull();
+    expect(parseDocLinkUrl('pgterminal-doc:/open?raw=a/1')).toBeNull();
   });
 });

@@ -4,7 +4,7 @@ import App from './App';
 import './styles/globals.css';
 
 const root = document.getElementById('root');
-if (!root) throw new Error('pgui: #root element missing');
+if (!root) throw new Error('PgTerminal: #root element missing');
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>

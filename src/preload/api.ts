@@ -1,11 +1,11 @@
 import { ipcRenderer, type IpcRendererEvent } from 'electron';
-import { INVOKE_CHANNELS, PUSH_CHANNELS, type PguiApi, type PushChannel } from '@shared/ipc';
+import { INVOKE_CHANNELS, PUSH_CHANNELS, type PgTerminalApi, type PushChannel } from '@shared/ipc';
 
 /**
- * Builds the allow-listed `window.pgui` API: one invoke wrapper per contract channel, plus
+ * Builds the allow-listed `window.pgterminal` API: one invoke wrapper per contract channel, plus
  * `on` for push events. Nothing else from Electron or Node is reachable from the renderer.
  */
-export function createApi(): PguiApi {
+export function createApi(): PgTerminalApi {
   const api: Record<string, unknown> = {};
 
   for (const channel of INVOKE_CHANNELS) {
@@ -22,5 +22,5 @@ export function createApi(): PguiApi {
     };
   };
 
-  return api as PguiApi;
+  return api as PgTerminalApi;
 }

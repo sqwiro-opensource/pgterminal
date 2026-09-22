@@ -28,7 +28,7 @@ export { isConnectionLost } from './connections.slice';
 // Harmless in production: the renderer is sandboxed and has no Node access.
 declare global {
   interface Window {
-    __pguiStore?: typeof useStore;
+    __pgtStore?: typeof useStore;
   }
 }
-if (typeof window !== 'undefined') window.__pguiStore = useStore;
+if (typeof window !== 'undefined') window.__pgtStore = useStore;

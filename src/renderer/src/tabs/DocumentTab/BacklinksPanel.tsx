@@ -3,7 +3,7 @@ import { ChevronRight, LoaderCircle, RefreshCw, ScanSearch, X } from 'lucide-rea
 import type { BacklinkGroupRef, BacklinkScopeMode, BacklinksEvent, DocTarget } from '@shared/types/doclink';
 import type { CellValue, PgErrorInfo } from '@shared/types/query';
 import type { Filter } from '@shared/types/rows';
-import { pgui, useIpcEvent } from '@renderer/lib/ipc';
+import { pgterminal, useIpcEvent } from '@renderer/lib/ipc';
 import { useStore } from '@renderer/store';
 import { DocLinkChip } from '@renderer/features/doclink/DocLinkChip';
 import { EmptyState } from '@renderer/components/EmptyState';
@@ -73,7 +73,7 @@ export function BacklinksPanel({ connectionId, database, target, row }: Backlink
       setResults({});
       setStatus('running');
       try {
-        await pgui['doclink:backlinks']({ jobId, connectionId, database, target, row, scope: { mode }, perTableLimit: 50, perQueryTimeoutMs: 5000 });
+        await pgterminal['doclink:backlinks']({ jobId, connectionId, database, target, row, scope: { mode }, perTableLimit: 50, perQueryTimeoutMs: 5000 });
       } catch (e) {
         setStatus('done');
         setResults({ error: { count: 0, truncated: false, error: { message: e instanceof Error ? e.message : String(e) } } });
@@ -98,7 +98,7 @@ export function BacklinksPanel({ connectionId, database, target, row }: Backlink
     void run(scope);
     return () => {
       const id = jobRef.current;
-      if (id) void pgui['doclink:cancelBacklinks']({ jobId: id }).catch(() => undefined);
+      if (id) void pgterminal['doclink:cancelBacklinks']({ jobId: id }).catch(() => undefined);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target.schema, target.table, target.keyValue, scope]);
@@ -147,7 +147,7 @@ export function BacklinksPanel({ connectionId, database, target, row }: Backlink
           ))}
         </select>
         {status === 'running' ? (
-          <button type="button" title="Cancel" className="rounded p-1 hover:bg-accent" onClick={() => jobRef.current && void pgui['doclink:cancelBacklinks']({ jobId: jobRef.current })}>
+          <button type="button" title="Cancel" className="rounded p-1 hover:bg-accent" onClick={() => jobRef.current && void pgterminal['doclink:cancelBacklinks']({ jobId: jobRef.current })}>
             <X size={12} strokeWidth={1.75} />
           </button>
         ) : (

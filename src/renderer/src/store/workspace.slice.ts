@@ -1,6 +1,6 @@
 import type { Tab, TabKind, TabParamsByKind, WorkspaceSnapshot } from '@shared/ipc';
 import { defaultTitle, tabConnectionId, tabId } from '@shared/workspace/tabId';
-import { getPgui } from '../lib/ipc';
+import { getApi } from '../lib/ipc';
 import type { RootState, SliceCreator } from './index';
 
 export interface OpenTabOptions {
@@ -217,7 +217,7 @@ export const createWorkspaceSlice: SliceCreator<WorkspaceSlice> = (set, get) => 
 
   async loadWorkspace() {
     try {
-      const snapshot = await getPgui()['workspace:load']();
+      const snapshot = await getApi()['workspace:load']();
       if (isValidSnapshot(snapshot)) {
         const tabs = sortPinned(snapshot.tabs.filter((t) => t && typeof t.id === 'string' && typeof t.kind === 'string'));
         const activeTabId = tabs.some((t) => t.id === snapshot.activeTabId) ? snapshot.activeTabId : (tabs[0]?.id ?? null);

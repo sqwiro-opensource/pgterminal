@@ -124,11 +124,24 @@ export function createConnectionsHandlers(deps: ConnectionsDeps) {
     hasPassword: vault.has(m.id) || sessionPasswords.has(m.id)
   });
 
-  const resolvePassword = (id: string | undefined, explicit: string | undefined): string | undefined => {
-    if (explicit !== undefined && explicit !== '') return explicit;
-    if (!id) return undefined;
-    return vault.get(id) ?? sessionPasswords.get(id) ?? undefined;
+  /**
+   * `unreadable` means the vault holds a secret the OS keychain can no longer decrypt: the app was
+   * renamed, the keychain was reset, or the file came from another machine. Without this the
+   * connection attempt goes out with no password and the server answers with a SASL error, which
+   * tells the user nothing about what to do.
+   */
+  const resolveSecret = (id: string | undefined, explicit: string | undefined): { password?: string; unreadable: boolean } => {
+    if (explicit !== undefined && explicit !== '') return { password: explicit, unreadable: false };
+    if (!id) return { unreadable: false };
+    const session = sessionPasswords.get(id);
+    if (session !== undefined) return { password: session, unreadable: false };
+    const stored = vault.get(id);
+    if (stored !== null) return { password: stored, unreadable: false };
+    return { unreadable: vault.has(id) };
   };
+
+  const resolvePassword = (id: string | undefined, explicit: string | undefined): string | undefined =>
+    resolveSecret(id, explicit).password;
 
   async function queryDatabases(pool: import('pg').Pool): Promise<DatabaseInfo[]> {
     const res = await pool.query<DbRow>(DATABASES_SQL);
@@ -213,7 +226,13 @@ export function createConnectionsHandlers(deps: ConnectionsDeps) {
     async connect({ connectionId, password: explicit }: { connectionId: string; password?: string }): Promise<ConnectResult> {
       const saved = getConnection(connectionId, stores);
       if (!saved) throw new Error(`Unknown connection: ${connectionId}`);
-      const password = resolvePassword(connectionId, explicit);
+      const secret = resolveSecret(connectionId, explicit);
+      if (secret.unreadable) {
+        throw new Error(
+          `The saved password for ${saved.name} could not be read from the OS keychain. Open the connection and enter it again.`
+        );
+      }
+      const password = secret.password;
       registry.register(saved, password);
       try {
         const pool = registry.getPool(connectionId, saved.defaultDatabase);

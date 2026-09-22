@@ -1,9 +1,11 @@
 {
-  "name": "pgui",
+  "name": "pgterminal",
+  "productName": "PgTerminal",
   "version": "2.0.0",
-  "description": "PostgreSQL workbench for the sqwiro fleet with ArangoDB-style document links",
+  "description": "PostgreSQL workbench for the sqwiro fleet, with ArangoDB-style document links",
   "main": "./out/main/index.js",
   "author": "Bernard Gaitho",
+  "homepage": "https://pgterminal.com",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {

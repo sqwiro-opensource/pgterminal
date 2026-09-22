@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { IpcPushMap, PguiApi } from '@shared/ipc';
+import type { IpcPushMap, PgTerminalApi } from '@shared/ipc';
 
 /** Observer notified of every rejected invoke, so connection loss can trigger a lazy reconnect. */
 export type IpcErrorObserver = (info: { channel: string; connectionId?: string; error: unknown }) => void;
@@ -35,21 +35,21 @@ function connectionIdOf(req: unknown): string | undefined {
   return undefined;
 }
 
-let wrapped: PguiApi | null = null;
-let wrappedFor: PguiApi | null = null;
+let wrapped: PgTerminalApi | null = null;
+let wrappedFor: PgTerminalApi | null = null;
 
 /**
  * Wraps the preload API so every rejected invoke is reported to the observer before the
  * rejection reaches the caller. `on` and non-function members pass through untouched.
  *
- * This builds a plain object rather than a Proxy: contextBridge exposes `window.pgui` with
+ * This builds a plain object rather than a Proxy: contextBridge exposes `window.pgterminal` with
  * non-configurable, non-writable properties, and a Proxy `get` trap must return those values
  * unchanged — returning a wrapper violates the invariant and throws at the first call.
  */
-function wrapApi(api: PguiApi): PguiApi {
+function wrapApi(api: PgTerminalApi): PgTerminalApi {
   if (wrapped && wrappedFor === api) return wrapped;
   const out = {} as Record<string, unknown>;
-  for (const key of Reflect.ownKeys(api) as Array<keyof PguiApi & string>) {
+  for (const key of Reflect.ownKeys(api) as Array<keyof PgTerminalApi & string>) {
     const value = api[key] as unknown;
     if (typeof value !== 'function' || key === 'on') {
       out[key] = typeof value === 'function' ? (value as (...a: unknown[]) => unknown).bind(api) : value;
@@ -74,26 +74,26 @@ function wrapApi(api: PguiApi): PguiApi {
       return res;
     };
   }
-  wrapped = out as unknown as PguiApi;
+  wrapped = out as unknown as PgTerminalApi;
   wrappedFor = api;
   return wrapped;
 }
 
 /** Typed accessor for the preload-exposed API. Throws a clear error when the preload did not run. */
-export function getPgui(): PguiApi {
-  const api = (window as unknown as { pgui?: PguiApi }).pgui;
+export function getApi(): PgTerminalApi {
+  const api = (window as unknown as { pgterminal?: PgTerminalApi }).pgterminal;
   if (!api) {
     throw new Error(
-      'window.pgui is undefined: the preload script did not expose the API (check contextIsolation/sandbox and the preload path).'
+      'window.pgterminal is undefined: the preload script did not expose the API (check contextIsolation/sandbox and the preload path).'
     );
   }
   return wrapApi(api);
 }
 
-/** Lazy proxy so modules can import `pgui` at top level without crashing when the preload is missing. */
-export const pgui: PguiApi = new Proxy({} as PguiApi, {
+/** Lazy proxy so modules can import `pgterminal` at top level without crashing when the preload is missing. */
+export const pgterminal: PgTerminalApi = new Proxy({} as PgTerminalApi, {
   get(_target, prop) {
-    return getPgui()[prop as keyof PguiApi];
+    return getApi()[prop as keyof PgTerminalApi];
   }
 });
 
@@ -107,7 +107,7 @@ export function useIpcEvent<K extends keyof IpcPushMap>(
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
     try {
-      unsubscribe = getPgui().on(channel, (payload) => cbRef.current(payload));
+      unsubscribe = getApi().on(channel, (payload) => cbRef.current(payload));
     } catch (err) {
       console.warn(`useIpcEvent(${channel}): ${(err as Error).message}`);
     }

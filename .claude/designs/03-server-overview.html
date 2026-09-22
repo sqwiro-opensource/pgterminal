@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>pgui · Server Overview</title>
+<title>PgTerminal · Server Overview</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="assets/pgui.css">
+<link rel="stylesheet" href="assets/pgterminal.css">
 <style>
   .ov{flex:1;overflow:auto;padding:14px 16px 60px;position:relative;background:hsl(var(--background))}
   .ov-h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
@@ -226,6 +226,6 @@ ORDER BY o.total DESC;</div><div style="display:flex;gap:6px;align-items:center"
 <div class="mock-note" style="left:926px;top:770px;max-width:196px">Locks: pg_locks + pg_blocking_pids(); each row = blocked ← blocker chain.</div>
 <div class="mock-note" style="left:820px;top:718px;max-width:560px">If pg_stat_statements is missing this panel shows “Enable pg_stat_statements” with the SQL. Reset stats lives under ⋯ (CF).</div>
 
-<script src="assets/pgui.js"></script>
+<script src="assets/pgterminal.js"></script>
 </body>
 </html>

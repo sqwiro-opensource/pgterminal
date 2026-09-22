@@ -117,7 +117,7 @@ export function openShortcutSheet(open = true): void {
 }
 
 /** Asks the active tab to reload. Tabs subscribe with `useRefreshSignal`. */
-export const REFRESH_TAB_EVENT = 'pgui:refresh-tab';
+export const REFRESH_TAB_EVENT = 'pgterminal:refresh-tab';
 export function requestTabRefresh(tabId?: string | null): void {
   const id = tabId ?? useStore.getState().activeTabId;
   if (!id) return;

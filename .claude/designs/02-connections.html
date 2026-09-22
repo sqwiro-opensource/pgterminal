@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>pgui · Connections</title>
+<title>PgTerminal · Connections</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="assets/pgui.css">
+<link rel="stylesheet" href="assets/pgterminal.css">
 <style>
   .conn{flex:1;display:grid;grid-template-columns:260px 1fr;min-height:0;position:relative}
   .cl{border-right:1px solid hsl(var(--border));display:flex;flex-direction:column;min-height:0;background:hsl(var(--sidebar))}
@@ -177,7 +177,7 @@
                 <summary>Advanced</summary>
                 <div class="field"><label>Connect timeout</label><div class="input" style="width:120px"><input value="10"><span class="muted small">s</span></div></div>
                 <div class="field"><label>Statement timeout</label><div class="input" style="width:120px"><input value="0"><span class="muted small">0 = none</span></div></div>
-                <div class="field"><label>application_name</label><div class="input" style="width:220px"><input value="pgui"></div></div>
+                <div class="field"><label>application_name</label><div class="input" style="width:220px"><input value="PgTerminal"></div></div>
                 <div class="field"><label>search_path</label><div class="input" style="width:220px"><input placeholder="server default"></div></div>
                 <div class="field"><label>Pool size</label><div class="input" style="width:120px"><input value="4"></div></div>
               </details>
@@ -242,6 +242,6 @@ errno -61 · syscall connect · after 10 003 ms</div><div style="margin-top:6px;
 <div class="mock-note" style="left:296px;top:600px;max-width:230px">Test is independent of Save: spinner + Cancel link → success (version, latency, db count) or error. It never persists.</div>
 <div class="mock-note" style="left:570px;top:720px;max-width:300px">Delete = CF dialog (light: no typed name — it is reversible by re-adding). Shows exactly what is lost.</div>
 
-<script src="assets/pgui.js"></script>
+<script src="assets/pgterminal.js"></script>
 </body>
 </html>

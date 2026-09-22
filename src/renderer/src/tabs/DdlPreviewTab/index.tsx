@@ -3,7 +3,7 @@ import { CircleAlert, FileCode2, RefreshCw, SquarePen } from 'lucide-react';
 import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button';
 import type { PgErrorInfo } from '@shared/types/query';
 import type { Tab } from '@shared/types/workspace';
-import { pgui } from '@renderer/lib/ipc';
+import { pgterminal } from '@renderer/lib/ipc';
 import { openQueryTab } from '@renderer/features/tree/actions';
 import { CopyButton } from '@renderer/components/ui/CopyButton';
 
@@ -22,7 +22,7 @@ export default function DdlPreviewTab({ tab }: { tab: Tab<'ddl-preview'> }): JSX
   const load = useCallback(async () => {
     setState({ status: 'loading' });
     try {
-      const { sql } = await pgui['ddl:get'](ddl);
+      const { sql } = await pgterminal['ddl:get'](ddl);
       setState({ status: 'ready', sql });
     } catch (err) {
       setState({ status: 'error', error: toError(err) });

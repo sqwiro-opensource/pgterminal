@@ -37,8 +37,8 @@ export function ConnectionFormFields({ form, errors, groups, onChange }: Connect
         <input className={cn(inputCls, errors.name && 'border-destructive')} value={form.name} onChange={(e) => onChange('name', e.target.value)} autoFocus placeholder="adminserver" />
       </Field>
       <Field label="Group">
-        <input className={inputCls} list="pgui-connection-groups" value={form.group} onChange={(e) => onChange('group', e.target.value)} placeholder="Production" />
-        <datalist id="pgui-connection-groups">
+        <input className={inputCls} list="pgterminal-connection-groups" value={form.group} onChange={(e) => onChange('group', e.target.value)} placeholder="Production" />
+        <datalist id="pgterminal-connection-groups">
           {groups.map((g) => (
             <option key={g} value={g} />
           ))}

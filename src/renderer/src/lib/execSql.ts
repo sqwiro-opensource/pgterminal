@@ -3,7 +3,7 @@
  * when it finishes. Used by confirm dialogs and structure actions; query tabs stream instead.
  */
 import type { PgErrorInfo, QueryEvent } from '@shared/types/query';
-import { getPgui } from './ipc';
+import { getApi } from './ipc';
 
 export interface ExecResult {
   ok: boolean;
@@ -17,7 +17,7 @@ export interface ExecResult {
 
 /** Execute `sql` on `connectionId`/`database`; never throws for SQL errors (see `ok`). */
 export function execSql(p: { connectionId: string; database: string; sql: string; continueOnError?: boolean }): Promise<ExecResult> {
-  const api = getPgui();
+  const api = getApi();
   const runId = crypto.randomUUID();
   return new Promise<ExecResult>((resolve, reject) => {
     const events: QueryEvent[] = [];

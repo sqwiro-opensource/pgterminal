@@ -38,7 +38,7 @@ jobs:
         run: |
           docker compose -f docker-compose.test.yml up -d
           for i in $(seq 1 60); do
-            if docker compose -f docker-compose.test.yml exec -T pg pg_isready -U pgui -d pgui_test; then
+            if docker compose -f docker-compose.test.yml exec -T pg pg_isready -U pgterminal -d pgui_test; then
               break
             fi
             sleep 2

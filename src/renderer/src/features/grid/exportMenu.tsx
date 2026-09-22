@@ -15,7 +15,7 @@ import {
 import type { CellValue, FieldInfo } from '@shared/types/query';
 import type { ExportRequest } from '@shared/types/export';
 import { quoteIdent } from '@shared/sql/quote';
-import { pgui } from '@renderer/lib/ipc';
+import { pgterminal } from '@renderer/lib/ipc';
 import { copyAsTsv, quoteLiteral, rowToInsert, rowToJson } from './gridModel';
 import { copyText } from '@renderer/lib/clipboard';
 
@@ -50,7 +50,7 @@ export function ExportMenu(p: ExportMenuProps) {
     }
     const id = toast.loading(`Writing ${rows.length.toLocaleString()} rows…`);
     try {
-      const res = await pgui['export:write']({ format, fields: p.fields, rows, table: p.table, suggestedName: p.suggestedName });
+      const res = await pgterminal['export:write']({ format, fields: p.fields, rows, table: p.table, suggestedName: p.suggestedName });
       // A null result means the save dialog was dismissed, which is not a failure.
       if (res) toast.success(`Exported ${rows.length.toLocaleString()} rows`, { id, description: res.path });
       else toast.dismiss(id);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import type { AppInfo } from '@shared/ipc';
-import { getPgui } from '../lib/ipc';
+import { getApi } from '../lib/ipc';
 import { activeConnectionId, useStore } from '../store';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import { toast } from 'sonner';
@@ -35,7 +35,7 @@ export function StatusBar(): JSX.Element {
     let cancelled = false;
     (async () => {
       try {
-        const i = await getPgui()['app:info']();
+        const i = await getApi()['app:info']();
         if (!cancelled) setInfo(i);
       } catch (err) {
         console.warn('app:info unavailable', (err as Error).message);
@@ -106,7 +106,7 @@ export function StatusBar(): JSX.Element {
       )}
       {info && (
         <span className="font-mono">
-          pgui {info.version} · Electron {info.electron}
+          PgTerminal {info.version} · Electron {info.electron}
         </span>
       )}
     </footer>

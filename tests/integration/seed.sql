@@ -1,4 +1,4 @@
--- pgui v2 integration seed. Mirrors .claude/specs/plan.html "Seed schema".
+-- pgterminal v2 integration seed. Mirrors .claude/specs/plan.html "Seed schema".
 -- Mutable tables (sales.sales_customer, sales.sales_order) are re-created by tests/integration/setup.ts reseedMutable().
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 

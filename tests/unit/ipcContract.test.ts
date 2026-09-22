@@ -33,8 +33,8 @@ describe('IPC contract', () => {
 
   it('isDefaultSentinel recognises only the sentinel', () => {
     expect(isDefaultSentinel(DEFAULT_SENTINEL)).toBe(true);
-    expect(isDefaultSentinel({ __pguiDefault: true })).toBe(true);
-    expect(isDefaultSentinel({ __pguiDefault: false })).toBe(false);
+    expect(isDefaultSentinel({ __pgtDefault: true })).toBe(true);
+    expect(isDefaultSentinel({ __pgtDefault: false })).toBe(false);
     expect(isDefaultSentinel(null)).toBe(false);
     expect(isDefaultSentinel('DEFAULT')).toBe(false);
     expect(isDefaultSentinel(1)).toBe(false);

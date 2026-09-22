@@ -1,5 +1,5 @@
-appId: com.cloudhub.pgui
-productName: pgui
+appId: com.pgterminal.app
+productName: PgTerminal
 copyright: Copyright © 2026 Bernard Gaitho
 directories:
   buildResources: build
@@ -22,7 +22,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: pgui
+  executableName: PgTerminal
   target:
     - target: nsis
       arch:
@@ -61,7 +61,7 @@ linux:
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
-# Placeholder: replace with the real update host before shipping (see README).
+# Update host on the product domain; publish latest-mac.yml + artifacts there (see README).
 publish:
   provider: generic
-  url: https://updates.example.invalid/pgui
+  url: https://updates.pgterminal.com/

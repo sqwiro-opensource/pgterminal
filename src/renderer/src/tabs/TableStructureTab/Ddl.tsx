@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshCw, SquareCode } from 'lucide-react';
 import { Skeleton } from '@renderer/components/ui/Skeleton';
-import { pgui } from '@renderer/lib/ipc';
+import { pgterminal } from '@renderer/lib/ipc';
 import type { RelationNode } from '@shared/types/catalog';
 import { ddlKindFor } from './structureModel';
 import { ErrorBox } from './parts';
@@ -25,7 +25,7 @@ export function useDdl(node: RelationNode | null, connectionId: string, database
     let cancelled = false;
     setLoading(true);
     setError(null);
-    pgui['ddl:get']({ connectionId, database, kind: ddlKindFor(node.kind), schema: node.schema, name: node.name })
+    pgterminal['ddl:get']({ connectionId, database, kind: ddlKindFor(node.kind), schema: node.schema, name: node.name })
       .then((r) => {
         if (!cancelled) setSql(r.sql);
       })
