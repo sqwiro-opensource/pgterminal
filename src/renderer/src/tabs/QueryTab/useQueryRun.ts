@@ -28,7 +28,6 @@ export interface QueryActions {
   setLimit(limit: LimitChoice): void;
   setTxMode(mode: 'auto' | 'manual'): void;
   setRatio(ratio: number): void;
-  toggleDetail(): void;
   setCursor(pos: { line: number; col: number }): void;
 }
 
@@ -64,7 +63,6 @@ export function useQueryRun(tabId: string): { rt: QueryTabRuntime; actions: Quer
       setLimit: (limit) => patchRuntime(tabId, { limit }),
       setTxMode: (txMode) => patchRuntime(tabId, { txMode }),
       setRatio: (ratio) => patchRuntime(tabId, { ratio }),
-      toggleDetail: () => patchRuntime(tabId, { showDetail: !getRuntime(tabId).showDetail }),
       setCursor: (cursor) => {
         const cur = getRuntime(tabId).cursor;
         if (cur.line !== cursor.line || cur.col !== cursor.col) patchRuntime(tabId, { cursor });

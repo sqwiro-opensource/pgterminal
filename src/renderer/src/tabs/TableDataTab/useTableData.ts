@@ -17,10 +17,9 @@ export interface TableDataRuntime {
   pageIndex: number;
   fetchedAt: number;
   splitRatio: number;
-  showDetail: boolean;
 }
 
-const INIT: TableDataRuntime = { page: null, loading: false, error: null, count: null, countLoading: false, pageIndex: 0, fetchedAt: 0, splitRatio: 70, showDetail: false };
+const INIT: TableDataRuntime = { page: null, loading: false, error: null, count: null, countLoading: false, pageIndex: 0, fetchedAt: 0, splitRatio: 70 };
 
 function keyOf(row: CellValue[] | undefined, page: RowsPage | null): Record<string, CellValue> | null {
   if (!row || !page) return null;

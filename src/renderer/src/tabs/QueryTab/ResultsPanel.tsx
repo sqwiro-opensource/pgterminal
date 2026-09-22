@@ -3,7 +3,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Braces, Hash, LoaderCircle, RefreshCw } from 'lucide-react';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import type { PgErrorInfo } from '@shared/types/query';
-import { ResultsGrid, RowDetail, type Density } from '@renderer/features/grid';
+import { ResultsGrid, RowDetail, useRowDetailSettings, type Density } from '@renderer/features/grid';
 import type { GridLinkContextValue } from '@renderer/features/grid/cells/linkContext';
 import { ExplainTree } from './ExplainTree';
 import { MessagesPanel } from './MessagesPanel';
@@ -16,7 +16,6 @@ export interface ResultsPanelProps {
   onView(view: ResultView): void;
   onLoadMore(statementIndex: number): void;
   onExactCount(statementIndex: number): void;
-  onToggleDetail(): void;
   onShowInEditor(error: PgErrorInfo): void;
   /** Connection/database context so link-shaped values render as document chips. */
   linkCtx?: GridLinkContextValue;
@@ -67,6 +66,7 @@ function Footer({ r, exact, running, onLoadMore, onExactCount }: { r: ResultSet;
 }
 
 export function ResultsPanel(p: ResultsPanelProps): JSX.Element {
+  const detail = useRowDetailSettings();
   const { run } = p.rt;
   const [focusRow, setFocusRow] = useState<number | null>(null);
   const view = p.rt.view;
@@ -102,7 +102,7 @@ export function ResultsPanel(p: ResultsPanelProps): JSX.Element {
           </span>
         )}
         {active && active.fields.length > 0 && (
-          <button type="button" onClick={p.onToggleDetail} className={cn('flex items-center gap-1 px-2 text-[11.5px] hover:text-foreground', p.rt.showDetail ? 'text-foreground' : 'text-muted-foreground')} title="Row detail">
+          <button type="button" onClick={() => detail.setOpen(!detail.open)} className={cn('flex items-center gap-1 px-2 text-[11.5px] hover:text-foreground', detail.open ? 'text-foreground' : 'text-muted-foreground')} title="Row detail">
             <Braces size={12} strokeWidth={1.75} /> Detail
           </button>
         )}
@@ -126,8 +126,8 @@ export function ResultsPanel(p: ResultsPanelProps): JSX.Element {
             {active.durationMs !== null && <span className="font-mono text-[11px]">{active.durationMs} ms</span>}
           </div>
         ) : (
-          <PanelGroup direction="horizontal" className="h-full">
-            <Panel minSize={30} className="flex min-h-0 flex-col">
+          <PanelGroup direction="horizontal" className="h-full" onLayout={(sizes) => detail.open && sizes[0] !== undefined && detail.setRatio(sizes[0])}>
+            <Panel minSize={30} defaultSize={detail.open ? detail.ratio : 100} className="flex min-h-0 flex-col">
               <ResultsGrid
                 fields={active.fields}
                 rows={active.rows}
@@ -142,11 +142,20 @@ export function ResultsPanel(p: ResultsPanelProps): JSX.Element {
               />
               <Footer r={active} exact={p.rt.exactCounts[active.statementIndex]} running={run.running} onLoadMore={() => p.onLoadMore(active.statementIndex)} onExactCount={() => p.onExactCount(active.statementIndex)} />
             </Panel>
-            {p.rt.showDetail && (
+            {detail.open && (
               <>
                 <PanelResizeHandle className="w-px bg-border data-[resize-handle-active]:bg-primary" />
-                <Panel defaultSize={30} minSize={15} className="min-h-0">
-                  <RowDetail fields={active.fields} row={focusRow !== null ? active.rows[focusRow] ?? null : null} title={focusRow !== null ? `Row ${focusRow + 1}` : 'Row'} onClose={p.onToggleDetail} />
+                <Panel defaultSize={100 - detail.ratio} minSize={15} className="min-h-0">
+                  <RowDetail
+                    fields={active.fields}
+                    row={focusRow !== null ? active.rows[focusRow] ?? null : null}
+                    title={focusRow !== null ? `Row ${focusRow + 1}` : 'Row'}
+                    view={detail.view}
+                    onViewChange={detail.setView}
+                    fieldsOpen={detail.fields}
+                    onFieldsOpenChange={detail.setFields}
+                    onClose={() => detail.setOpen(false)}
+                  />
                 </Panel>
               </>
             )}

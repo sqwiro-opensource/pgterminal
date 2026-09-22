@@ -170,7 +170,6 @@ export default function QueryTab({ tab }: { tab: Tab }): JSX.Element {
             onView={actions.setView}
             onLoadMore={(i) => void actions.loadMore(i)}
             onExactCount={(i) => actions.exactCount(i).catch((err: Error) => toast.error('Count failed', { description: err.message }))}
-            onToggleDetail={actions.toggleDetail}
             onShowInEditor={onShowInEditor}
             linkCtx={{ connectionId, database, fromTabId: tab.id }}
           />

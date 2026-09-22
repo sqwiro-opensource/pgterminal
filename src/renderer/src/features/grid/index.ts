@@ -3,3 +3,5 @@ export { RowDetail, type RowDetailProps } from './RowDetail';
 export { JsonTree } from './JsonTree';
 export type { SortSpec } from './GridHeader';
 export { buildColumns, copyAsTsv, rowToInsert, rowToJson, rowKeyOf, sortRows, type GridColumn } from './gridModel';
+export { useRowDetailSettings } from './useRowDetailSettings';
+export type { RowDetailView } from './RowDetail';

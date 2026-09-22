@@ -7,7 +7,7 @@ import type { CellValue, PgErrorInfo } from '@shared/types/query';
 import { useStore } from '@renderer/store';
 import { pgui } from '@renderer/lib/ipc';
 import { IconButton } from '@renderer/components/ui/IconButton';
-import { ResultsGrid, RowDetail } from '@renderer/features/grid';
+import { ResultsGrid, RowDetail, useRowDetailSettings } from '@renderer/features/grid';
 import { rowKeyOf } from '@renderer/features/grid/gridModel';
 import { useEditBuffer } from '@renderer/features/grid/useEditBuffer';
 import { CellEditor } from '@renderer/features/grid/cellEditors';
@@ -27,11 +27,12 @@ export default function TableDataTab({ tab: anyTab }: { tab: Tab }) {
   const tab = anyTab as Tab<'table-data'>;
   const { connectionId, database, schema, table, filters, sort } = tab.params;
   const ref = useMemo(() => ({ connectionId, database, schema, table }), [connectionId, database, schema, table]);
-  const { rt, update, limit, keyset, next, prev, first, goTo, refresh, loadCount } = useTableData(tab);
+  const { rt, limit, keyset, next, prev, first, goTo, refresh, loadCount } = useTableData(tab);
   useRefreshSignal(tab.id, refresh);
   const rel = useRelationNode(ref);
   const meta = useStore((s) => s.connections[connectionId]);
   const density = useStore((s) => s.settings.density);
+  const detail = useRowDetailSettings();
   const { updateParams, setDirty, registerCloseGuard, openTab, updateSettings } = useStore.getState();
 
   const page = rt.page;
@@ -169,15 +170,15 @@ export default function TableDataTab({ tab: anyTab }: { tab: Tab }) {
         <IconButton label="Open in query tab" size="sm" onClick={openInQuery} disabled={!page}>
           <SquareCode size={13} strokeWidth={1.75} />
         </IconButton>
-        <IconButton label={rt.showDetail ? 'Hide row detail' : 'Show row detail'} size="sm" active={rt.showDetail} onClick={() => update({ showDetail: !rt.showDetail })}>
+        <IconButton label={detail.open ? 'Hide row detail' : 'Show row detail'} size="sm" active={detail.open} onClick={() => detail.setOpen(!detail.open)}>
           {'{}'}
         </IconButton>
       </div>
       <FilterBar fields={fields.length ? fields : (rel.node?.columns ?? []).map((c) => ({ name: c.name, dataType: c.dataType, dataTypeID: 0, tableID: 0, columnID: 0 }))} filters={filters} sort={sort} onFilters={(f) => updateParams<'table-data'>(tab.id, { filters: f, page: { mode: 'keyset', after: null } })} onSort={(s) => updateParams<'table-data'>(tab.id, { sort: s, page: { mode: 'keyset', after: null } })} />
       {page && <div className="flex h-6 flex-none items-center gap-2 border-b border-border bg-muted/30 px-3 font-mono text-[11px] text-muted-foreground"><span className="truncate" title={page.sqlText}>{page.sqlText.replace(/\s+/g, ' ')}</span></div>}
       <InsertRows fields={fields} columns={rel.node?.columns} inserts={buf.buffer.inserts} onChange={buf.updateInsert} onRemove={buf.removeInsert} />
-      <PanelGroup direction="horizontal" className="min-h-0 flex-1">
-        <Panel minSize={30}>
+      <PanelGroup direction="horizontal" className="min-h-0 flex-1" onLayout={(sizes) => detail.open && sizes[0] !== undefined && detail.setRatio(sizes[0])}>
+        <Panel minSize={30} defaultSize={detail.open ? detail.ratio : 100}>
           <ResultsGrid
             fields={fields}
             rows={displayRows}
@@ -210,11 +211,20 @@ export default function TableDataTab({ tab: anyTab }: { tab: Tab }) {
             }}
           />
         </Panel>
-        {rt.showDetail && (
+        {detail.open && (
           <>
-            <PanelResizeHandle className="w-px bg-border" />
-            <Panel defaultSize={30} minSize={15}>
-              <RowDetail fields={fields} row={focusRow !== null ? (displayRows[focusRow] ?? null) : null} title={focusRow !== null ? `Row ${focusRow + 1}` : 'Row'} onClose={() => update({ showDetail: false })} />
+            <PanelResizeHandle className="w-px bg-border data-[resize-handle-active]:bg-primary" />
+            <Panel defaultSize={100 - detail.ratio} minSize={15}>
+              <RowDetail
+                fields={fields}
+                row={focusRow !== null ? (displayRows[focusRow] ?? null) : null}
+                title={focusRow !== null ? `Row ${focusRow + 1}` : 'Row'}
+                view={detail.view}
+                onViewChange={detail.setView}
+                fieldsOpen={detail.fields}
+                onFieldsOpenChange={detail.setFields}
+                onClose={() => detail.setOpen(false)}
+              />
             </Panel>
           </>
         )}

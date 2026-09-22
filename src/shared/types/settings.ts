@@ -49,6 +49,14 @@ export interface AppSettings {
   estimateCountAbove: number;
   /** Characters of a jsonb value previewed in one grid line. */
   jsonPreviewLength: number;
+  /** Row detail panel open by default in grids. */
+  rowDetailOpen: boolean;
+  /** Row detail rendering: collapsible tree or raw JSON. */
+  rowDetailView: 'tree' | 'json';
+  /** Show the column/type list at the top of the row detail. */
+  rowDetailFields: boolean;
+  /** Width of the grid pane beside the row detail, as a percentage. */
+  rowDetailRatio: number;
   backlinkScopeDefault: BacklinkScopeMode;
   linkFkColumns: boolean;
   linkUnresolved: boolean;
@@ -94,6 +102,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   dateTimeFormat: 'iso',
   estimateCountAbove: 100_000,
   jsonPreviewLength: 120,
+  rowDetailOpen: true,
+  rowDetailView: 'tree',
+  rowDetailFields: false,
+  rowDetailRatio: 70,
   backlinkScopeDefault: 'sameSchema',
   linkFkColumns: true,
   linkUnresolved: false,

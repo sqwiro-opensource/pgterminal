@@ -22,7 +22,6 @@ export type LimitChoice = 100 | 500 | 1000 | 5000 | 'none';
 export interface QueryTabRuntime {
   run: QueryRunState;
   view: ResultView;
-  showDetail: boolean;
   /** Editor/results split ratio (percent for the editor panel). */
   ratio: number;
   limit: LimitChoice;
@@ -40,7 +39,6 @@ export interface QueryTabRuntime {
 export const defaultQueryRuntime: QueryTabRuntime = {
   run: initialRunState,
   view: 0,
-  showDetail: false,
   ratio: 45,
   limit: 500,
   txMode: 'auto',
