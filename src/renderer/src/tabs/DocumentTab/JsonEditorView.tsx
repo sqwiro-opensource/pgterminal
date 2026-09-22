@@ -15,6 +15,8 @@ export interface JsonEditorViewProps {
   fields: FieldInfo[];
   original: Row;
   draft: Row;
+  /** Identity of the document on screen; changes when the tab navigates to another one. */
+  docKey: string;
   onDraft(next: Row): void;
   onError(message: string | null): void;
 }
@@ -94,7 +96,7 @@ export function JsonEditorView(p: JsonEditorViewProps): JSX.Element {
       )}
       <div className="min-h-0 flex-1">
         <Suspense fallback={<div className="p-3 text-[12px] text-muted-foreground">Loading editor…</div>}>
-          <MonacoJsonEditor modelKey={modelKey} value={text} onChange={onChange} onMount={(ed) => decorate(ed as unknown as EditorLike)} />
+          <MonacoJsonEditor modelKey={modelKey} valueKey={p.docKey} value={text} onChange={onChange} onMount={(ed) => decorate(ed as unknown as EditorLike)} />
         </Suspense>
       </div>
     </div>

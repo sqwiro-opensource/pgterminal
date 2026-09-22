@@ -6,6 +6,8 @@ import { useMonacoEditor } from './useMonacoEditor';
 export interface MonacoJsonEditorProps {
   modelKey: string;
   value: string;
+  /** Identity of the value; when it changes the new text is applied even if the editor has focus. */
+  valueKey?: string;
   onChange?(value: string): void;
   readOnly?: boolean;
   markers?: PgErrorInfo[];
@@ -20,6 +22,7 @@ export function MonacoJsonEditor(props: MonacoJsonEditorProps): JSX.Element {
     modelKey: props.modelKey,
     language: 'json',
     value: props.value,
+    ...(props.valueKey !== undefined ? { valueKey: props.valueKey } : {}),
     ...(props.onChange ? { onChange: props.onChange } : {}),
     ...(props.readOnly !== undefined ? { readOnly: props.readOnly } : {}),
     ...(props.markers ? { markers: props.markers } : {}),

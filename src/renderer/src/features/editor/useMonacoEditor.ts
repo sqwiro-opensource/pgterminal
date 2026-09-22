@@ -3,11 +3,17 @@ import type { PgErrorInfo } from '@shared/types/query';
 import { useTheme } from '@renderer/lib/theme';
 import { monaco, MONO_FONT, defineEditorThemes, setupMonaco } from './monacoSetup';
 import { getOrCreateModel, replaceModelText } from './editorModels';
+import { decideValueSync, marksKeyApplied } from './valueSync';
 
 export interface UseMonacoEditorOptions {
   modelKey: string;
   language: 'sql' | 'json';
   value: string;
+  /**
+   * Identity of what `value` represents. When it changes the editor is showing a different
+   * thing, so the new text is applied even if the editor has focus.
+   */
+  valueKey?: string;
   onChange?: (value: string) => void;
   readOnly?: boolean;
   markers?: PgErrorInfo[];
@@ -114,13 +120,28 @@ export function useMonacoEditor(opts: UseMonacoEditorOptions): {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opts.modelKey, opts.language]);
 
-  // External value changes (restore, format, "open in query tab") — never while the user is typing.
+  // External value changes (restore, format, "open in query tab") must not clobber typing — but a
+  // change of `valueKey` means the editor now shows a different document, and following a link
+  // leaves the editor focused, so that case has to win over the focus guard.
+  //
+  // The key changes a render before the new text arrives, and in that gap the old text still
+  // matches the model. So the key is recorded only when its text is actually applied; recording
+  // it on a match would spend the switch on the stale render and refuse the real update.
+  const appliedKey = useRef(opts.valueKey);
   useEffect(() => {
     if (!editor) return;
     const model = editor.getModel();
     if (!model) return;
-    if (model.getValue() !== opts.value && !editor.hasTextFocus()) replaceModelText(model, opts.value);
-  }, [editor, opts.value]);
+    const awaitingSwitch = opts.valueKey !== appliedKey.current;
+    const decision = decideValueSync({
+      modelValue: model.getValue(),
+      value: opts.value,
+      awaitingSwitch,
+      hasFocus: editor.hasTextFocus()
+    });
+    if (decision === 'apply') replaceModelText(model, opts.value);
+    if (marksKeyApplied(decision, awaitingSwitch)) appliedKey.current = opts.valueKey;
+  }, [editor, opts.value, opts.valueKey]);
 
   useEffect(() => {
     editor?.updateOptions({ readOnly: opts.readOnly ?? false });

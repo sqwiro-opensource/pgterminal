@@ -181,6 +181,7 @@ function DocumentBody({ tab, target, connectionId, database, view }: { tab: Tab<
                     fields={state.fields}
                     original={state.row}
                     draft={state.draft}
+                    docKey={`${target.schema}.${target.table}/${target.keyValue}`}
                     onDraft={act.setDraft}
                     onError={setJsonError}
                   />
