@@ -7,6 +7,7 @@ import { Check, X } from 'lucide-react';
 import { DEFAULT_SENTINEL, isDefaultSentinel, type CellValue, type JsonValue } from '@shared/types/query';
 import { classifyType } from '@renderer/lib/format';
 import { useResizableBox } from './useResizableBox';
+import { useDraggableBox } from './useDraggableBox';
 import { ResizeGrip } from './ResizeGrip';
 
 const MonacoJsonEditor = lazy(() => import('@renderer/features/editor/MonacoJsonEditor'));
@@ -117,12 +118,22 @@ function JsonEditor(p: CellEditorProps) {
     }
   };
   const box = useResizableBox('jsonEditorWidth', 'jsonEditorHeight', { minW: 320, minH: 140 });
+  const drag = useDraggableBox(true);
   return (
     <div
       className="absolute left-0 top-0 z-20 flex flex-col overflow-hidden rounded-md border border-border bg-popover shadow-md"
-      style={{ width: box.width }}
+      style={{
+        width: box.width,
+        transform: drag.dx || drag.dy ? `translate3d(${drag.dx}px, ${drag.dy}px, 0)` : undefined
+      }}
       onKeyDown={(e) => e.stopPropagation()}
     >
+      <div
+        onPointerDown={drag.onHandlePointerDown}
+        className={`flex h-6 flex-none items-center gap-2 border-b border-border px-2 text-[11px] font-semibold text-muted-foreground select-none ${drag.dragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+      >
+        <span className="font-mono">{'{}'}</span> Edit JSON
+      </div>
       <div style={{ height: box.height }}>
         <Suspense fallback={<textarea className="h-full w-full bg-background p-2 font-mono text-[12px]" value={text} onChange={(e) => setText(e.target.value)} />}>
           <MonacoJsonEditor modelKey={key} value={text} onChange={setText} />

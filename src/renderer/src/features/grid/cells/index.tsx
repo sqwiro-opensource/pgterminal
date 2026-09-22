@@ -5,10 +5,12 @@ import type { CellValue, JsonValue } from '@shared/types/query';
 import { isLinkShaped, type FormattedCell } from '@renderer/lib/format';
 import { DocLinkChip, DocLinkChipList } from '@renderer/features/doclink/DocLinkChip';
 import { fkChipRaw } from '@renderer/features/doclink/fkChips';
+import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import { useStore } from '@renderer/store';
 import { JsonTree } from '../JsonTree';
 import { JsonRaw, JsonViewToggle, type JsonView } from '../JsonViewToggle';
 import { useResizableBox } from '../useResizableBox';
+import { useDraggableBox } from '../useDraggableBox';
 import { ResizeGrip } from '../ResizeGrip';
 import { useGridLinkContext } from './linkContext';
 
@@ -136,6 +138,7 @@ export const JsonCell = memo(function JsonCell({ f, raw, onOpenLink }: CellProps
   const view = useStore((st) => st.settings.jsonCellView);
   const setView = (v: JsonView): void => void useStore.getState().updateSettings({ jsonCellView: v });
   const box = useResizableBox('jsonCellWidth', 'jsonCellHeight', { minW: 320, minH: 160 });
+  const drag = useDraggableBox(open);
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -158,11 +161,15 @@ export const JsonCell = memo(function JsonCell({ f, raw, onOpenLink }: CellProps
         style={{
           width: Math.min(box.width, window.innerWidth - 24),
           height: box.height,
-          maxHeight: 'var(--radix-popover-content-available-height)'
+          maxHeight: 'var(--radix-popover-content-available-height)',
+          transform: drag.dx || drag.dy ? `translate3d(${drag.dx}px, ${drag.dy}px, 0)` : undefined
         }}
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <div className="flex h-8 flex-none items-center gap-2 border-b border-border px-2 text-[12px] font-semibold">
+        <div
+          onPointerDown={drag.onHandlePointerDown}
+          className={cn('flex h-8 flex-none items-center gap-2 border-b border-border px-2 text-[12px] font-semibold select-none', drag.dragging ? 'cursor-grabbing' : 'cursor-grab')}
+        >
           <span className="font-mono text-muted-foreground">{'{}'}</span>
           <span className="min-w-0 flex-1 truncate">{f.title ?? 'JSON'}</span>
           <JsonViewToggle view={view} onChange={setView} />
