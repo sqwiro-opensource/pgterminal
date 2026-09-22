@@ -57,6 +57,8 @@ export interface AppSettings {
   rowDetailFields: boolean;
   /** Rendering for the jsonb cell popover; kept apart from the row detail panel. */
   jsonCellView: 'tree' | 'json';
+  /** Rendering a document tab opens in; follows the last toggle, so new documents match the old. */
+  documentView: 'tree' | 'json';
   /** Size of the jsonb cell popover, in px; resizable and remembered. */
   jsonCellWidth: number;
   jsonCellHeight: number;
@@ -114,6 +116,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   rowDetailView: 'tree',
   rowDetailFields: false,
   jsonCellView: 'tree',
+  documentView: 'json',
   jsonCellWidth: 680,
   jsonCellHeight: 420,
   jsonEditorWidth: 480,

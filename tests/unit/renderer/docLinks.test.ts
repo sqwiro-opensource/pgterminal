@@ -84,6 +84,24 @@ describe('docLinks service', () => {
     expect(useStore.getState().tabs.filter((t) => t.kind === 'document')).toHaveLength(2);
   });
 
+  it('opens a new document tab in the view last chosen, json until one is chosen', async () => {
+    const target = { schema: 'sales', table: 'sales_customer', keyColumn: '_id', keyValue: 'sales_customer/7', rank: 1, reason: 'prefixedName' as const };
+    resolveMock.mockResolvedValue({ status: 'found', target, row: {}, fields: [] });
+    useStore.getState().closeAll();
+    await docLinks.open(docLinks.isRef('sales_customer/7')!, ctx);
+    const opened = (): string => {
+      const tab = useStore.getState().tabs.find((t) => t.kind === 'document')!;
+      return (tab.params as { view: string }).view;
+    };
+    expect(opened()).toBe('json');
+
+    useStore.setState((s) => ({ settings: { ...s.settings, documentView: 'tree' } }));
+    useStore.getState().closeAll();
+    await docLinks.open(docLinks.isRef('sales_customer/7')!, ctx);
+    expect(opened()).toBe('tree');
+    useStore.getState().closeAll();
+  });
+
   it('chip variants: normal when resolvable, broken otherwise, derived when forced', () => {
     expect(chipVariantFor('sales_customer/1', 'c1', 'db')).toBe('normal');
     expect(chipVariantFor('nosuch/1', 'c1', 'db')).toBe('broken');

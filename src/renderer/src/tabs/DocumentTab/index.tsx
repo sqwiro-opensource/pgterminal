@@ -49,6 +49,18 @@ function DocumentBody({ tab, target, connectionId, database, view }: { tab: Tab<
     [index, history.length, tab.id, updateParams]
   );
 
+  /**
+   * The toggle is also a preference: the next document opens the way this one was left, which is
+   * why the choice goes to settings as well as to this tab's params.
+   */
+  const setView = useCallback(
+    (v: 'tree' | 'json') => {
+      updateParams<'document'>(tab.id, { view: v });
+      void useStore.getState().updateSettings({ documentView: v });
+    },
+    [tab.id, updateParams]
+  );
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       const meta = e.metaKey || e.ctrlKey;
@@ -69,12 +81,12 @@ function DocumentBody({ tab, target, connectionId, database, view }: { tab: Tab<
         if (state.dirty && !readOnly) setSheet(true);
       } else if (e.key.toLowerCase() === 'j' && e.shiftKey) {
         e.preventDefault();
-        updateParams<'document'>(tab.id, { view: view === 'tree' ? 'json' : 'tree' });
+        setView(view === 'tree' ? 'json' : 'tree');
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [go, state.dirty, readOnly, tab.id, updateParams, view]);
+  }, [go, state.dirty, readOnly, tab.id, setView, view]);
 
   const diff = useMemo(() => (state.row ? diffRow(state.row, state.draft, state.fields) : []), [state.row, state.draft, state.fields]);
   const readOnlyColumns = useMemo(() => ['_id', ...state.pkColumns], [state.pkColumns]);
@@ -120,7 +132,7 @@ function DocumentBody({ tab, target, connectionId, database, view }: { tab: Tab<
         readOnly={readOnly}
         onBack={() => go(-1)}
         onForward={() => go(1)}
-        onView={(v) => updateParams<'document'>(tab.id, { view: v })}
+        onView={setView}
         onOpenTable={openTable}
         onOpenStructure={openStructure}
         onReload={() => void act.reload()}
@@ -172,7 +184,7 @@ function DocumentBody({ tab, target, connectionId, database, view }: { tab: Tab<
                     tabId={tab.id}
                     readOnlyColumns={readOnlyColumns}
                     onChange={act.setColumn}
-                    onEditJson={() => updateParams<'document'>(tab.id, { view: 'json' })}
+                    onEditJson={() => setView('json')}
                   />
                 ) : (
                   <JsonEditorView

@@ -115,7 +115,7 @@ function tableDataFilter(target: DocTarget): Filter[] {
 }
 
 function openDocumentTab(target: DocTarget, opts: OpenOptions): void {
-  const { openTab, updateParams, setTitle, tabs } = useStore.getState();
+  const { openTab, updateParams, setTitle, tabs, settings } = useStore.getState();
   const from = opts.fromTabId ? tabs.find((t) => t.id === opts.fromTabId) : undefined;
   if (from && from.kind === 'document' && !opts.newTab) {
     const p = from.params as { history: DocTarget[]; index: number };
@@ -126,7 +126,7 @@ function openDocumentTab(target: DocTarget, opts: OpenOptions): void {
   }
   openTab(
     'document',
-    { connectionId: opts.connectionId, database: opts.database, history: [target], index: 0, view: 'tree' },
+    { connectionId: opts.connectionId, database: opts.database, history: [target], index: 0, view: settings.documentView },
     { reuse: !opts.newTab, focus: !opts.newTab }
   );
 }
