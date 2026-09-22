@@ -31,9 +31,9 @@
     --icon-function: 32 72% 40%; --icon-sequence: 340 58% 46%; --icon-type: 188 66% 34%;
     --icon-extension: 215 18% 45%; --icon-index: 152 54% 32%; --icon-constraint: 16 66% 46%;
     --icon-trigger: 50 76% 36%;
-    --icon-column: 220 9% 46%; --icon-key: 38 92% 45%;
+    --icon-column: 217 28% 52%; --icon-key: 38 92% 45%;
     --icon-database: 87 34% 33%; --icon-server: 222 20% 12%;
-    --icon-schema: 220 9% 46%; --icon-folder: 220 9% 54%;
+    --icon-schema: 310 45% 45%; --icon-folder: 220 9% 54%;
     --radius: 6px;
     --row: 28px; --tree-row: 24px;
     color-scheme: light;
@@ -64,9 +64,9 @@
     --icon-function: 32 78% 62%; --icon-sequence: 340 72% 70%; --icon-type: 188 68% 58%;
     --icon-extension: 215 20% 64%; --icon-index: 152 58% 56%; --icon-constraint: 16 76% 66%;
     --icon-trigger: 50 84% 62%;
-    --icon-column: 218 10% 62%; --icon-key: 40 95% 62%;
+    --icon-column: 217 32% 70%; --icon-key: 40 95% 62%;
     --icon-database: 70 42% 55%; --icon-server: 210 20% 92%;
-    --icon-schema: 218 10% 62%; --icon-folder: 218 10% 54%;
+    --icon-schema: 310 58% 72%; --icon-folder: 218 10% 54%;
     color-scheme: dark;
   }
   * { @apply border-border; }
