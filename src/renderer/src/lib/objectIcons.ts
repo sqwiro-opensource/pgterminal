@@ -1,20 +1,29 @@
 import {
+  Blocks,
+  Boxes,
   Braces,
   Columns3,
   Database,
   Eye,
-  Folder,
-  FolderOpen,
+  Glasses,
   Hash,
   Hexagon,
   KeyRound,
   Layers,
   Link2,
+  ListChecks,
+  ListOrdered,
   ListTree,
   Puzzle,
   Server,
+  Shapes,
+  Sheet,
+  ShieldCheck,
+  Sigma,
   SquareFunction,
+  Table,
   Table2,
+  Workflow,
   Zap,
   type LucideIcon
 } from 'lucide-react';
@@ -27,7 +36,10 @@ import type { NodeKind } from '@shared/types/catalog';
 export type IconKind = NodeKind | 'server' | 'extensionsGroup';
 
 export interface IconOptions {
-  /** Folder-ish kinds open when expanded. */
+  /**
+   * Accepted for call-site convenience; expansion is shown by the chevron, so it no longer
+   * changes the icon — a folder keeps the icon of what it holds whether open or closed.
+   */
   expanded?: boolean;
   /** A column that is part of the primary key. */
   pk?: boolean;
@@ -44,17 +56,17 @@ const ICONS: Record<IconKind, LucideIcon> = {
   connection: Server,
   server: Server,
   database: Database,
-  schema: Folder,
-  tablesGroup: Folder,
-  viewsGroup: Folder,
-  functionsGroup: Folder,
-  typesGroup: Folder,
-  sequencesGroup: Folder,
-  columnsGroup: Folder,
-  indexesGroup: Folder,
-  constraintsGroup: Folder,
-  triggersGroup: Folder,
-  extensionsGroup: Folder,
+  schema: Boxes,
+  tablesGroup: Sheet,
+  viewsGroup: Glasses,
+  functionsGroup: Sigma,
+  typesGroup: Shapes,
+  sequencesGroup: ListOrdered,
+  columnsGroup: Table,
+  indexesGroup: ListChecks,
+  constraintsGroup: ShieldCheck,
+  triggersGroup: Workflow,
+  extensionsGroup: Blocks,
   table: Table2,
   partitionedTable: Table2,
   foreignTable: Table2,
@@ -134,14 +146,13 @@ export const KIND_LABEL: Record<IconKind, string> = {
   extension: 'Extension'
 };
 
-/** True for the kinds drawn as a folder, which open when expanded. */
+/** True for the kinds that hold other kinds (a schema or one of its object groups). */
 export function isFolderKind(kind: IconKind): boolean {
   return kind === 'schema' || kind.endsWith('Group');
 }
 
 export function iconFor(kind: IconKind, opts: IconOptions = {}): LucideIcon {
   if (kind === 'column' && opts.pk) return KeyRound;
-  if (isFolderKind(kind) && opts.expanded) return FolderOpen;
   return ICONS[kind];
 }
 

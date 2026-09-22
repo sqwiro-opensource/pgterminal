@@ -79,19 +79,45 @@ describe('objectIcons', () => {
     expect(iconColorFor('column')).toBe('text-icon-column');
   });
 
-  it('opens folder-ish kinds when expanded and leaves others alone', () => {
+  it('knows which kinds hold others', () => {
     expect(isFolderKind('schema')).toBe(true);
     expect(isFolderKind('tablesGroup')).toBe(true);
     expect(isFolderKind('table')).toBe(false);
-
-    expect(iconFor('schema', { expanded: true })).not.toBe(iconFor('schema'));
-    expect(iconFor('tablesGroup', { expanded: true })).not.toBe(iconFor('tablesGroup'));
-    expect(iconFor('table', { expanded: true })).toBe(iconFor('table'));
   });
 
   it('shares one icon across the relation kinds but not one colour', () => {
     const relations: IconKind[] = ['table', 'partitionedTable', 'foreignTable'];
     expect(new Set(relations.map((k) => iconFor(k))).size).toBe(1);
     expect(new Set(relations.map((k) => iconColorFor(k))).size).toBe(3);
+  });
+
+  it('gives every folder its own icon, distinct from the leaves it holds', () => {
+    // Colour alone left Tables, Views and Functions reading as one grey row.
+    const folders = [
+      'schema', 'tablesGroup', 'viewsGroup', 'functionsGroup', 'typesGroup', 'sequencesGroup',
+      'columnsGroup', 'indexesGroup', 'constraintsGroup', 'triggersGroup', 'extensionsGroup'
+    ] as const;
+    const icons = folders.map((k) => iconFor(k));
+    expect(new Set(icons).size).toBe(folders.length);
+
+    // A folder must not wear the same icon as the items inside it.
+    const pairs: Array<[(typeof folders)[number], Parameters<typeof iconFor>[0]]> = [
+      ['tablesGroup', 'table'],
+      ['viewsGroup', 'view'],
+      ['functionsGroup', 'function'],
+      ['typesGroup', 'type'],
+      ['sequencesGroup', 'sequence'],
+      ['columnsGroup', 'column'],
+      ['indexesGroup', 'index'],
+      ['constraintsGroup', 'constraint'],
+      ['triggersGroup', 'trigger'],
+      ['extensionsGroup', 'extension']
+    ];
+    for (const [folder, leaf] of pairs) expect(iconFor(folder)).not.toBe(iconFor(leaf));
+  });
+
+  it('keeps a folder icon steady when it opens, since the chevron shows that', () => {
+    expect(iconFor('tablesGroup', { expanded: true })).toBe(iconFor('tablesGroup'));
+    expect(iconFor('schema', { expanded: true })).toBe(iconFor('schema'));
   });
 });
