@@ -115,6 +115,22 @@ Everything at once:
 bun run typecheck && bun run test && bun run build
 ```
 
+## Installing from source
+
+```bash
+bun install
+bun run dev
+```
+
+The UI depends on `@cloudhub-ux/shadcn`, which is published to GitHub Packages and is not public,
+so `bun install` needs a token with `read:packages`:
+
+```bash
+echo "//npm.pkg.github.com/:_authToken=<token>" >> .npmrc   # .npmrc already maps the scopes
+```
+
+CI reads the same token from a `PACKAGES_TOKEN` repository secret.
+
 ## Building and releasing
 
 ```bash

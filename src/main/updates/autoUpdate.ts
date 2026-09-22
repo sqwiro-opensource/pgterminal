@@ -3,7 +3,7 @@
  * every state change is pushed to the renderer as `app:updateEvent` and surfaced as a toast.
  * Listeners are registered exactly once per process, not per window.
  */
-import { app } from 'electron';
+import { BrowserWindow, Notification, app } from 'electron';
 import electronUpdater, { type AppUpdater } from 'electron-updater';
 import { push } from '../ipc/handle';
 
@@ -50,6 +50,7 @@ export function installAutoUpdate(): void {
   autoUpdater.on('update-downloaded', (info: { version?: string }) => {
     downloaded = true;
     push('app:updateEvent', { type: 'downloaded', version: info?.version });
+    notifyReady(info?.version);
   });
   // electron-updater emits `error` on every network hiccup; swallowing it here keeps main alive.
   autoUpdater.on('error', (err: Error) => {
@@ -81,6 +82,29 @@ export async function checkForUpdates({ manual = false }: { manual?: boolean } =
   } finally {
     manualCheck = false;
   }
+}
+
+/**
+ * Tells the desktop an update is waiting, but only when the window is not in front: a toast is
+ * enough when someone is looking at the app, and a notification on top of it would be duplicate
+ * noise. Clicking the notification brings the window forward so the Restart action is reachable.
+ */
+function notifyReady(version?: string): void {
+  const win = BrowserWindow.getAllWindows().find((w) => !w.isDestroyed());
+  if (win?.isFocused()) return;
+  if (!Notification.isSupported()) return;
+  const note = new Notification({
+    title: version ? `PgTerminal ${version} is ready` : 'PgTerminal update ready',
+    body: 'Restart to finish installing.',
+    silent: true
+  });
+  note.on('click', () => {
+    if (!win || win.isDestroyed()) return;
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+  });
+  note.show();
 }
 
 /** Restarts into the downloaded update. No-op when no download completed. */

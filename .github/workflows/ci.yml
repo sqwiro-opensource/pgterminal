@@ -17,6 +17,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Authenticate to GitHub Packages
+        # @cloudhub-ux/* are published to npm.pkg.github.com and are not public, so a clone cannot
+        # install them without a token. Add a PACKAGES_TOKEN repository secret with read:packages,
+        # or make those packages public, and this step becomes unnecessary.
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.PACKAGES_TOKEN }}" >> .npmrc
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run lint
@@ -33,6 +38,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Authenticate to GitHub Packages
+        # @cloudhub-ux/* are published to npm.pkg.github.com and are not public, so a clone cannot
+        # install them without a token. Add a PACKAGES_TOKEN repository secret with read:packages,
+        # or make those packages public, and this step becomes unnecessary.
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.PACKAGES_TOKEN }}" >> .npmrc
       - run: bun install --frozen-lockfile
       - name: Start Postgres and wait for the seed
         run: |
@@ -59,5 +69,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Authenticate to GitHub Packages
+        # @cloudhub-ux/* are published to npm.pkg.github.com and are not public, so a clone cannot
+        # install them without a token. Add a PACKAGES_TOKEN repository secret with read:packages,
+        # or make those packages public, and this step becomes unnecessary.
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.PACKAGES_TOKEN }}" >> .npmrc
       - run: bun install --frozen-lockfile
       - run: bun run build
