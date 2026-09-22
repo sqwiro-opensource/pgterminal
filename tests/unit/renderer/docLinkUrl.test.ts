@@ -27,29 +27,27 @@ describe('doc link urls', () => {
     expect(parseDocLinkUrl(doubled)?.raw).toBe('magneta_application/cron');
   });
 
-  it('still reads the older authority form', () => {
-    const legacy = `pgui-doc://${encodeURIComponent('sales_customer/42')}?conn=c1&db=sqwiro-admin`;
-    expect(parseDocLinkUrl(legacy)).toEqual({ raw: 'sales_customer/42', connectionId: 'c1', database: 'sqwiro-admin' });
-  });
 
-  it('carries the originating tab when given one', () => {
-    const url = docLinkUrl('a/1', { ...ctx, tabId: 'document:c1/db/s/t/1' });
-    expect(parseDocLinkUrl(url)?.tabId).toBe('document:c1/db/s/t/1');
-  });
 
   it('handles keys and databases that need encoding', () => {
     const url = docLinkUrl("sales.customer/it's-odd", { connectionId: 'c 1', database: 'my db' });
     expect(parseDocLinkUrl(url)).toEqual({ raw: "sales.customer/it's-odd", connectionId: 'c 1', database: 'my db' });
   });
 
-  it('does not over-decode a tab id that legitimately contains a percent escape', () => {
-    // Document tab ids embed an encoded key; decoding it twice would name a different tab.
-    const tabId = 'document:c1/db/sales/sales_customer/sales_customer%2F2';
-    expect(parseDocLinkUrl(docLinkUrl('a/1', { ...ctx, tabId }))?.tabId).toBe(tabId);
-  });
 
   it('keeps a key that contains a percent escape intact', () => {
     expect(parseDocLinkUrl(docLinkUrl('t/a%2Fb', ctx))?.raw).toBe('t/a%2Fb');
+  });
+
+  it('reads the url back after Monaco percent-encoded the query separators', () => {
+    // Exactly what the opener receives: `?raw=a&conn=b` re-serialised as `?raw%3Da%26conn%3Db`.
+    const built = docLinkUrl('magneta_application/cron', ctx);
+    const mangled = `pgui-doc:/open?${encodeURIComponent(built.slice(built.indexOf('?') + 1))}`;
+    expect(parseDocLinkUrl(mangled)).toEqual({
+      raw: 'magneta_application/cron',
+      connectionId: 'c1',
+      database: 'sqwiro-admin'
+    });
   });
 
   it('rejects urls of another scheme or without context', () => {

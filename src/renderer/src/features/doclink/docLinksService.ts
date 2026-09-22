@@ -193,10 +193,12 @@ function openFromUrl(url: string): void {
   if (!payload) return;
   const ref = isRef(payload.raw);
   if (!ref) return;
+  // The click happened inside the active tab, so that is the tab to navigate in place.
+  const fromTabId = useStore.getState().activeTabId ?? undefined;
   void open(ref, {
     connectionId: payload.connectionId,
     database: payload.database,
-    ...(payload.tabId ? { fromTabId: payload.tabId } : {})
+    ...(fromTabId ? { fromTabId } : {})
   });
 }
 

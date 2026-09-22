@@ -83,6 +83,22 @@ function installSmokeHooks(win: BrowserWindow): void {
               new Promise((_, reject) => setTimeout(() => reject(new Error('smoke script timed out')), 90_000))
             ]);
             process.stdout.write(`[smoke] result ${JSON.stringify(result)}\n`);
+            // A script can ask for a real input event: synthetic DOM events cannot drive
+            // components that track native modifier state (Monaco's ⌘-click, for one).
+            const clickAt = (result as { __clickAt?: { x: number; y: number; modifiers?: string[] } } | null)?.__clickAt;
+            if (clickAt) {
+              const modifiers = (clickAt.modifiers ?? []) as Parameters<typeof win.webContents.sendInputEvent>[0] extends { modifiers?: infer M } ? M : never;
+              win.webContents.sendInputEvent({ type: 'mouseMove', x: clickAt.x, y: clickAt.y });
+              await new Promise((r) => setTimeout(r, 120));
+              win.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Meta', modifiers });
+              await new Promise((r) => setTimeout(r, 80));
+              win.webContents.sendInputEvent({ type: 'mouseDown', x: clickAt.x, y: clickAt.y, button: 'left', clickCount: 1, modifiers });
+              win.webContents.sendInputEvent({ type: 'mouseUp', x: clickAt.x, y: clickAt.y, button: 'left', clickCount: 1, modifiers });
+              win.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Meta' });
+              await new Promise((r) => setTimeout(r, 2500));
+              const after = await win.webContents.executeJavaScript('window.__pguiSmokeAfter ? window.__pguiSmokeAfter() : null');
+              process.stdout.write(`[smoke] after-click ${JSON.stringify(after)}\n`);
+            }
             await new Promise((r) => setTimeout(r, 800));
           }
           const image = await win.webContents.capturePage();
