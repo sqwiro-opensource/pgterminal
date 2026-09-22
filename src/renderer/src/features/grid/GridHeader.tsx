@@ -12,6 +12,7 @@ import {
 import { Checkbox } from '@cloudhub-ux/shadcn/esm/components/ui/checkbox';
 import type { GridColumn } from './gridModel';
 import { GUTTER_WIDTH } from './gridModel';
+import { copyText } from '@renderer/lib/clipboard';
 
 export interface SortSpec {
   column: string;
@@ -100,7 +101,7 @@ export const GridHeader = memo(function GridHeader(p: GridHeaderProps) {
                 <DropdownMenuItem onSelect={() => p.onHide(col.id)}>Hide column</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => p.onPin(col.id)}>{p.pinned.has(col.id) ? 'Unpin' : 'Pin left'}</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => void navigator.clipboard.writeText(col.header)}>Copy column name</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => void copyText(col.header, 'column name')}>Copy column name</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <div

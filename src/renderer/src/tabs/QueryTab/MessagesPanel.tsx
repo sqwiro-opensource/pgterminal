@@ -1,8 +1,8 @@
 import { Copy, Crosshair } from 'lucide-react';
-import { toast } from 'sonner';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import type { PgErrorInfo } from '@shared/types/query';
 import type { QueryMessage } from './queryRuntime';
+import { copyText } from '@renderer/lib/clipboard';
 
 export interface MessagesPanelProps {
   messages: QueryMessage[];
@@ -48,7 +48,7 @@ function ErrorCard({ m, onShowInEditor }: { m: QueryMessage; onShowInEditor(e: P
         )}
         <button
           type="button"
-          onClick={() => void navigator.clipboard.writeText(text).then(() => toast.success('Copied'))}
+          onClick={() => void copyText(text, 'error')}
           className="inline-flex h-6 items-center gap-1 rounded border border-border bg-background px-2 text-[11.5px] hover:bg-accent"
         >
           <Copy size={12} strokeWidth={1.75} /> Copy

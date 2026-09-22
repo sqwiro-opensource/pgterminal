@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Columns3, Table2 } from 'lucide-react';
+import { iconColorFor } from '@renderer/lib/objectIcons';
 import { useStore } from '@renderer/store';
 import { isRelationKind, nodeIds } from '@shared/catalog/nodeId';
 import type { RelationNode } from '@shared/types/catalog';
@@ -55,10 +56,10 @@ function Actions({ schema, table, connectionId, database }: { schema: string; ta
   return (
     <span className="inline-flex gap-1">
       <button type="button" title="Open structure" onClick={() => openStructure(connectionId, database, schema, table)} className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground">
-        <Columns3 size={14} strokeWidth={1.75} />
+        <Columns3 size={14} strokeWidth={1.75} className={iconColorFor('column')} />
       </button>
       <button type="button" title="Open data" onClick={() => openData(connectionId, database, schema, table)} className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground">
-        <Table2 size={14} strokeWidth={1.75} />
+        <Table2 size={14} strokeWidth={1.75} className={iconColorFor('table')} />
       </button>
     </span>
   );

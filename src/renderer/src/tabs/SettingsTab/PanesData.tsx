@@ -7,6 +7,7 @@ import { useStore } from '@renderer/store';
 import { Button, NumberInput, Row, Select, Switch, TextInput } from './controls';
 import { exportConnections, parseConnectionImport } from './settingsModel';
 import type { PaneProps } from './PanesGeneral';
+import { copyText } from '@renderer/lib/clipboard';
 
 export function DataPane({ settings, set, num }: PaneProps): JSX.Element {
   return (
@@ -117,14 +118,12 @@ export function ConnectionsPane({ settings, set }: PaneProps): JSX.Element {
 
   const copyExport = (): void => {
     const json = JSON.stringify(exportConnections(Object.values(connections)), null, 2);
-    navigator.clipboard.writeText(json).then(
-      () => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-        toast.success(`Copied ${Object.keys(connections).length} connections`, { description: 'Passwords are never included.' });
-      },
-      () => toast.error('Clipboard unavailable')
-    );
+    void copyText(json).then((ok) => {
+      if (!ok) return;
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+      toast.success(`Copied ${Object.keys(connections).length} connections`, { description: 'Passwords are never included.' });
+    });
   };
 
   const runImport = (): void => {

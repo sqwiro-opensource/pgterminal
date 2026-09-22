@@ -1,11 +1,12 @@
 import { memo } from 'react';
-import { Braces, ChevronRight, Copy, X } from 'lucide-react';
+import { Braces, ChevronRight, X } from 'lucide-react';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import type { CellValue, FieldInfo, JsonValue } from '@shared/types/query';
 import { JsonTree } from './JsonTree';
 import { JsonRaw, JsonViewToggle } from './JsonViewToggle';
 import { GridLinkContext, type GridLinkContextValue } from './cells/linkContext';
 import { rowToJson } from './gridModel';
+import { CopyButton } from '@renderer/components/ui/CopyButton';
 
 export type RowDetailView = 'tree' | 'json';
 
@@ -46,16 +47,7 @@ export const RowDetail = memo(function RowDetail({
         <Braces size={14} strokeWidth={1.75} className="flex-none text-muted-foreground" />
         <span className="min-w-0 flex-1 truncate">{title ?? 'Row'}</span>
         <JsonViewToggle view={view} onChange={onViewChange} />
-        {json && (
-          <button
-            type="button"
-            aria-label="Copy row as JSON"
-            className="inline-flex h-6 w-6 flex-none items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
-            onClick={() => void navigator.clipboard.writeText(JSON.stringify(json, null, 2))}
-          >
-            <Copy size={12} strokeWidth={1.75} />
-          </button>
-        )}
+        {json && <CopyButton value={() => JSON.stringify(json, null, 2)} title="Copy row as JSON" />}
         {onClose && (
           <button
             type="button"

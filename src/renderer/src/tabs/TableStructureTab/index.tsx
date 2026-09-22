@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Eye, Layers, Link2, RefreshCw, Table2 } from 'lucide-react';
+import { iconColorFor } from '@renderer/lib/objectIcons';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import type { Tab, TabParamsByKind } from '@shared/types/workspace';
 import { formatBytes, formatCount } from '@renderer/features/tree/treeModel';
@@ -22,6 +23,13 @@ import { useRefreshSignal } from '@renderer/tabs/useTab';
 type Section = TabParamsByKind['table-structure']['section'];
 
 const KIND_ICON = { table: Table2, view: Eye, matview: Layers, foreignTable: Link2, partitionedTable: Layers } as const;
+const KIND_COLOR = {
+  table: iconColorFor('table'),
+  view: iconColorFor('view'),
+  matview: iconColorFor('matview'),
+  foreignTable: iconColorFor('foreignTable'),
+  partitionedTable: iconColorFor('partitionedTable')
+} as const;
 
 export default function TableStructureTab({ tab: anyTab }: { tab: Tab }) {
   const tab = anyTab as Tab<'table-structure'>;
@@ -47,11 +55,12 @@ export default function TableStructureTab({ tab: anyTab }: { tab: Tab }) {
 
   const setSection = (s: Section) => workspace().updateParams<'table-structure'>(tab.id, { section: s });
   const Icon = node ? KIND_ICON[node.kind] : Table2;
+  const iconColor = node ? KIND_COLOR[node.kind] : iconColorFor('table');
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex h-9 items-center gap-2 border-b border-border px-3">
-        <Icon size={14} strokeWidth={1.75} className="text-muted-foreground" />
+        <Icon size={14} strokeWidth={1.75} className={iconColor} />
         <span className="font-mono text-[13px] font-medium">
           <span className="text-muted-foreground">{schema}.</span>
           {table}

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { create } from 'zustand';
-import { Copy, LoaderCircle, SquarePen, TriangleAlert } from 'lucide-react';
-import { toast } from 'sonner';
+import { LoaderCircle, SquarePen, TriangleAlert } from 'lucide-react';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@cloudhub-ux/shadcn/esm/components/ui/dialog';
 import type { EnvLabel } from '@shared/types/connection';
+import { CopyButton } from '@renderer/components/ui/CopyButton';
 
 export type ConfirmVariant = 'destructive' | 'light' | 'neutral';
 
@@ -130,13 +130,13 @@ function ConfirmBody({ spec, onClose }: { spec: ConfirmSpec; onClose(): void }):
         )}
         <div className="relative rounded-md border border-border bg-muted/40">
           <pre className="max-h-40 overflow-auto p-3 pr-16 font-mono text-[12px] leading-relaxed">{sql}</pre>
-          <button
-            type="button"
-            className="absolute right-2 top-2 inline-flex h-6 items-center gap-1 rounded border border-border bg-background px-2 text-[11px] text-muted-foreground hover:text-foreground"
-            onClick={() => void navigator.clipboard.writeText(sql).then(() => toast.success('SQL copied'))}
-          >
-            <Copy size={12} strokeWidth={1.75} /> Copy
-          </button>
+          <CopyButton
+            value={sql}
+            label="Copy"
+            title="Copy SQL"
+            variant="text"
+            className="absolute right-2 top-2 border border-border bg-background"
+          />
         </div>
         {spec.typedName && (
           <label className="flex items-center gap-2">

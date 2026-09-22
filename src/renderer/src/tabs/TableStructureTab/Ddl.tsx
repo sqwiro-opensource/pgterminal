@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Copy, RefreshCw, SquareCode } from 'lucide-react';
+import { RefreshCw, SquareCode } from 'lucide-react';
 import { Skeleton } from '@renderer/components/ui/Skeleton';
 import { pgui } from '@renderer/lib/ipc';
 import type { RelationNode } from '@shared/types/catalog';
 import { ddlKindFor } from './structureModel';
 import { ErrorBox } from './parts';
+import { CopyButton } from '@renderer/components/ui/CopyButton';
 
 export interface DdlState {
   sql: string | null;
@@ -58,19 +59,10 @@ function ToolbarButton({ label, onClick, disabled, title, children }: { label: s
 }
 
 export function Ddl({ state }: { state: DdlState }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    if (!state.sql) return;
-    await navigator.clipboard.writeText(state.sql);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
-  };
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <div className="flex h-8 items-center gap-1.5 border-b border-border px-2">
-        <ToolbarButton label={copied ? 'Copied' : 'Copy'} onClick={() => void copy()} disabled={!state.sql}>
-          {copied ? <Check size={13} strokeWidth={1.75} /> : <Copy size={13} strokeWidth={1.75} />}
-        </ToolbarButton>
+        <CopyButton value={state.sql ?? ''} title="Copy DDL" size="md" disabled={!state.sql} />
         <ToolbarButton label="Open in query tab" disabled title="Query tabs arrive with Phase 3">
           <SquareCode size={13} strokeWidth={1.75} />
         </ToolbarButton>

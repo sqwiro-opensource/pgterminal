@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { CircleAlert, Copy, FileCode2, RefreshCw, SquarePen } from 'lucide-react';
-import { toast } from 'sonner';
+import { CircleAlert, FileCode2, RefreshCw, SquarePen } from 'lucide-react';
 import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button';
 import type { PgErrorInfo } from '@shared/types/query';
 import type { Tab } from '@shared/types/workspace';
 import { pgui } from '@renderer/lib/ipc';
 import { openQueryTab } from '@renderer/features/tree/actions';
+import { CopyButton } from '@renderer/components/ui/CopyButton';
 
 type State = { status: 'loading' } | { status: 'ready'; sql: string } | { status: 'error'; error: PgErrorInfo };
 
@@ -43,9 +43,7 @@ export default function DdlPreviewTab({ tab }: { tab: Tab<'ddl-preview'> }): JSX
         <span className="font-mono">{qualified}</span>
         <span className="rounded bg-muted px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{ddl.kind}</span>
         <span className="flex-1" />
-        <Button variant="ghost" size="sm" className="h-7 gap-1 text-[12px]" disabled={!sql} onClick={() => void navigator.clipboard.writeText(sql).then(() => toast.success('DDL copied'))}>
-          <Copy size={13} strokeWidth={1.75} /> Copy
-        </Button>
+        <CopyButton value={sql} label="Copy" title="Copy DDL" variant="text" size="md" disabled={!sql} className="hover:bg-accent" />
         <Button variant="ghost" size="sm" className="h-7 gap-1 text-[12px]" onClick={() => void load()}>
           <RefreshCw size={13} strokeWidth={1.75} /> Refresh
         </Button>

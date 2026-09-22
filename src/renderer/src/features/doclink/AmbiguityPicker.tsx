@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { create } from 'zustand';
 import { Table2 } from 'lucide-react';
+import { iconColorFor } from '@renderer/lib/objectIcons';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@cloudhub-ux/shadcn/esm/components/ui/dialog';
 import type { DocRef, DocTarget, DocTargetReason } from '@shared/types/doclink';
 
@@ -88,7 +89,7 @@ export function AmbiguityPickerHost(): JSX.Element {
                 onMouseEnter={() => setFocus(i)}
                 onClick={() => close(c)}
               >
-                <Table2 size={14} strokeWidth={1.75} className="text-muted-foreground" />
+                <Table2 size={14} strokeWidth={1.75} className={iconColorFor('table')} />
                 <span className="font-mono">
                   <span className="text-muted-foreground">{c.schema}.</span>
                   {c.table}

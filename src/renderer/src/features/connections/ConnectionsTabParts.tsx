@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Check, Copy, Import, Loader2, XCircle } from 'lucide-react';
+import { Check, Import, Loader2, XCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@cloudhub-ux/shadcn/esm/components/ui/popover';
 import type { TestResult } from '@shared/ipc';
 import { isUriError, parseConnectionUri, type ConnectionForm } from './connectionForm';
+import { CopyButton } from '@renderer/components/ui/CopyButton';
 
 export type TestState =
   | { kind: 'idle' }
@@ -37,9 +38,7 @@ export function TestResultLine({ state }: { state: TestState }): JSX.Element | n
         {state.message}
         {state.hint && <span className="text-muted-foreground"> · {state.hint}</span>}
       </span>
-      <button type="button" aria-label="Copy error" onClick={() => void navigator.clipboard.writeText(text)} className="text-muted-foreground hover:text-foreground">
-        <Copy size={12} strokeWidth={1.75} />
-      </button>
+      <CopyButton value={text} title="Copy error" className="h-5 w-5" />
     </span>
   );
 }

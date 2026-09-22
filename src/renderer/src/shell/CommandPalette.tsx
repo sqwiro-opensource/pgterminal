@@ -7,6 +7,7 @@ import { useTheme } from '@renderer/lib/theme';
 import { onPaletteRequest, setThemeToggle, type PaletteMode } from '@renderer/lib/keybindings';
 import { buildItems, parseInput, type PaletteItem } from '@renderer/features/palette/paletteModel';
 import { warmObjectIndex } from '@renderer/features/palette/objectIndex';
+import { DOCUMENT_COLOR, iconColorFor } from '@renderer/lib/objectIcons';
 
 const ICONS = {
   table: Table2,
@@ -18,6 +19,18 @@ const ICONS = {
   action: Play,
   braces: Braces
 } as const;
+
+/** Palette icon names that name a catalog object take that object's colour. */
+const ICON_COLOR: Record<keyof typeof ICONS, string> = {
+  table: iconColorFor('table'),
+  view: iconColorFor('view'),
+  function: iconColorFor('function'),
+  sequence: iconColorFor('sequence'),
+  type: iconColorFor('type'),
+  braces: DOCUMENT_COLOR,
+  tab: 'text-muted-foreground',
+  action: 'text-muted-foreground'
+};
 
 const MODE_HINT: Record<PaletteMode, string> = {
   '': 'Type to search objects, tabs and actions',
@@ -189,7 +202,7 @@ export function CommandPalette(): JSX.Element | null {
                     i === active ? 'bg-accent text-accent-foreground' : 'text-foreground'
                   )}
                 >
-                  <Icon size={14} strokeWidth={1.75} className="flex-none text-muted-foreground" />
+                  <Icon size={14} strokeWidth={1.75} className={cn('flex-none', ICON_COLOR[item.icon])} />
                   <span className="min-w-0 flex-1 truncate">{item.label}</span>
                   {item.hint && i === active && <span className="flex-none text-[11px] text-muted-foreground">{item.hint}</span>}
                   {item.detail && <span className="flex-none font-mono text-[11px] text-muted-foreground">{item.detail}</span>}

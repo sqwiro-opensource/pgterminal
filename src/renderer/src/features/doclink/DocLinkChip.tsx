@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@cloudhub-ux/shadcn/esm
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger, MenuEntries, type MenuEntry } from '@renderer/components/ui/ContextMenu';
 import { docLinks, type LinkContext } from './docLinksService';
 import { DocPreviewCard } from './DocPreviewCard';
+import { copyText } from '@renderer/lib/clipboard';
 
 export type ChipVariant = 'normal' | 'derived' | 'broken';
 
@@ -110,13 +111,13 @@ export const DocLinkChip = memo(function DocLinkChip(p: DocLinkChipProps) {
     { label: 'Open', onSelect: () => void open(false) },
     { label: 'Open in new tab', onSelect: () => void open(true) },
     { label: 'Peek in inspector', onSelect: () => void open(false, true) },
-    { label: 'Copy _id', separatorBefore: true, onSelect: () => void navigator.clipboard.writeText(p.raw) },
+    { label: 'Copy _id', separatorBefore: true, onSelect: () => void copyText(p.raw, '_id') },
     {
       label: 'Copy target SQL',
       onSelect: () => {
         if (!ref) return;
         void docLinks.resolve(ref, ctx, p.preferred).then((r) => {
-          if (r.status === 'found') void navigator.clipboard.writeText(docLinks.targetSql(r.target));
+          if (r.status === 'found') void copyText(docLinks.targetSql(r.target), 'SQL');
         });
       }
     },

@@ -3,6 +3,7 @@ import { ExternalLink, Table2, Unlink } from 'lucide-react';
 import type { DocLinkResolution, DocRef } from '@shared/types/doclink';
 import type { CellValue } from '@shared/types/query';
 import { formatCell } from '@renderer/lib/format';
+import { iconColorFor } from '@renderer/lib/objectIcons';
 import { docLinks, type LinkContext } from './docLinksService';
 import { orderFieldsForPreview } from '@renderer/tabs/DocumentTab/documentModel';
 
@@ -41,7 +42,7 @@ export function DocPreviewCard({ ref_, ctx, preferred, onOpen }: DocPreviewCardP
   return (
     <div className="w-[320px] text-[12px]">
       <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-        <Table2 size={14} strokeWidth={1.75} className="text-link" />
+        <Table2 size={14} strokeWidth={1.75} className={iconColorFor('table')} />
         <span className="truncate font-mono text-[12.5px] text-link">{ref_.raw}</span>
         {res?.status === 'found' && (
           <span className="truncate text-[11px] text-muted-foreground">

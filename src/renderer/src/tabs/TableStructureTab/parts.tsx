@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { CircleAlert, Table2 } from 'lucide-react';
+import { iconColorFor } from '@renderer/lib/objectIcons';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import { Skeleton } from '@renderer/components/ui/Skeleton';
 
@@ -65,7 +66,7 @@ export function TargetChip({ schema, table, onClick, title }: { schema: string; 
       title={title ?? `Open structure of ${schema}.${table}`}
       className="inline-flex h-[18px] max-w-full items-center gap-1 rounded border border-primary/20 bg-primary/[.08] px-1.5 font-mono text-[12px] text-link hover:bg-primary/[.14] hover:underline hover:decoration-dotted"
     >
-      <Table2 size={12} strokeWidth={1.75} />
+      <Table2 size={12} strokeWidth={1.75} className={iconColorFor('table')} />
       <span className="text-muted-foreground">{schema}.</span>
       <span className="truncate">{table}</span>
     </button>

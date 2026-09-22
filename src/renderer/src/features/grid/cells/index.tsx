@@ -1,5 +1,4 @@
 import { memo, useState, type ReactNode } from 'react';
-import { Copy } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@cloudhub-ux/shadcn/esm/components/ui/popover';
 import type { CellValue, JsonValue } from '@shared/types/query';
 import { isLinkShaped, type FormattedCell } from '@renderer/lib/format';
@@ -13,6 +12,7 @@ import { useResizableBox } from '../useResizableBox';
 import { useDraggableBox } from '../useDraggableBox';
 import { ResizeGrip } from '../ResizeGrip';
 import { useGridLinkContext } from './linkContext';
+import { CopyButton } from '@renderer/components/ui/CopyButton';
 
 interface CellProps {
   f: FormattedCell;
@@ -173,14 +173,7 @@ export const JsonCell = memo(function JsonCell({ f, raw, onOpenLink }: CellProps
           <span className="font-mono text-muted-foreground">{'{}'}</span>
           <span className="min-w-0 flex-1 truncate">{f.title ?? 'JSON'}</span>
           <JsonViewToggle view={view} onChange={setView} />
-          <button
-            type="button"
-            aria-label="Copy JSON"
-            className="inline-flex h-6 w-6 flex-none items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
-            onClick={() => void navigator.clipboard.writeText(JSON.stringify(raw, null, 2))}
-          >
-            <Copy size={12} strokeWidth={1.75} />
-          </button>
+          <CopyButton value={() => JSON.stringify(raw, null, 2)} title="Copy JSON" />
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-2">
           {view === 'tree' ? <JsonTree value={raw as JsonValue} onOpenLink={onOpenLink} /> : <JsonRaw value={raw} onOpenLink={onOpenLink} />}

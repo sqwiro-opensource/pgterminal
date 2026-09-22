@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Lock, Plus, SquareCode, Table2, Trash2 } from 'lucide-react';
+import { iconColorFor } from '@renderer/lib/objectIcons';
 import { toast } from 'sonner';
 import type { Tab } from '@shared/types/workspace';
 import type { CellValue, PgErrorInfo } from '@shared/types/query';
@@ -146,7 +147,7 @@ export default function TableDataTab({ tab: anyTab }: { tab: Tab }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex h-9 flex-none items-center gap-2 border-b border-border px-3">
-        <Table2 size={14} strokeWidth={1.75} className="text-muted-foreground" />
+        <Table2 size={14} strokeWidth={1.75} className={iconColorFor('table')} />
         <span className="font-mono text-[13px] font-medium">
           <span className="text-muted-foreground">{schema}.</span>
           {table}

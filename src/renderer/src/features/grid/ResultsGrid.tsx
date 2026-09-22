@@ -10,6 +10,7 @@ import { useGridSelection } from './useGridSelection';
 import { GridLinkContext, type GridLinkContextValue } from './cells/linkContext';
 import { readGridState, writeGridState } from './gridSessionState';
 import { GridErrorCard, GridSkeleton } from './GridStates';
+import { copyText } from '@renderer/lib/clipboard';
 
 const NO_LINK_CTX: GridLinkContextValue = {};
 
@@ -156,13 +157,16 @@ export function ResultsGrid(p: ResultsGridProps) {
       if (what === 'cell' && sel.focus) {
         const col = columns[sel.focus.col];
         const row = rows[sel.focus.row];
-        if (col && row) void navigator.clipboard.writeText(formattedAt(row, col).kind === 'null' ? '' : String(formattedAt(row, col).title ?? formattedAt(row, col).text));
+        if (col && row) void copyText(formattedAt(row, col).kind === 'null' ? '' : String(formattedAt(row, col).title ?? formattedAt(row, col).text), 'cell');
         return;
       }
       const idx = sel.selected.size ? [...sel.selected].sort((a, b) => a - b) : sel.focus ? [sel.focus.row] : [];
       if (idx.length === 0) return;
       const asJson = idx.map((i) => rowToJson(rows[i] as CellValue[], p.fields));
-      void navigator.clipboard.writeText(idx.length === 1 ? JSON.stringify(asJson[0], null, 2) : JSON.stringify(asJson, null, 2));
+      void copyText(
+        idx.length === 1 ? JSON.stringify(asJson[0], null, 2) : JSON.stringify(asJson, null, 2),
+        idx.length === 1 ? 'row' : `${idx.length} rows`
+      );
     },
     [sel.focus, sel.selected, columns, rows, p.fields]
   );

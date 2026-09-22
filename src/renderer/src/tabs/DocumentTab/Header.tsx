@@ -1,4 +1,5 @@
 import { Braces, ChevronLeft, ChevronRight, EllipsisVertical, RefreshCw, Save, Table2, Trash2 } from 'lucide-react';
+import { DOCUMENT_COLOR } from '@renderer/lib/objectIcons';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@cloudhub-ux/shadcn/esm/components/ui/dropdown-menu';
 import type { DocTarget } from '@shared/types/doclink';
@@ -98,7 +99,7 @@ export function Header(p: HeaderProps): JSX.Element {
         >
           <Save size={13} strokeWidth={1.75} /> Save <kbd className="kbd ml-1">⌘S</kbd>
         </button>
-        <Braces size={14} strokeWidth={1.75} className="ml-1 text-muted-foreground" />
+        <Braces size={14} strokeWidth={1.75} className={`ml-1 ${DOCUMENT_COLOR}`} />
       </div>
     </div>
   );

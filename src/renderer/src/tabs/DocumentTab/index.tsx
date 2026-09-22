@@ -16,6 +16,7 @@ import { ReferencesPanel } from './ReferencesPanel';
 import { SaveDiffSheet } from './SaveDiffSheet';
 import { deletePreviewSql, diffRow, draftToJsonText } from './documentModel';
 import { useDocument } from './useDocument';
+import { copyText } from '@renderer/lib/clipboard';
 
 /** Document tab: one row as a navigable document with references, backlinks and editing. */
 export default function DocumentTab({ tab }: { tab: Tab }): JSX.Element {
@@ -123,8 +124,8 @@ function DocumentBody({ tab, target, connectionId, database, view }: { tab: Tab<
         onOpenTable={openTable}
         onOpenStructure={openStructure}
         onReload={() => void act.reload()}
-        onCopyJson={() => void navigator.clipboard.writeText(draftToJsonText(state.draft, state.fields))}
-        onCopyId={() => void navigator.clipboard.writeText(String(state.row?._id ?? target.keyValue))}
+        onCopyJson={() => void copyText(draftToJsonText(state.draft, state.fields), 'JSON')}
+        onCopyId={() => void copyText(String(state.row?._id ?? target.keyValue), '_id')}
         onDelete={onDelete}
         onSave={() => (jsonError ? toast.error(jsonError) : setSheet(true))}
       />

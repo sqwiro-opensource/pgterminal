@@ -18,6 +18,15 @@
   --env-staging-bg:38 92% 93%; --env-staging-fg:30 80% 35%; --env-staging-bar:38 92% 50%;
   --env-dev-bg:142 60% 93%; --env-dev-fg:142 60% 28%; --env-dev-bar:142 71% 40%;
   --env-local-bg:220 14% 93%; --env-local-fg:220 9% 40%; --env-local-bar:220 9% 60%;
+  /* object icons: related things share a hue family, unrelated ones sit far apart */
+  --icon-table:217 60% 45%; --icon-partitioned:200 62% 38%; --icon-foreign:236 52% 56%;
+  --icon-view:270 52% 50%; --icon-matview:292 48% 46%;
+  --icon-function:32 72% 40%; --icon-sequence:340 58% 46%; --icon-type:188 66% 34%;
+  --icon-extension:215 18% 45%; --icon-index:152 54% 32%; --icon-constraint:16 66% 46%;
+  --icon-trigger:50 76% 36%;
+  --icon-column:220 9% 46%; --icon-key:38 92% 45%;
+  --icon-database:87 34% 33%; --icon-server:222 20% 12%;
+  --icon-schema:220 9% 46%; --icon-folder:220 9% 54%;
   --radius:6px;
   --font-ui:"IBM Plex Sans","SF Pro Text",-apple-system,"Segoe UI","Helvetica Neue",sans-serif;
   --font-mono:"JetBrains Mono","IBM Plex Mono","SF Mono",Menlo,Consolas,monospace;
@@ -43,6 +52,14 @@
   --env-staging-bg:38 60% 16%; --env-staging-fg:40 90% 75%; --env-staging-bar:40 95% 60%;
   --env-dev-bg:142 40% 14%; --env-dev-fg:142 60% 70%; --env-dev-bar:142 60% 50%;
   --env-local-bg:222 12% 18%; --env-local-fg:218 10% 70%; --env-local-bar:218 10% 55%;
+  --icon-table:217 70% 70%; --icon-partitioned:200 70% 64%; --icon-foreign:236 72% 76%;
+  --icon-view:272 70% 76%; --icon-matview:292 64% 73%;
+  --icon-function:32 78% 62%; --icon-sequence:340 72% 70%; --icon-type:188 68% 58%;
+  --icon-extension:215 20% 64%; --icon-index:152 58% 56%; --icon-constraint:16 76% 66%;
+  --icon-trigger:50 84% 62%;
+  --icon-column:218 10% 62%; --icon-key:40 95% 62%;
+  --icon-database:70 42% 55%; --icon-server:210 20% 92%;
+  --icon-schema:218 10% 62%; --icon-folder:218 10% 54%;
   --shadow-md:0 4px 14px -2px hsl(0 0% 0% / .5),0 1px 2px hsl(0 0% 0% / .4);
   --shadow-xl:0 24px 48px -12px hsl(0 0% 0% / .7),0 2px 6px hsl(0 0% 0% / .5);
   color-scheme:dark;
@@ -111,6 +128,12 @@ kbd{display:inline-block;font-size:10.5px;line-height:1;padding:3px 5px;border:1
 .node .chev{width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;color:hsl(var(--muted-foreground));flex:none}
 .node .chev.open svg{transform:rotate(90deg)}
 .node .ic{color:hsl(var(--muted-foreground))}
+.ic-table{color:hsl(var(--icon-table))}.ic-partitioned{color:hsl(var(--icon-partitioned))}.ic-foreign{color:hsl(var(--icon-foreign))}
+.ic-view{color:hsl(var(--icon-view))}.ic-matview{color:hsl(var(--icon-matview))}.ic-function{color:hsl(var(--icon-function))}
+.ic-sequence{color:hsl(var(--icon-sequence))}.ic-type{color:hsl(var(--icon-type))}.ic-extension{color:hsl(var(--icon-extension))}
+.ic-index{color:hsl(var(--icon-index))}.ic-constraint{color:hsl(var(--icon-constraint))}.ic-trigger{color:hsl(var(--icon-trigger))}
+.ic-column{color:hsl(var(--icon-column))}.ic-key{color:hsl(var(--icon-key))}.ic-database{color:hsl(var(--icon-database))}
+.ic-server{color:hsl(var(--icon-server))}.ic-schema{color:hsl(var(--icon-schema))}.ic-folder{color:hsl(var(--icon-folder))}
 .node .lbl{flex:1;overflow:hidden;text-overflow:ellipsis}
 .node .meta{font-family:var(--font-mono);font-size:11px;color:hsl(var(--muted-foreground))}
 .node.db .lbl{font-weight:500}

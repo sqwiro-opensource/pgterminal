@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { toast } from 'sonner';
+import { copyText } from '@renderer/lib/clipboard';
 
 interface Props {
   tabId: string;
@@ -32,12 +32,7 @@ export class TabErrorBoundary extends Component<Props, State> {
   private copy = async (): Promise<void> => {
     const { error, stack } = this.state;
     const text = `${error?.name}: ${error?.message}\n${error?.stack ?? ''}\n${stack ?? ''}`;
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success('Error copied');
-    } catch {
-      toast.error('Could not copy');
-    }
+    await copyText(text, 'error');
   };
 
   override render(): ReactNode {

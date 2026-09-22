@@ -17,6 +17,7 @@ import type { ExportRequest } from '@shared/types/export';
 import { quoteIdent } from '@shared/sql/quote';
 import { pgui } from '@renderer/lib/ipc';
 import { copyAsTsv, quoteLiteral, rowToInsert, rowToJson } from './gridModel';
+import { copyText } from '@renderer/lib/clipboard';
 
 export interface ExportMenuProps {
   fields: FieldInfo[];
@@ -31,7 +32,7 @@ export interface ExportMenuProps {
 }
 
 function copy(text: string, what: string): void {
-  void navigator.clipboard.writeText(text).then(() => toast.success(what), () => toast.error('Clipboard unavailable'));
+  void copyText(text, what);
 }
 
 export function ExportMenu(p: ExportMenuProps) {
@@ -47,11 +48,14 @@ export function ExportMenu(p: ExportMenuProps) {
         toast.dismiss(id);
       }
     }
+    const id = toast.loading(`Writing ${rows.length.toLocaleString()} rows…`);
     try {
       const res = await pgui['export:write']({ format, fields: p.fields, rows, table: p.table, suggestedName: p.suggestedName });
-      if (res) toast.success(`Exported ${rows.length.toLocaleString()} rows`, { description: res.path });
+      // A null result means the save dialog was dismissed, which is not a failure.
+      if (res) toast.success(`Exported ${rows.length.toLocaleString()} rows`, { id, description: res.path });
+      else toast.dismiss(id);
     } catch (err) {
-      toast.error('Export failed', { description: err instanceof Error ? err.message : String(err) });
+      toast.error('Export failed', { id, description: err instanceof Error ? err.message : String(err) });
     }
   };
   const whereClause = () => {
@@ -63,7 +67,7 @@ export function ExportMenu(p: ExportMenuProps) {
       return;
     }
     const clauses = rows.map((r) => `(${pk.map((c, j) => `${quoteIdent(c)} = ${quoteLiteral(r[idx[j] as number] ?? null, p.fields[idx[j] as number]?.dataType)}`).join(' AND ')})`);
-    copy(clauses.length === 1 ? clauses[0]! : clauses.join(' OR '), 'WHERE clause copied');
+    copy(clauses.length === 1 ? clauses[0]! : clauses.join(' OR '), 'WHERE clause');
   };
   const idCol = p.fields.findIndex((f) => f.name === '_id');
   const n = selRows.length;
@@ -92,12 +96,12 @@ export function ExportMenu(p: ExportMenuProps) {
         )}
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-[10.5px] uppercase tracking-wider text-muted-foreground">Copy ({label})</DropdownMenuLabel>
-        <DropdownMenuItem onSelect={() => copy(copyAsTsv(p.rows, p.fields, sel ?? []), 'Copied as TSV')}>As TSV</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => copy(JSON.stringify(selRows.map((r) => rowToJson(r, p.fields)), null, 2), 'Copied as JSON')}>As JSON</DropdownMenuItem>
-        <DropdownMenuItem disabled={!p.table} onSelect={() => p.table && copy(selRows.map((r) => rowToInsert(r, p.fields, p.table!.schema, p.table!.table)).join('\n'), 'Copied as INSERT')}>
+        <DropdownMenuItem onSelect={() => copy(copyAsTsv(p.rows, p.fields, sel ?? []), 'as TSV')}>As TSV</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => copy(JSON.stringify(selRows.map((r) => rowToJson(r, p.fields)), null, 2), 'as JSON')}>As JSON</DropdownMenuItem>
+        <DropdownMenuItem disabled={!p.table} onSelect={() => p.table && copy(selRows.map((r) => rowToInsert(r, p.fields, p.table!.schema, p.table!.table)).join('\n'), 'as INSERT')}>
           As INSERT
         </DropdownMenuItem>
-        <DropdownMenuItem disabled={idCol < 0} onSelect={() => copy(selRows.map((r) => String(r[idCol] ?? '')).join('\n'), 'Copied _id values')}>
+        <DropdownMenuItem disabled={idCol < 0} onSelect={() => copy(selRows.map((r) => String(r[idCol] ?? '')).join('\n'), '_id values')}>
           _id values
         </DropdownMenuItem>
         <DropdownMenuItem disabled={!p.pkColumns?.length} onSelect={whereClause}>

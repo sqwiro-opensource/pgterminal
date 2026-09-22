@@ -15,7 +15,6 @@ import {
   type LucideIcon
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { useShallow } from 'zustand/react/shallow';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import {
@@ -30,6 +29,8 @@ import { ContextMenu, ContextMenuContent, ContextMenuTrigger, MenuEntries, type 
 import { useStore } from '../store';
 import { runningTabIds } from '../tabs/QueryTab/runManager';
 import { openNewQueryTab } from '../lib/keybindings';
+import { DOCUMENT_COLOR, iconColorFor, type IconKind } from '../lib/objectIcons';
+import { copyText } from '@renderer/lib/clipboard';
 
 const ICONS: Record<TabKind, LucideIcon> = {
   query: Code2,
@@ -45,6 +46,20 @@ const ICONS: Record<TabKind, LucideIcon> = {
 
 export function tabIcon(kind: TabKind): LucideIcon {
   return ICONS[kind] ?? Code2;
+}
+
+/** Tab kinds that show a catalog object borrow that object's colour. */
+const TAB_ICON_KIND: Partial<Record<TabKind, IconKind>> = {
+  'table-data': 'table',
+  'table-structure': 'column',
+  function: 'function',
+  connections: 'server'
+};
+
+export function tabIconColor(kind: TabKind): string {
+  if (kind === 'document') return DOCUMENT_COLOR;
+  const objectKind = TAB_ICON_KIND[kind];
+  return objectKind ? iconColorFor(objectKind) : 'text-muted-foreground';
 }
 
 /** Middle-truncate: keeps both ends visible ("sales_cus…mer/42"). */
@@ -111,12 +126,7 @@ export function TabBar({ onNew }: TabBarProps): JSX.Element {
     { label: 'Duplicate', onSelect: () => duplicate(tab), disabled: tab.kind !== 'query' },
     {
       label: 'Copy tab path',
-      onSelect: () => {
-        navigator.clipboard.writeText(tab.id).then(
-          () => toast.success('Copied'),
-          () => toast.error('Could not copy')
-        );
-      },
+      onSelect: () => void copyText(tab.id, 'tab path'),
       separatorBefore: true
     },
     { label: 'Reveal in tree', disabled: true }
@@ -196,7 +206,7 @@ export function TabBar({ onNew }: TabBarProps): JSX.Element {
                   {running.includes(tab.id) ? (
                     <LoaderCircle size={14} strokeWidth={2} className="flex-none animate-spin text-primary" />
                   ) : (
-                    <Icon size={14} strokeWidth={1.75} className={cn('flex-none', active ? 'text-primary' : 'text-muted-foreground')} />
+                    <Icon size={14} strokeWidth={1.75} className={cn('flex-none', active ? 'text-primary' : tabIconColor(tab.kind))} />
                   )}
                   {!tab.pinned && <span className="flex-1 truncate">{middleTruncate(tab.title)}</span>}
                   {!tab.pinned && (
@@ -253,7 +263,7 @@ export function TabBar({ onNew }: TabBarProps): JSX.Element {
               const Icon = tabIcon(tab.kind);
               return (
                 <DropdownMenuItem key={tab.id} onSelect={() => setActive(tab.id)} className="gap-2">
-                  <Icon size={14} strokeWidth={1.75} className="text-muted-foreground" />
+                  <Icon size={14} strokeWidth={1.75} className={tabIconColor(tab.kind)} />
                   <span className={cn('flex-1 truncate', tab.id === activeTabId && 'font-medium')}>{tab.title}</span>
                   {tab.dirty && <span className="h-[7px] w-[7px] rounded-full bg-primary" />}
                 </DropdownMenuItem>

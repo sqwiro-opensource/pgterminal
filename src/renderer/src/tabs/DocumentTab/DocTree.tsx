@@ -8,6 +8,7 @@ import { isDefaultSentinel } from '@shared/types/query';
 import { DocLinkChip } from '@renderer/features/doclink/DocLinkChip';
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger, MenuEntries } from '@renderer/components/ui/ContextMenu';
 import { coerceInput, setPath, type Row } from './documentModel';
+import { copyText } from '@renderer/lib/clipboard';
 
 export interface DocTreeProps {
   fields: FieldInfo[];
@@ -41,8 +42,8 @@ function ColumnRow({ field, row, draft, connectionId, database, tabId, readOnlyC
   const readOnly = readOnlyColumns.includes(field.name);
   const isJsonObj = kind === 'json' && value !== null && typeof value === 'object';
   const menu = [
-    { label: 'Copy value', onSelect: () => void navigator.clipboard.writeText(typeof value === 'object' ? JSON.stringify(value) : String(value ?? '')) },
-    { label: 'Copy column name', onSelect: () => void navigator.clipboard.writeText(field.name) },
+    { label: 'Copy value', onSelect: () => void copyText(typeof value === 'object' ? JSON.stringify(value) : String(value ?? ''), 'value') },
+    { label: 'Copy column name', onSelect: () => void copyText(field.name, 'column name') },
     { label: 'Set NULL', disabled: readOnly, onSelect: () => onChange(field.name, null) },
     ...(kind === 'json' ? [{ label: 'Edit as JSON…', separatorBefore: true, disabled: readOnly, onSelect: () => onEditJson(field.name) }] : [])
   ];

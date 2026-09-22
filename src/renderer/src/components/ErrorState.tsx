@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { CircleAlert, Copy, RefreshCw } from 'lucide-react';
+import { CircleAlert, RefreshCw } from 'lucide-react';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import type { PgErrorInfo } from '@shared/ipc';
+import { CopyButton } from '@renderer/components/ui/CopyButton';
 
 export interface ErrorStateProps {
   /** A structured Postgres error, or a plain message. */
@@ -35,16 +35,6 @@ export function errorToText(e: PgErrorInfo | string): string {
 /** The single error surface: severity, SQLSTATE, message, detail, hint, Copy and Retry. */
 export function ErrorState({ error, title, onRetry, onClose, variant = 'card', className }: ErrorStateProps): JSX.Element {
   const err = asError(error);
-  const [copied, setCopied] = useState(false);
-  const copy = (): void => {
-    navigator.clipboard.writeText(errorToText(err)).then(
-      () => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      },
-      () => undefined
-    );
-  };
 
   const body = (
     <div
@@ -74,14 +64,13 @@ export function ErrorState({ error, title, onRetry, onClose, variant = 'card', c
               Retry
             </button>
           )}
-          <button
-            type="button"
-            onClick={copy}
-            className="inline-flex h-6 items-center gap-1 rounded border border-border bg-background px-2 text-[11.5px] hover:bg-accent"
-          >
-            <Copy size={12} strokeWidth={1.75} />
-            {copied ? 'Copied' : 'Copy'}
-          </button>
+          <CopyButton
+            value={() => errorToText(err)}
+            label="Copy"
+            title="Copy error"
+            variant="text"
+            className="border border-border bg-background text-[11.5px] text-foreground"
+          />
           {onClose && (
             <button
               type="button"

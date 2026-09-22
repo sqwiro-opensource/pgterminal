@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Copy, LoaderCircle } from 'lucide-react';
+import { LoaderCircle } from 'lucide-react';
 import { Button } from '@cloudhub-ux/shadcn/esm/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@cloudhub-ux/shadcn/esm/components/ui/dialog';
 import type { CellValue, FieldInfo, PgErrorInfo } from '@shared/types/query';
 import { classifyType } from '@renderer/lib/format';
 import { toMutationSet, updatePreviewSql, type RowDiff } from './documentModel';
+import { CopyButton } from '@renderer/components/ui/CopyButton';
 
 export interface SaveDiffSheetProps {
   open: boolean;
@@ -63,9 +64,7 @@ export function SaveDiffSheet(p: SaveDiffSheetProps): JSX.Element {
           </table>
           <div className="relative mt-3 rounded border border-border bg-muted/40 p-2 font-mono text-[11.5px]">
             <pre className="whitespace-pre-wrap">{sql}</pre>
-            <button type="button" className="absolute right-1 top-1 rounded p-1 text-muted-foreground hover:bg-accent" onClick={() => void navigator.clipboard.writeText(sql)}>
-              <Copy size={12} strokeWidth={1.75} />
-            </button>
+            <CopyButton value={sql} title="Copy SQL" className="absolute right-1 top-1" />
           </div>
           {p.error && (
             <div className="mt-3 rounded border border-destructive/40 bg-destructive/10 p-2 text-[12px]">

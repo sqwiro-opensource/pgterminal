@@ -16,6 +16,7 @@ import * as T from './sqlTemplates';
 import { executeDdl, type DdlTarget } from './ddlActions';
 import { openCreateTableDialog } from '@renderer/features/structure/CreateTableDialog';
 import { formatBytes, formatCount, type TreeRow } from './treeModel';
+import { copyText } from '@renderer/lib/clipboard';
 
 /* ---------- workspace bridge (slice written by P2.1; accessed defensively) ---------- */
 
@@ -96,7 +97,7 @@ function pathOf(row: TreeRow): string[] {
 }
 
 function copy(text: string, what = 'Copied'): void {
-  void navigator.clipboard.writeText(text).then(
+  void copyText(text).then(
     () => toast.success(what, { description: text.length > 120 ? `${text.slice(0, 120)}…` : text }),
     () => toast.error('Clipboard unavailable')
   );

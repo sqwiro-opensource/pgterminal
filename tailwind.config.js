@@ -43,6 +43,26 @@ module.exports = {
         bool: 'hsl(var(--bool))',
         time: 'hsl(var(--time))',
         str: 'hsl(var(--str))',
+        icon: {
+          table: 'hsl(var(--icon-table))',
+          partitioned: 'hsl(var(--icon-partitioned))',
+          foreign: 'hsl(var(--icon-foreign))',
+          view: 'hsl(var(--icon-view))',
+          matview: 'hsl(var(--icon-matview))',
+          function: 'hsl(var(--icon-function))',
+          sequence: 'hsl(var(--icon-sequence))',
+          type: 'hsl(var(--icon-type))',
+          extension: 'hsl(var(--icon-extension))',
+          index: 'hsl(var(--icon-index))',
+          constraint: 'hsl(var(--icon-constraint))',
+          trigger: 'hsl(var(--icon-trigger))',
+          column: 'hsl(var(--icon-column))',
+          key: 'hsl(var(--icon-key))',
+          database: 'hsl(var(--icon-database))',
+          server: 'hsl(var(--icon-server))',
+          schema: 'hsl(var(--icon-schema))',
+          folder: 'hsl(var(--icon-folder))'
+        },
         env: {
           'prod-bg': 'hsl(var(--env-prod-bg))', 'prod-fg': 'hsl(var(--env-prod-fg))', 'prod-bar': 'hsl(var(--env-prod-bar))',
           'staging-bg': 'hsl(var(--env-staging-bg))', 'staging-fg': 'hsl(var(--env-staging-fg))', 'staging-bar': 'hsl(var(--env-staging-bar))',
@@ -58,12 +78,14 @@ module.exports = {
       keyframes: {
         'accordion-down': { from: { height: '0' }, to: { height: 'var(--radix-accordion-content-height)' } },
         'accordion-up': { from: { height: 'var(--radix-accordion-content-height)' }, to: { height: '0' } },
-        pulse2: { '0%,100%': { opacity: '1' }, '50%': { opacity: '.35' } }
+        pulse2: { '0%,100%': { opacity: '1' }, '50%': { opacity: '.35' } },
+        'copy-pop': { from: { opacity: '0', transform: 'scale(.55)' }, to: { opacity: '1', transform: 'none' } }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        pulse2: 'pulse2 1.2s ease-in-out infinite'
+        pulse2: 'pulse2 1.2s ease-in-out infinite',
+        'copy-pop': 'copy-pop 180ms cubic-bezier(.2,.9,.3,1.4)'
       }
     }
   },

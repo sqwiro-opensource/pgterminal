@@ -1,37 +1,24 @@
 import { forwardRef, type CSSProperties, type MouseEvent } from 'react';
-import {
-  ChevronRight, CircleAlert, Columns3, Database, Eye, Folder, FolderOpen, Hash, Hexagon, KeyRound, Layers, Link2,
-  ListTree, LoaderCircle, Lock, Puzzle, Server, SquareFunction, Table2, Zap, type LucideIcon
-} from 'lucide-react';
+import { ChevronRight, CircleAlert, LoaderCircle, Lock, type LucideIcon } from 'lucide-react';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@cloudhub-ux/shadcn/esm/components/ui/tooltip';
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger, MenuEntries, type MenuEntry } from '@renderer/components/ui/ContextMenu';
-import type { RowKind, TreeRow } from './treeModel';
+import { iconColorFor, iconFor as iconForKind, type IconKind } from '@renderer/lib/objectIcons';
+import type { TreeRow } from './treeModel';
 
-const ICONS: Partial<Record<RowKind, LucideIcon>> = {
-  server: Server,
-  database: Database,
-  table: Table2,
-  partitionedTable: Table2,
-  foreignTable: Table2,
-  view: Eye,
-  matview: Layers,
-  function: SquareFunction,
-  procedure: SquareFunction,
-  sequence: Hash,
-  type: Hexagon,
-  extension: Puzzle,
-  column: Columns3,
-  index: ListTree,
-  constraint: Link2,
-  trigger: Zap
-};
+/** Rows that are pure layout (group headers, "N more", hints) carry no object icon. */
+function isIconKind(kind: TreeRow['kind']): kind is IconKind {
+  return kind !== 'group' && kind !== 'more' && kind !== 'hint';
+}
 
 function iconFor(row: TreeRow): LucideIcon | null {
-  if (row.kind === 'group' || row.kind === 'more' || row.kind === 'hint') return null;
-  if (row.kind === 'column' && row.pk) return KeyRound;
-  if (row.kind.endsWith('Group') || row.kind === 'schema') return row.expanded ? FolderOpen : Folder;
-  return ICONS[row.kind] ?? Folder;
+  if (!isIconKind(row.kind)) return null;
+  return iconForKind(row.kind, { expanded: row.expanded, pk: row.pk });
+}
+
+function iconColor(row: TreeRow): string {
+  if (!isIconKind(row.kind)) return 'text-muted-foreground';
+  return iconColorFor(row.kind, { pk: row.pk });
 }
 
 export interface TreeNodeProps {
@@ -103,7 +90,7 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(function TreeN
         ) : null}
       </span>
       {row.kind === 'server' && <StatusDot status={row.status} />}
-      {Icon && <Icon size={14} strokeWidth={1.75} className="flex-none text-muted-foreground" />}
+      {Icon && <Icon size={14} strokeWidth={1.75} className={cn('flex-none', dim ? 'text-muted-foreground' : iconColor(row))} />}
       <span
         className={cn(
           'min-w-0 flex-1 truncate',
