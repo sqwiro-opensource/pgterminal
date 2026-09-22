@@ -55,6 +55,8 @@ export interface AppSettings {
   rowDetailView: 'tree' | 'json';
   /** Show the column/type list at the top of the row detail. */
   rowDetailFields: boolean;
+  /** Rendering for the jsonb cell popover; kept apart from the row detail panel. */
+  jsonCellView: 'tree' | 'json';
   /** Width of the grid pane beside the row detail, as a percentage. */
   rowDetailRatio: number;
   backlinkScopeDefault: BacklinkScopeMode;
@@ -105,6 +107,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   rowDetailOpen: true,
   rowDetailView: 'tree',
   rowDetailFields: false,
+  jsonCellView: 'tree',
   rowDetailRatio: 70,
   backlinkScopeDefault: 'sameSchema',
   linkFkColumns: true,

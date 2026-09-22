@@ -3,6 +3,7 @@ import { Braces, ChevronRight, Copy, X } from 'lucide-react';
 import { cn } from '@cloudhub-ux/shadcn/esm/lib/utils';
 import type { CellValue, FieldInfo, JsonValue } from '@shared/types/query';
 import { JsonTree } from './JsonTree';
+import { JsonRaw, JsonViewToggle } from './JsonViewToggle';
 import { rowToJson } from './gridModel';
 
 export type RowDetailView = 'tree' | 'json';
@@ -39,21 +40,7 @@ export const RowDetail = memo(function RowDetail({
       <div className="flex h-8 flex-none items-center gap-2 border-b border-border px-2 text-[12px] font-semibold">
         <Braces size={14} strokeWidth={1.75} className="flex-none text-muted-foreground" />
         <span className="min-w-0 flex-1 truncate">{title ?? 'Row'}</span>
-        <div className="inline-flex h-6 flex-none overflow-hidden rounded-[5px] border border-border">
-          {(['tree', 'json'] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => onViewChange(v)}
-              className={cn(
-                'px-2 text-[11px] font-medium capitalize text-muted-foreground',
-                view === v && 'bg-accent text-foreground'
-              )}
-            >
-              {v === 'json' ? 'JSON' : 'Tree'}
-            </button>
-          ))}
-        </div>
+        <JsonViewToggle view={view} onChange={onViewChange} />
         {json && (
           <button
             type="button"
@@ -100,9 +87,7 @@ export const RowDetail = memo(function RowDetail({
           {view === 'tree' ? (
             <JsonTree value={json as JsonValue} expandDepth={3} onOpenLink={onOpenLink} />
           ) : (
-            <pre className="whitespace-pre-wrap break-words font-mono text-[12px] leading-relaxed text-foreground">
-              {JSON.stringify(json, null, 2)}
-            </pre>
+            <JsonRaw value={json} />
           )}
         </div>
       )}

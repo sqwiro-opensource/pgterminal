@@ -5,7 +5,9 @@ import type { CellValue, JsonValue } from '@shared/types/query';
 import { isLinkShaped, type FormattedCell } from '@renderer/lib/format';
 import { DocLinkChip, DocLinkChipList } from '@renderer/features/doclink/DocLinkChip';
 import { fkChipRaw } from '@renderer/features/doclink/fkChips';
+import { useStore } from '@renderer/store';
 import { JsonTree } from '../JsonTree';
+import { JsonRaw, JsonViewToggle, type JsonView } from '../JsonViewToggle';
 import { useGridLinkContext } from './linkContext';
 
 interface CellProps {
@@ -129,6 +131,8 @@ export const TextCell = memo(function TextCell({ f, raw, onOpenLink, colId }: Ce
 
 export const JsonCell = memo(function JsonCell({ f, raw, onOpenLink }: CellProps) {
   const [open, setOpen] = useState(false);
+  const view = useStore((st) => st.settings.jsonCellView);
+  const setView = (v: JsonView): void => void useStore.getState().updateSettings({ jsonCellView: v });
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -141,19 +145,31 @@ export const JsonCell = memo(function JsonCell({ f, raw, onOpenLink }: CellProps
           {f.text}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[480px] p-0" onOpenAutoFocus={(e) => e.preventDefault()}>
-        <div className="flex h-8 items-center gap-2 border-b border-border px-3 text-[12px] font-semibold">
-          <span className="font-mono">{'{}'}</span> JSON
+      {/* Sized to the space Radix reports, so a deep document uses the window instead of a 320px box. */}
+      <PopoverContent
+        align="start"
+        side="bottom"
+        sideOffset={4}
+        collisionPadding={8}
+        className="flex w-[min(680px,92vw)] flex-col p-0"
+        style={{ maxHeight: 'var(--radix-popover-content-available-height)' }}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        <div className="flex h-8 flex-none items-center gap-2 border-b border-border px-2 text-[12px] font-semibold">
+          <span className="font-mono text-muted-foreground">{'{}'}</span>
+          <span className="min-w-0 flex-1 truncate">{f.title ?? 'JSON'}</span>
+          <JsonViewToggle view={view} onChange={setView} />
           <button
             type="button"
-            className="ml-auto inline-flex h-6 items-center gap-1 rounded px-2 text-[11.5px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label="Copy JSON"
+            className="inline-flex h-6 w-6 flex-none items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
             onClick={() => void navigator.clipboard.writeText(JSON.stringify(raw, null, 2))}
           >
-            <Copy size={12} strokeWidth={1.75} /> Copy JSON
+            <Copy size={12} strokeWidth={1.75} />
           </button>
         </div>
-        <div className="max-h-[320px] overflow-auto p-2">
-          <JsonTree value={raw as JsonValue} onOpenLink={onOpenLink} />
+        <div className="min-h-0 flex-1 overflow-auto p-2">
+          {view === 'tree' ? <JsonTree value={raw as JsonValue} onOpenLink={onOpenLink} /> : <JsonRaw value={raw} />}
         </div>
       </PopoverContent>
     </Popover>
