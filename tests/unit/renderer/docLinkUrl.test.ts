@@ -1,36 +1,59 @@
 import { describe, expect, it } from 'vitest';
-import { docLinkUrl } from '../../../src/renderer/src/features/editor/docLinkUrl';
+import { docLinkUrl, parseDocLinkUrl } from '../../../src/renderer/src/features/editor/docLinkUrl';
 
 /**
- * Monaco hands the opener a parsed Uri, so the url the link provider builds has to survive a
- * round trip through URI parsing and come back as the same reference and context.
+ * Monaco hands the opener a re-serialised Uri, so a url has to survive normalisation and come
+ * back as the same reference and context. The reference contains a slash, which is what makes
+ * this fragile.
  */
-describe('docLinkUrl', () => {
-  const parse = (url: string): { raw: string; conn: string | null; db: string | null } => {
-    const u = new URL(url);
-    return {
-      raw: decodeURIComponent(url.slice('pgui-doc://'.length).split('?')[0] ?? ''),
-      conn: u.searchParams.get('conn'),
-      db: u.searchParams.get('db')
-    };
-  };
+describe('doc link urls', () => {
+  const ctx = { connectionId: 'c1', database: 'sqwiro-admin' };
 
-  it('round-trips a plain reference', () => {
-    const out = parse(docLinkUrl('sales_customer/42', { connectionId: 'c1', database: 'pgui_test' }));
-    expect(out).toEqual({ raw: 'sales_customer/42', conn: 'c1', db: 'pgui_test' });
+  it('round-trips a reference containing a slash', () => {
+    expect(parseDocLinkUrl(docLinkUrl('magneta_application/cron', ctx))).toEqual({
+      raw: 'magneta_application/cron',
+      connectionId: 'c1',
+      database: 'sqwiro-admin'
+    });
   });
 
-  it('survives keys and databases that need encoding', () => {
-    const url = docLinkUrl("sales.customer/it's/odd", { connectionId: 'c 1', database: 'my db', tabId: 'document:x/y' });
-    const out = parse(url);
-    expect(out.raw).toBe("sales.customer/it's/odd");
-    expect(out.conn).toBe('c 1');
-    expect(out.db).toBe('my db');
-    expect(new URL(url).searchParams.get('tab')).toBe('document:x/y');
+  it('keeps the payload out of the authority', () => {
+    expect(docLinkUrl('magneta_application/cron', ctx)).not.toContain('//magneta');
   });
 
-  it('keeps the scheme the opener matches on', () => {
-    expect(docLinkUrl('a/1', { connectionId: 'c', database: 'd' }).startsWith('pgui-doc://')).toBe(true);
-    expect(new URL(docLinkUrl('a/1', { connectionId: 'c', database: 'd' })).protocol).toBe('pgui-doc:');
+  it('survives a url that was percent-encoded a second time', () => {
+    // What a Uri round trip did to the old authority form: %2F became %252F.
+    const doubled = docLinkUrl('magneta_application/cron', ctx).replace('magneta_application%2Fcron', 'magneta_application%252Fcron');
+    expect(parseDocLinkUrl(doubled)?.raw).toBe('magneta_application/cron');
+  });
+
+  it('still reads the older authority form', () => {
+    const legacy = `pgui-doc://${encodeURIComponent('sales_customer/42')}?conn=c1&db=sqwiro-admin`;
+    expect(parseDocLinkUrl(legacy)).toEqual({ raw: 'sales_customer/42', connectionId: 'c1', database: 'sqwiro-admin' });
+  });
+
+  it('carries the originating tab when given one', () => {
+    const url = docLinkUrl('a/1', { ...ctx, tabId: 'document:c1/db/s/t/1' });
+    expect(parseDocLinkUrl(url)?.tabId).toBe('document:c1/db/s/t/1');
+  });
+
+  it('handles keys and databases that need encoding', () => {
+    const url = docLinkUrl("sales.customer/it's-odd", { connectionId: 'c 1', database: 'my db' });
+    expect(parseDocLinkUrl(url)).toEqual({ raw: "sales.customer/it's-odd", connectionId: 'c 1', database: 'my db' });
+  });
+
+  it('does not over-decode a tab id that legitimately contains a percent escape', () => {
+    // Document tab ids embed an encoded key; decoding it twice would name a different tab.
+    const tabId = 'document:c1/db/sales/sales_customer/sales_customer%2F2';
+    expect(parseDocLinkUrl(docLinkUrl('a/1', { ...ctx, tabId }))?.tabId).toBe(tabId);
+  });
+
+  it('keeps a key that contains a percent escape intact', () => {
+    expect(parseDocLinkUrl(docLinkUrl('t/a%2Fb', ctx))?.raw).toBe('t/a%2Fb');
+  });
+
+  it('rejects urls of another scheme or without context', () => {
+    expect(parseDocLinkUrl('https://example.com/a/1?conn=c&db=d')).toBeNull();
+    expect(parseDocLinkUrl('pgui-doc:/open?raw=a/1')).toBeNull();
   });
 });

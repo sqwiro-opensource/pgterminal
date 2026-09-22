@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { pgui } from '@renderer/lib/ipc';
 import { setLinkDetector } from '@renderer/lib/format';
 import { useStore } from '@renderer/store';
+import { parseDocLinkUrl } from '@renderer/features/editor/docLinkUrl';
 import { editorHooks, linkResolver } from '@renderer/features/editor/editorRegistry';
 import { pickCandidate } from './AmbiguityPicker';
 
@@ -188,17 +189,15 @@ function targetSql(target: DocTarget): string {
 
 /** Parse a `pgui-doc://<raw>?conn=…&db=…&tab=…` link produced by the Monaco link providers. */
 function openFromUrl(url: string): void {
-  // Parse by hand: URL() lowercases the host part, which would corrupt case-sensitive keys.
-  const m = /^pgui-doc:\/\/([^?]*)(?:\?(.*))?$/.exec(url);
-  if (!m) return;
-  const raw = decodeURIComponent(m[1] ?? '');
-  const params = new URLSearchParams(m[2] ?? '');
-  const ref = isRef(raw);
-  const connectionId = params.get('conn');
-  const database = params.get('db');
-  const fromTabId = params.get('tab') ?? undefined;
-  if (!ref || !connectionId || !database) return;
-  void open(ref, { connectionId, database, ...(fromTabId ? { fromTabId } : {}) });
+  const payload = parseDocLinkUrl(url);
+  if (!payload) return;
+  const ref = isRef(payload.raw);
+  if (!ref) return;
+  void open(ref, {
+    connectionId: payload.connectionId,
+    database: payload.database,
+    ...(payload.tabId ? { fromTabId: payload.tabId } : {})
+  });
 }
 
 export const docLinks = {
@@ -215,6 +214,15 @@ export const docLinks = {
 };
 
 export type DocLinks = typeof docLinks;
+
+// Exposed for the same reason as the store: it lets an automated run drive the real link
+// pipeline. Harmless in production — the renderer is sandboxed and has no Node access.
+declare global {
+  interface Window {
+    __pguiDocLinks?: typeof docLinks;
+  }
+}
+if (typeof window !== 'undefined') window.__pguiDocLinks = docLinks;
 
 // ---- wiring at module init ------------------------------------------------------------------------------
 setLinkDetector((v) => isRef(v) !== null);
