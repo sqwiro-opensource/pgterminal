@@ -37,6 +37,32 @@ describe('CredentialVault', () => {
     expect(new CredentialVault(fakeSafe(), getStores({ cwd }).vault, 'darwin').get('conn-1')).toBe('Sup3r$ecretPassw0rd');
   });
 
+  it('canRead separates "a secret is stored" from "we can still decrypt it"', () => {
+    const v = new CredentialVault(fakeSafe(), s.vault, 'darwin');
+    v.set('conn-1', 'pw');
+    expect(v.canRead('conn-1')).toBe(true);
+    expect(v.canRead('missing')).toBe(false);
+
+    // A new key: the entry is still there, the plaintext is gone. This is what a renamed app,
+    // a reset keychain or a vault.json from another machine looks like.
+    const lostKey: SafeStorageLike = {
+      ...fakeSafe(),
+      decryptString: () => {
+        throw new Error('Error while decrypting the ciphertext provided to safeStorage.decryptString.');
+      }
+    };
+    const v2 = new CredentialVault(lostKey, getStores({ cwd }).vault, 'darwin');
+    expect(v2.has('conn-1')).toBe(true);
+    expect(v2.get('conn-1')).toBeNull();
+    expect(v2.canRead('conn-1')).toBe(false);
+
+    // Writing a new password makes it readable again without rebuilding the vault.
+    const v3 = new CredentialVault(fakeSafe(), getStores({ cwd }).vault, 'darwin');
+    v3.set('conn-1', 'pw2');
+    expect(v3.canRead('conn-1')).toBe(true);
+    expect(v3.get('conn-1')).toBe('pw2');
+  });
+
   it('refuses when encryption is unavailable and writes nothing', () => {
     const v = new CredentialVault(fakeSafe({ available: false }), s.vault, 'darwin');
     const res = v.set('conn-1', 'pw');

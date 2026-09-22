@@ -73,7 +73,7 @@ export function WelcomeScreen({ onNewConnection, onManageConnections }: WelcomeS
       <div className="relative mt-[12vh] w-full max-w-[880px] px-8 pb-12 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
         <div className="flex items-center gap-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <BrandMark size={22} />
+            <BrandMark size={24} />
           </div>
           <div>
             <div className="font-mono text-[30px] font-bold leading-none tracking-tight">PgTerminal</div>

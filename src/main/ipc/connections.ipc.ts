@@ -121,7 +121,7 @@ export function createConnectionsHandlers(deps: ConnectionsDeps) {
 
   const withHasPassword = (m: ConnectionMeta): ConnectionMeta => ({
     ...m,
-    hasPassword: vault.has(m.id) || sessionPasswords.has(m.id)
+    hasPassword: vault.canRead(m.id) || sessionPasswords.has(m.id)
   });
 
   /**
@@ -135,7 +135,7 @@ export function createConnectionsHandlers(deps: ConnectionsDeps) {
     if (!id) return { unreadable: false };
     const session = sessionPasswords.get(id);
     if (session !== undefined) return { password: session, unreadable: false };
-    const stored = vault.get(id);
+    const stored = vault.canRead(id) ? vault.get(id) : null;
     if (stored !== null) return { password: stored, unreadable: false };
     return { unreadable: vault.has(id) };
   };
@@ -171,7 +171,7 @@ export function createConnectionsHandlers(deps: ConnectionsDeps) {
       }
       // `password: ''` with an existing vault entry → keep the stored secret.
 
-      const stored = upsertConnection({ ...meta, hasPassword: vault.has(id) || sessionPasswords.has(id) }, stores);
+      const stored = upsertConnection({ ...meta, hasPassword: vault.canRead(id) || sessionPasswords.has(id) }, stores);
       if (registry.has(id)) {
         if (passwordChanged || credentialsChanged(prev, meta)) {
           await registry.disconnect(id);
@@ -192,17 +192,28 @@ export function createConnectionsHandlers(deps: ConnectionsDeps) {
 
     async test(req: ConnectionInput | { connectionId: string }): Promise<TestResult> {
       let meta: Omit<ConnectionMeta, 'hasPassword'>;
-      let password: string | undefined;
+      let secret: { password?: string; unreadable: boolean };
       if ('connectionId' in req && !('host' in req)) {
         const saved = getConnection(req.connectionId, stores);
         if (!saved) throw new Error(`Unknown connection: ${req.connectionId}`);
         meta = saved;
-        password = resolvePassword(saved.id, undefined);
+        secret = resolveSecret(saved.id, undefined);
       } else {
         const input = req as ConnectionInput;
         meta = toMeta(input, input.id ?? 'test', input.id ? getConnection(input.id, stores) : undefined);
-        password = resolvePassword(input.id, input.password);
+        secret = resolveSecret(input.id, input.password);
       }
+      if (secret.unreadable) {
+        return {
+          ok: false,
+          latencyMs: 0,
+          error: {
+            message: `The saved password could not be read from the OS keychain. Type it in above and save.`,
+            severity: 'ERROR'
+          }
+        };
+      }
+      const password = secret.password;
       const full: ConnectionMeta = { ...meta, hasPassword: password !== undefined, poolMax: 1 };
       const pool = createPool(full, meta.defaultDatabase || 'postgres', password);
       const started = performance.now();
@@ -214,7 +225,7 @@ export function createConnectionsHandlers(deps: ConnectionsDeps) {
           ok: true,
           server,
           latencyMs: Math.round(performance.now() - started),
-          passwordStored: meta.id !== 'test' && vault.has(meta.id)
+          passwordStored: meta.id !== 'test' && vault.canRead(meta.id)
         };
       } catch (err) {
         return { ok: false, latencyMs: Math.round(performance.now() - started), error: toPgErrorInfo(err) };

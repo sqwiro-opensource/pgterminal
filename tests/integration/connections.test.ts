@@ -99,8 +99,14 @@ describe.skipIf(skip)('connections IPC handlers (integration)', () => {
       emit: () => undefined
     });
     const meta = await h2.save(inputFromUrl('lost-key'));
+    // The list must not claim a password it cannot produce, or the form offers "leave blank to keep it".
+    expect(meta.hasPassword).toBe(false);
+    expect((await h2.list())[0]?.hasPassword).toBe(false);
     await expect(h2.connect({ connectionId: meta.id })).rejects.toThrow(/could not be read from the OS keychain/);
-    // An explicitly supplied password still connects.
+    const tested = await h2.test({ connectionId: meta.id });
+    expect(tested.ok).toBe(false);
+    expect(tested.ok === false && tested.error?.message).toMatch(/could not be read from the OS keychain/);
+    // An explicitly supplied password still connects and still tests.
     await expect(h2.connect({ connectionId: meta.id, password: inputFromUrl('x').password })).resolves.toBeTruthy();
     await registry2.closeAll();
   });

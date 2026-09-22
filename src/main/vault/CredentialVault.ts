@@ -18,6 +18,9 @@ export interface SafeStorageLike {
 export type CanStore = { ok: true } | { ok: false; reason: string };
 
 export class CredentialVault {
+  /** Memo for `canRead`, so a lost key costs one failed decrypt per id per session, not one per call. */
+  private readonly readable = new Map<string, boolean>();
+
   constructor(
     private readonly safe: SafeStorageLike,
     private readonly store: Store<VaultFile>,
@@ -42,6 +45,8 @@ export class CredentialVault {
     if (!can.ok) return { stored: false, reason: can.reason };
     const cipher = this.safe.encryptString(password).toString('base64');
     this.store.set('secrets', { ...this.store.get('secrets'), [id]: cipher });
+    // Re-check rather than assume: encrypting can succeed against a key that will not decrypt.
+    this.readable.delete(id);
     return { stored: true };
   }
 
@@ -60,8 +65,26 @@ export class CredentialVault {
     return id in this.store.get('secrets');
   }
 
+  /**
+   * True when a secret is stored *and* this machine can still decrypt it.
+   *
+   * A vault entry written under a different app name, a keychain that was reset, or a vault.json
+   * carried from another machine all still answer `has` — but yield nothing. Callers that take
+   * that for "we have a password" then connect with none, and the server answers with an
+   * unreadable SASL error instead of asking for the password.
+   */
+  canRead(id: string): boolean {
+    if (!this.has(id)) return false;
+    const memo = this.readable.get(id);
+    if (memo !== undefined) return memo;
+    const ok = this.get(id) !== null;
+    this.readable.set(id, ok);
+    return ok;
+  }
+
   delete(id: string): boolean {
     const secrets = { ...this.store.get('secrets') };
+    this.readable.delete(id);
     if (!(id in secrets)) return false;
     delete secrets[id];
     this.store.set('secrets', secrets);

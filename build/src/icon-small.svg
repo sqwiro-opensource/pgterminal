@@ -1,13 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
     <linearGradient id="tile" x1="0.15" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#20281A"/>
-      <stop offset="1" stop-color="#0C1008"/>
+      <stop offset="0" stop-color="#20281A"/><stop offset="1" stop-color="#0C1008"/>
     </linearGradient>
   </defs>
   <rect x="32" y="32" width="960" height="960" rx="216" fill="url(#tile)"/>
-  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="290,360 416,512 290,664" stroke="#8EAB4C" stroke-width="104"/>
-    <line x1="596" y1="700" x2="736" y2="324" stroke="#CBDD74" stroke-width="116"/>
+  <g fill="#7A9840">
+    <path d="M 396 268 C 306 208 190 254 174 388 C 158 522 246 620 366 602 C 430 592 452 552 454 476 C 456 400 440 314 396 268 Z"/>
+    <path d="M 628 268 C 718 208 834 254 850 388 C 866 522 778 620 658 602 C 594 592 572 552 570 476 C 568 400 584 314 628 268 Z"/>
   </g>
+  <g fill="#CFE07A">
+    <path d="M 512 208 C 414 208 346 262 330 356 C 318 428 328 494 356 544 C 382 588 430 612 512 612 C 594 612 642 588 668 544 C 696 494 706 428 694 356 C 678 262 610 208 512 208 Z"/>
+    
+<circle cx="512.0" cy="512.0" r="70.0"/>    <circle cx="512.6" cy="519.9" r="68.8"/>    <circle cx="513.2" cy="527.7" r="67.8"/>    <circle cx="513.6" cy="535.4" r="66.8"/>    <circle cx="514.0" cy="543.0" r="65.8"/>    <circle cx="514.2" cy="550.5" r="64.9"/>    <circle cx="514.4" cy="558.0" r="64.0"/>    <circle cx="514.6" cy="565.3" r="63.1"/>    <circle cx="514.6" cy="572.5" r="62.2"/>    <circle cx="514.7" cy="579.6" r="61.3"/>    <circle cx="514.7" cy="586.6" r="60.5"/>    <circle cx="514.6" cy="593.6" r="59.6"/>    <circle cx="514.5" cy="600.4" r="58.8"/>    <circle cx="514.4" cy="607.2" r="57.9"/>    <circle cx="514.3" cy="613.8" r="57.1"/>    <circle cx="514.2" cy="620.4" r="56.3"/>    <circle cx="514.1" cy="626.8" r="55.5"/>    <circle cx="514.0" cy="633.2" r="54.6"/>    <circle cx="514.0" cy="639.5" r="53.8"/>    <circle cx="513.9" cy="645.7" r="53.0"/>    <circle cx="513.9" cy="651.8" r="52.2"/>    <circle cx="513.9" cy="657.9" r="51.4"/>    <circle cx="514.0" cy="663.8" r="50.6"/>    <circle cx="514.2" cy="669.7" r="49.8"/>    <circle cx="514.4" cy="675.5" r="49.1"/>    <circle cx="514.6" cy="681.1" r="48.3"/>    <circle cx="515.0" cy="686.8" r="47.5"/>    <circle cx="515.4" cy="692.3" r="46.7"/>    <circle cx="516.0" cy="697.7" r="45.9"/>    <circle cx="516.6" cy="703.1" r="45.2"/>    <circle cx="517.4" cy="708.4" r="44.4"/>    <circle cx="518.3" cy="713.6" r="43.6"/>    <circle cx="519.3" cy="718.7" r="42.9"/>    <circle cx="520.4" cy="723.8" r="42.1"/>    <circle cx="521.7" cy="728.7" r="41.3"/>    <circle cx="523.2" cy="733.6" r="40.6"/>    <circle cx="524.8" cy="738.4" r="39.8"/>    <circle cx="526.5" cy="743.2" r="39.1"/>    <circle cx="528.4" cy="747.9" r="38.3"/>    <circle cx="530.6" cy="752.5" r="37.6"/>    <circle cx="532.9" cy="757.0" r="36.8"/>    <circle cx="535.4" cy="761.5" r="36.1"/>    <circle cx="538.1" cy="765.8" r="35.3"/>    <circle cx="541.0" cy="770.2" r="34.6"/>    <circle cx="544.1" cy="774.4" r="33.9"/>    <circle cx="547.5" cy="778.6" r="33.1"/>    <circle cx="551.1" cy="782.7" r="32.4"/>    <circle cx="554.9" cy="786.7" r="31.7"/>    <circle cx="559.0" cy="790.7" r="30.9"/>    <circle cx="563.3" cy="794.6" r="30.2"/>    <circle cx="568.0" cy="798.5" r="29.5"/>    <circle cx="572.8" cy="802.3" r="28.7"/>    <circle cx="578.0" cy="806.0" r="28.0"/>
+  </g>
+  <circle cx="450" cy="372" r="24" fill="#141A0E"/>
+  <circle cx="574" cy="372" r="24" fill="#141A0E"/>
 </svg>
