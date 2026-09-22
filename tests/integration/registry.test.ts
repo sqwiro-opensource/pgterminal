@@ -33,16 +33,6 @@ function metaFromUrl(id: string, overrides: Partial<ConnectionMeta> = {}): { met
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
-async function pguiBackends(): Promise<number> {
-  return withTestPool(async (pool) => {
-    const r = await pool.query<{ n: string }>(
-      `SELECT count(*)::text AS n FROM pg_stat_activity WHERE application_name = $1 AND pid <> pg_backend_pid()`,
-      [APPLICATION_NAME]
-    );
-    return Number(r.rows[0]?.n ?? 0);
-  }, 1);
-}
-
 describe.skipIf(skip)('ConnectionRegistry (integration)', () => {
   const events: ConnectionEvent[] = [];
   const reg = new ConnectionRegistry({ emit: (e) => events.push(e), reaperIntervalMs: 0 });

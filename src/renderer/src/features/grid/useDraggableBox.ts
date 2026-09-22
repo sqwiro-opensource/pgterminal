@@ -28,7 +28,8 @@ export function useDraggableBox(open: boolean): DraggableBox {
   const onHandlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       // Let the header's own controls (view toggle, copy, close) behave normally.
-      if ((e.target as HTMLElement).closest('button,[role="separator"],input,select')) return;
+      const hit = e.target instanceof Element ? e.target : null;
+      if (hit?.closest('button,[role="separator"],input,select')) return;
       e.preventDefault();
       const el = e.currentTarget as HTMLElement;
       const box = el.getBoundingClientRect();

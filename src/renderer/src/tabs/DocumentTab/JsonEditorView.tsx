@@ -2,6 +2,8 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { CircleAlert } from 'lucide-react';
 import type { FieldInfo } from '@shared/types/query';
 import { setEditorContext } from '@renderer/features/editor/editorRegistry';
+import { refreshDocLinks } from '@renderer/features/editor';
+import { useStore } from '@renderer/store';
 import { draftToJsonText, parseDraft, type Row } from './documentModel';
 
 const MonacoJsonEditor = lazy(() => import('@renderer/features/editor/MonacoJsonEditor'));
@@ -34,6 +36,17 @@ export function JsonEditorView(p: JsonEditorViewProps): JSX.Element {
     setEditorContext(modelKey, { connectionId: p.connectionId, database: p.database, tabId: p.tabId });
     return () => setEditorContext(modelKey, undefined);
   }, [modelKey, p.connectionId, p.database, p.tabId]);
+
+  // Whether a reference resolves is decided against the catalog index, which loads lazily.
+  // Load it for this database and recompute links once it arrives, otherwise an editor opened
+  // first shows no links at all until its text changes.
+  const indexReady = useStore((st) => Boolean(st.completionIndex[`${p.connectionId}/${p.database}`]));
+  useEffect(() => {
+    void useStore.getState().ensureCompletionIndex(p.connectionId, p.database);
+  }, [p.connectionId, p.database]);
+  useEffect(() => {
+    if (indexReady) refreshDocLinks();
+  }, [indexReady]);
 
   const onChange = useCallback(
     (v: string) => {

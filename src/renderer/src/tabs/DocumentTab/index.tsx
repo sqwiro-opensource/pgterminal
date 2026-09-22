@@ -54,7 +54,9 @@ function DocumentBody({ tab, target, connectionId, database, view }: { tab: Tab<
       if (!meta) return;
       const active = useStore.getState().activeTabId === tab.id;
       if (!active) return;
-      const inEditor = (e.target as HTMLElement | null)?.closest('.monaco-editor, input, textarea');
+      // `e.target` is not always an Element (document, text nodes), so guard before `closest`.
+      const el = e.target instanceof Element ? e.target : null;
+      const inEditor = el?.closest('.monaco-editor, input, textarea');
       if (e.key === '[' && !inEditor) {
         e.preventDefault();
         go(-1);

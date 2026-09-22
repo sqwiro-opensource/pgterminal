@@ -184,6 +184,21 @@ function registerLinkOpener(): monaco.IDisposable {
  * Install workers, themes and providers exactly once. Returns the composite disposable; disposing it allows a
  * later `setupMonaco()` to register again (used by HMR).
  */
+let docLinkParts: monaco.IDisposable[] = [];
+
+/**
+ * Re-registers the document-link providers so Monaco recomputes links for open models.
+ *
+ * Link results are cached per model and only recomputed on content change, but whether a
+ * reference resolves depends on the catalog index, which loads asynchronously. Without this,
+ * an editor opened before its index arrives shows no links until the text is edited.
+ */
+export function refreshDocLinks(): void {
+  if (!installed) return;
+  for (const p of docLinkParts) p.dispose();
+  docLinkParts = [registerJsonDocLinks(), registerSqlDocLinks()];
+}
+
 export function setupMonaco(): monaco.IDisposable {
   if (installed) return installed;
   const env = self as unknown as { MonacoEnvironment?: monaco.Environment };
@@ -194,10 +209,11 @@ export function setupMonaco(): monaco.IDisposable {
     }
   };
   defineEditorThemes();
-  const parts = [registerCompletionProvider(), registerHoverProvider(), registerLinkOpener(), registerJsonDocLinks(), registerSqlDocLinks()];
+  const parts = [registerCompletionProvider(), registerHoverProvider(), registerLinkOpener()];
+  docLinkParts = [registerJsonDocLinks(), registerSqlDocLinks()];
   installed = {
     dispose() {
-      for (const p of parts) p.dispose();
+      for (const p of [...parts, ...docLinkParts]) p.dispose();
       installed = null;
     }
   };

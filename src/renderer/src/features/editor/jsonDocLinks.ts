@@ -6,6 +6,9 @@
 import { parseDocRef } from '@shared/doclink/parseDocRef';
 import { monaco, JSON_LANGUAGE } from './monacoSetup';
 import { getEditorContext, linkResolver, modelKeyFromUri } from './editorRegistry';
+import { docLinkUrl } from './docLinkUrl';
+
+export { docLinkUrl };
 
 const JSON_STRING = /"(?:[^"\\]|\\.)*"/g;
 
@@ -15,12 +18,6 @@ function unescapeJson(token: string): string | null {
   } catch {
     return null;
   }
-}
-
-/** Build the link url carrying the connection context so the opener needs no editor lookup. */
-export function docLinkUrl(raw: string, ctx: { connectionId: string; database: string; tabId?: string }): string {
-  const q = new URLSearchParams({ conn: ctx.connectionId, db: ctx.database, ...(ctx.tabId ? { tab: ctx.tabId } : {}) });
-  return `pgui-doc://${encodeURIComponent(raw)}?${q.toString()}`;
 }
 
 export function collectLinks(
