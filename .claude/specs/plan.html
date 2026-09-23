@@ -53,12 +53,14 @@
       <div class="meta">
         <span>Owner <b>Bernard Gaitho</b></span>
         <span>Date <b>2026-09-22</b></span>
-        <span>Status <b>Not started</b></span>
+        <span>Completed <b>2026-09-23</b></span>
+        <span>Status <b>Shipped · v2.0.0</b></span>
         <span>Approach <b>Clean rewrite in the same repo</b></span>
-        <span>Legacy <b>kept under <code>legacy/</code> until Phase 7</b></span>
+        <span>Legacy <b>deleted in P7.7</b></span>
       </div>
-      <div class="progress" aria-label="Overall progress 0%"><i style="width:0%"></i></div>
-      <div class="meta"><span>Overall progress <b>0 %</b> · 0 of 53 tasks complete</span></div>
+      <div class="progress" aria-label="Overall progress 100%"><i style="width:100%"></i></div>
+      <div class="meta"><span>Overall progress <b>100 %</b> · 53 of 53 tasks complete</span></div>
+      <div class="meta"><span>Verified <b>2026-09-23</b> · <code>typecheck</code> clean · 341 unit tests · 89 integration tests · signed 2.0.0 released</span></div>
     </header>
 
     <!-- ============================ DASHBOARD ============================ -->
@@ -66,20 +68,20 @@
       <div class="sec-h"><span class="num">00</span><h2>Status dashboard</h2></div>
       <div class="dash">
         <div class="metric"><div class="v">53</div><div class="l">Total tasks</div></div>
-        <div class="metric"><div class="v">0</div><div class="l">Completed</div></div>
+        <div class="metric"><div class="v">53</div><div class="l">Completed</div></div>
         <div class="metric"><div class="v">0</div><div class="l">In progress</div></div>
         <div class="metric"><div class="v">0</div><div class="l">Blocked</div></div>
         <div class="metric"><div class="v">8</div><div class="l">Phases</div></div>
       </div>
       <div class="phase-list">
-        <div class="row"><span><a href="#p0">Phase 0</a> · Scaffold</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 10</span></div>
-        <div class="row"><span><a href="#p1">Phase 1</a> · Connections</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 8</span></div>
-        <div class="row"><span><a href="#p2">Phase 2</a> · Workspace</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 6</span></div>
-        <div class="row"><span><a href="#p3">Phase 3</a> · Query runner</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 6</span></div>
-        <div class="row"><span><a href="#p4">Phase 4</a> · Doc links</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 7</span></div>
-        <div class="row"><span><a href="#p5">Phase 5</a> · Table editing</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 5</span></div>
-        <div class="row"><span><a href="#p6">Phase 6</a> · Overview &amp; fleet</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 4</span></div>
-        <div class="row"><span><a href="#p7">Phase 7</a> · Polish</span><div class="bar"><i style="width:0%"></i></div><span class="pct">0 / 7</span></div>
+        <div class="row"><span><a href="#p0">Phase 0</a> · Scaffold</span><div class="bar"><i style="width:100%"></i></div><span class="pct">10 / 10</span></div>
+        <div class="row"><span><a href="#p1">Phase 1</a> · Connections</span><div class="bar"><i style="width:100%"></i></div><span class="pct">8 / 8</span></div>
+        <div class="row"><span><a href="#p2">Phase 2</a> · Workspace</span><div class="bar"><i style="width:100%"></i></div><span class="pct">6 / 6</span></div>
+        <div class="row"><span><a href="#p3">Phase 3</a> · Query runner</span><div class="bar"><i style="width:100%"></i></div><span class="pct">6 / 6</span></div>
+        <div class="row"><span><a href="#p4">Phase 4</a> · Doc links</span><div class="bar"><i style="width:100%"></i></div><span class="pct">7 / 7</span></div>
+        <div class="row"><span><a href="#p5">Phase 5</a> · Table editing</span><div class="bar"><i style="width:100%"></i></div><span class="pct">5 / 5</span></div>
+        <div class="row"><span><a href="#p6">Phase 6</a> · Overview &amp; fleet</span><div class="bar"><i style="width:100%"></i></div><span class="pct">4 / 4</span></div>
+        <div class="row"><span><a href="#p7">Phase 7</a> · Polish</span><div class="bar"><i style="width:100%"></i></div><span class="pct">7 / 7</span></div>
       </div>
       <div class="callout info"><span class="t">Update rule</span><span>When a task changes state, update its badge, the phase bar above, the metric tiles, and the hero progress bar in the same edit. Add the completion date to the task's Notes row.</span></div>
     </section>
@@ -207,11 +209,11 @@
 
         <!-- ---------------- PHASE 0 ---------------- -->
         <div class="phase" id="p0">
-          <div class="ph"><h3>Phase 0 · Scaffold + security</h3><span class="badge todo">TODO</span><span class="goal">Empty but hardened shell, typed IPC contract, test harness. No database code yet.</span></div>
+          <div class="ph"><h3>Phase 0 · Scaffold + security</h3><span class="badge done">COMPLETED</span><span class="goal">Empty but hardened shell, typed IPC contract, test harness. No database code yet.</span></div>
           <div class="exit"><b>Exit criteria:</b> app opens a blank shell with zero CSP violations; <code>window.pgterminal</code> exists and <code>window.require</code>/<code>process</code> are undefined in the renderer; <code>yarn typecheck</code>, <code>yarn test:unit</code> and <code>yarn build</code> pass; Docker Postgres seeds successfully.</div>
 
           <div class="task" id="p0-1">
-            <div class="th"><span class="tid">P0.1</span><h4>Move legacy code aside and reset TypeScript projects</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P0.1</span><h4>Move legacy code aside and reset TypeScript projects</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>legacy/src/**</code> (moved), <code>tsconfig.json</code>, <code>tsconfig.node.json</code>, <code>tsconfig.web.json</code>, <code>.eslintrc.cjs</code>, <code>.gitignore</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -230,7 +232,7 @@
           </div>
 
           <div class="task" id="p0-2">
-            <div class="th"><span class="tid">P0.2</span><h4>Rewrite package.json dependencies and scripts</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P0.2</span><h4>Rewrite package.json dependencies and scripts</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>package.json</code>, <code>yarn.lock</code></span>
               <span class="k">Port from</span><span><code>legacy</code> <code>package.json</code> (scripts <code>dev</code>, <code>build:*</code>)</span>
@@ -249,7 +251,7 @@
           </div>
 
           <div class="task" id="p0-3">
-            <div class="th"><span class="tid">P0.3</span><h4>electron-vite configuration</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P0.3</span><h4>electron-vite configuration</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>electron.vite.config.ts</code></span>
               <span class="k">Port from</span><span><code>legacy</code> <code>electron.vite.config.ts</code> (entry points only)</span>
@@ -268,7 +270,7 @@
           </div>
 
           <div class="task" id="p0-4">
-            <div class="th"><span class="tid">P0.4</span><h4>Tailwind and shadcn theme wiring</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P0.4</span><h4>Tailwind and shadcn theme wiring</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>tailwind.config.js</code>, <code>postcss.config.js</code>, <code>src/renderer/src/styles/globals.css</code></span>
               <span class="k">Port from</span><span><code>legacy</code> <code>tailwind.config.js</code> (theme tokens)</span>
@@ -285,7 +287,7 @@
           </div>
 
           <div class="task" id="p0-5">
-            <div class="th"><span class="tid">P0.5</span><h4>Shared IPC contract and domain types</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P0.5</span><h4>Shared IPC contract and domain types</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/shared/ipc.ts</code>, <code>src/shared/types/{connection,catalog,query,rows,doclink,workspace,settings,stats}.ts</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -303,7 +305,7 @@
           </div>
 
           <div class="task" id="p0-6">
-            <div class="th"><span class="tid">P0.6</span><h4>Main process bootstrap and window security</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P0.6</span><h4>Main process bootstrap and window security</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/index.ts</code>, <code>src/main/window.ts</code>, <code>src/main/ipc/handle.ts</code>, <code>src/main/ipc/register.ts</code></span>
               <span class="k">Port from</span><span><code>legacy/src/main/index.ts</code> (window creation, dev-tools toggling)</span>
@@ -323,7 +325,7 @@
           </div>
 
           <div class="task" id="p0-7">
-            <div class="th"><span class="tid">P0.7</span><h4>Preload: allow-listed <code>window.pgterminal</code> API</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P0.7</span><h4>Preload: allow-listed <code>window.pgterminal</code> API</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/preload/index.ts</code>, <code>src/preload/api.ts</code>, <code>src/preload/index.d.ts</code></span>
               <span class="k">Port from</span><span>— (the legacy preload re-exports the raw <code>ipcRenderer</code>; nothing to keep)</span>
@@ -341,7 +343,7 @@
           </div>
 
           <div class="task" id="p0-8">
-            <div class="th"><span class="tid">P0.8</span><h4>Renderer shell skeleton with strict CSP</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P0.8</span><h4>Renderer shell skeleton with strict CSP</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/index.html</code>, <code>src/renderer/src/main.tsx</code>, <code>App.tsx</code>, <code>shell/Shell.tsx</code>, <code>shell/TitleBar.tsx</code>, <code>shell/TabBar.tsx</code>, <code>shell/StatusBar.tsx</code>, <code>components/ErrorBoundary.tsx</code>, <code>lib/ipc.ts</code></span>
               <span class="k">Port from</span><span><code>legacy/src/renderer/src/App.tsx</code> (ShadcnThemeProvider usage)</span>
@@ -360,7 +362,7 @@
           </div>
 
           <div class="task" id="p0-9">
-            <div class="th"><span class="tid">P0.9</span><h4>Test harness: vitest, Docker Postgres, seed</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P0.9</span><h4>Test harness: vitest, Docker Postgres, seed</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>vitest.config.ts</code>, <code>docker-compose.test.yml</code>, <code>tests/integration/seed.sql</code>, <code>tests/integration/manyTables.sql</code>, <code>tests/integration/setup.ts</code>, <code>tests/unit/.gitkeep</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -378,7 +380,7 @@
           </div>
 
           <div class="task" id="p0-10">
-            <div class="th"><span class="tid">P0.10</span><h4>Statement splitter (pure)</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P0.10</span><h4>Statement splitter (pure)</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/shared/sql/statementSplitter.ts</code>, <code>tests/unit/statementSplitter.test.ts</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -398,11 +400,11 @@
 
         <!-- ---------------- PHASE 1 ---------------- -->
         <div class="phase" id="p1">
-          <div class="ph"><h3>Phase 1 · Connections, vault, registry, catalog</h3><span class="badge todo">TODO</span><span class="goal">Save encrypted connections, connect to several servers, browse a lazy catalog tree.</span></div>
+          <div class="ph"><h3>Phase 1 · Connections, vault, registry, catalog</h3><span class="badge done">COMPLETED</span><span class="goal">Save encrypted connections, connect to several servers, browse a lazy catalog tree.</span></div>
           <div class="exit"><b>Exit criteria:</b> three fleet connections saved with encrypted passwords (<code>vault.json</code> has no plaintext, <code>connections.json</code> has no <code>password</code> key); each connects and lists databases; expanding schema → tables → columns/indexes/constraints/triggers works lazily; disconnect ends all backends with <code>application_name='PgTerminal'</code>.</div>
 
           <div class="task" id="p1-1">
-            <div class="th"><span class="tid">P1.1</span><h4>Persistent stores (electron-store)</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P1.1</span><h4>Persistent stores (electron-store)</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/store/stores.ts</code></span>
               <span class="k">Port from</span><span>— (replaces <code>legacy/src/main/localstorage/localStorage.ts</code>)</span>
@@ -419,7 +421,7 @@
           </div>
 
           <div class="task" id="p1-2">
-            <div class="th"><span class="tid">P1.2</span><h4>Credential vault with safeStorage</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P1.2</span><h4>Credential vault with safeStorage</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/vault/CredentialVault.ts</code>, <code>tests/unit/credentialVault.test.ts</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -436,7 +438,7 @@
           </div>
 
           <div class="task" id="p1-3">
-            <div class="th"><span class="tid">P1.3</span><h4>Type parsers, structured errors, pool factory, connection registry</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P1.3</span><h4>Type parsers, structured errors, pool factory, connection registry</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/db/typeParsers.ts</code>, <code>pgError.ts</code>, <code>poolFactory.ts</code>, <code>ConnectionRegistry.ts</code>, <code>tests/unit/pgError.test.ts</code>, <code>tests/integration/registry.test.ts</code></span>
               <span class="k">Port from</span><span><code>legacy/src/main/db/PostgresServer.ts</code> (only the idea; the global <code>types.setTypeParser</code> is not ported)</span>
@@ -455,7 +457,7 @@
           </div>
 
           <div class="task" id="p1-4">
-            <div class="th"><span class="tid">P1.4</span><h4>Connections IPC handlers</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P1.4</span><h4>Connections IPC handlers</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/ipc/connections.ipc.ts</code></span>
               <span class="k">Port from</span><span><code>legacy/src/main/db/PgConnectionHandlers.ts</code> (channel intent only)</span>
@@ -473,7 +475,7 @@
           </div>
 
           <div class="task" id="p1-5">
-            <div class="th"><span class="tid">P1.5</span><h4>Catalog SQL split into per-node parameterised queries</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P1.5</span><h4>Catalog SQL split into per-node parameterised queries</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/catalog/sql/{database,schema,relation,function,index,trigger,constraint,sequence,type,extension}.sql.ts</code></span>
               <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/database/context/useSelectedDatabaseContext.tsx:4-286</code> (the CTE), <code>legacy/src/renderer/src/app/mainpage/scripts/scriptGenerator.ts</code> (information_schema patterns)</span>
@@ -492,7 +494,7 @@
           </div>
 
           <div class="task" id="p1-6">
-            <div class="th"><span class="tid">P1.6</span><h4>CatalogService, CompletionIndex, nodeId codec</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P1.6</span><h4>CatalogService, CompletionIndex, nodeId codec</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/catalog/CatalogService.ts</code>, <code>CompletionIndex.ts</code>, <code>src/shared/catalog/nodeId.ts</code>, <code>src/main/ipc/catalog.ipc.ts</code>, <code>tests/unit/nodeId.test.ts</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -510,7 +512,7 @@
           </div>
 
           <div class="task" id="p1-7">
-            <div class="th"><span class="tid">P1.7</span><h4>Renderer store slices and connection UI</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P1.7</span><h4>Renderer store slices and connection UI</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/store/index.ts</code>, <code>connections.slice.ts</code>, <code>catalog.slice.ts</code>, <code>settings.slice.ts</code>, <code>features/connections/ConnectionsTab.tsx</code>, <code>ConnectionForm.tsx</code>, <code>ConnectionList.tsx</code></span>
               <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/sidebar/ConnectionForm.tsx</code> (field list only)</span>
@@ -528,7 +530,7 @@
           </div>
 
           <div class="task" id="p1-8">
-            <div class="th"><span class="tid">P1.8</span><h4>Virtualised lazy catalog tree</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P1.8</span><h4>Virtualised lazy catalog tree</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/features/tree/CatalogTree.tsx</code>, <code>TreeNode.tsx</code>, <code>useTreeKeyboard.ts</code>, <code>treeFilter.ts</code></span>
               <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/database/schemas/SchemaTree.tsx</code>, <code>TablesTree.tsx</code> (icons and labels only)</span>
@@ -549,11 +551,11 @@
 
         <!-- ---------------- PHASE 2 ---------------- -->
         <div class="phase" id="p2">
-          <div class="ph"><h3>Phase 2 · Workspace, tabs, tree actions, structure, DDL</h3><span class="badge todo">TODO</span><span class="goal">Serializable tabs that survive restart, tree context menus, structure tab and DDL preview.</span></div>
+          <div class="ph"><h3>Phase 2 · Workspace, tabs, tree actions, structure, DDL</h3><span class="badge done">COMPLETED</span><span class="goal">Serializable tabs that survive restart, tree context menus, structure tab and DDL preview.</span></div>
           <div class="exit"><b>Exit criteria:</b> tabs (positions, active, params) survive restart; opening the same table twice focuses the existing tab; persisted JSON contains no React elements; DDL preview shows a correct <code>CREATE TABLE</code> for the seed.</div>
 
           <div class="task" id="p2-1">
-            <div class="th"><span class="tid">P2.1</span><h4>Workspace and UI slices with persistence</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P2.1</span><h4>Workspace and UI slices with persistence</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/store/workspace.slice.ts</code>, <code>ui.slice.ts</code>, <code>persist.ts</code>, <code>tests/unit/workspace.test.ts</code></span>
               <span class="k">Port from</span><span>— (replaces <code>legacy/src/renderer/src/context/useTabInterfaceContext.tsx</code>)</span>
@@ -572,7 +574,7 @@
           </div>
 
           <div class="task" id="p2-2">
-            <div class="th"><span class="tid">P2.2</span><h4>Tab registry, tab bar, empty workspace</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P2.2</span><h4>Tab registry, tab bar, empty workspace</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/tabs/registry.tsx</code>, <code>shell/TabBar.tsx</code>, <code>shell/EmptyWorkspace.tsx</code>, <code>tabs/HibernatedTab.tsx</code></span>
               <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/mainpage/EmptySpace.tsx</code> (shortcut list; make it true in P7.1)</span>
@@ -591,7 +593,7 @@
           </div>
 
           <div class="task" id="p2-3">
-            <div class="th"><span class="tid">P2.3</span><h4>Workspace and settings IPC; boot sequence</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P2.3</span><h4>Workspace and settings IPC; boot sequence</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/ipc/workspace.ipc.ts</code>, <code>settings.ipc.ts</code>, <code>src/renderer/src/boot.ts</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -608,7 +610,7 @@
           </div>
 
           <div class="task" id="p2-4">
-            <div class="th"><span class="tid">P2.4</span><h4>Tree context menus and primary actions</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P2.4</span><h4>Tree context menus and primary actions</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/features/tree/contextMenus.tsx</code>, <code>features/tree/actions.ts</code></span>
               <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/database/schemas/tables/TablesTree.tsx</code> (menu intent; the six copy-pasted "show create SQL" blocks are replaced by <code>ddl:get</code>)</span>
@@ -626,7 +628,7 @@
           </div>
 
           <div class="task" id="p2-5">
-            <div class="th"><span class="tid">P2.5</span><h4>Table structure tab</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P2.5</span><h4>Table structure tab</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/tabs/TableStructureTab/{index,Columns,Indexes,Constraints,Triggers,Relations,Partitions,Ddl}.tsx</code></span>
               <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/database/schemas/structures/TableStructure.tsx</code> and siblings (layout only)</span>
@@ -644,7 +646,7 @@
           </div>
 
           <div class="task" id="p2-6">
-            <div class="th"><span class="tid">P2.6</span><h4>DDL service and DDL preview tab</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P2.6</span><h4>DDL service and DDL preview tab</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/ddl/DdlService.ts</code>, <code>src/main/ipc/ddl.ipc.ts</code>, <code>src/renderer/src/tabs/DdlPreviewTab/index.tsx</code>, <code>tests/integration/ddl.test.ts</code></span>
               <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/mainpage/scripts/scriptGenerator.ts</code> (8 builders, rewritten with <code>$n</code> params and server-side <code>format('%I')</code>)</span>
@@ -664,11 +666,11 @@
 
         <!-- ---------------- PHASE 3 ---------------- -->
         <div class="phase" id="p3">
-          <div class="ph"><h3>Phase 3 · Query runner and results grid</h3><span class="badge todo">TODO</span><span class="goal">Stream any query, cancel it, see structured errors, edit SQL with schema-aware completion.</span></div>
+          <div class="ph"><h3>Phase 3 · Query runner and results grid</h3><span class="badge done">COMPLETED</span><span class="goal">Stream any query, cancel it, see structured errors, edit SQL with schema-aware completion.</span></div>
           <div class="exit"><b>Exit criteria:</b> a 1M-row <code>SELECT *</code> streams without freezing and stops at the cap; cancel is observed in &lt; 500 ms; errors show line/col markers; <code>1.10::numeric</code> displays as <code>1.10</code>.</div>
 
           <div class="task" id="p3-1">
-            <div class="th"><span class="tid">P3.1</span><h4>SessionManager, QueryRunner, cancel</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P3.1</span><h4>SessionManager, QueryRunner, cancel</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/db/SessionManager.ts</code>, <code>QueryRunner.ts</code>, <code>cancel.ts</code>, <code>tests/integration/queryRunner.test.ts</code></span>
               <span class="k">Port from</span><span>— (replaces <code>PostgresServer.dbQuery</code> and <code>getPgTransaction</code>)</span>
@@ -687,7 +689,7 @@
           </div>
 
           <div class="task" id="p3-2">
-            <div class="th"><span class="tid">P3.2</span><h4>Query IPC and query history store</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P3.2</span><h4>Query IPC and query history store</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/ipc/query.ipc.ts</code>, <code>session.ipc.ts</code>, <code>history.ipc.ts</code>, <code>src/main/history/QueryHistory.ts</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -704,7 +706,7 @@
           </div>
 
           <div class="task" id="p3-3">
-            <div class="th"><span class="tid">P3.3</span><h4>Monaco setup, SQL editor, schema-aware completion</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P3.3</span><h4>Monaco setup, SQL editor, schema-aware completion</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/features/editor/monacoSetup.ts</code>, <code>MonacoSqlEditor.tsx</code>, <code>sqlCompletion.ts</code>, <code>sqlContext.ts</code>, <code>tests/unit/sqlContext.test.ts</code></span>
               <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/components/editor/completion.ts</code> (keyword/function/snippet lists); <code>MonacoSqlEditor.tsx</code> (context ideas only)</span>
@@ -724,7 +726,7 @@
           </div>
 
           <div class="task" id="p3-4">
-            <div class="th"><span class="tid">P3.4</span><h4>Query tab</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P3.4</span><h4>Query tab</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/tabs/QueryTab/{index,Toolbar,ResultsPanel,MessagesPanel,useQueryRun}.tsx</code></span>
               <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/components/editor/QueryComponent.tsx</code> (nothing structural; the run-then-reload-catalog pattern is dropped)</span>
@@ -743,7 +745,7 @@
           </div>
 
           <div class="task" id="p3-5">
-            <div class="th"><span class="tid">P3.5</span><h4>Results grid, cell renderers, row detail</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P3.5</span><h4>Results grid, cell renderers, row detail</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/features/grid/ResultsGrid.tsx</code>, <code>cells/{NumberCell,TextCell,NullCell,BoolCell,TimeCell,JsonCell,ByteaCell,ArrayCell}.tsx</code>, <code>RowDetail.tsx</code>, <code>lib/format.ts</code>, <code>tests/unit/format.test.ts</code></span>
               <span class="k">Port from</span><span><code>legacy/.../results/datatable/components/data-table.tsx</code> (TanStack usage only)</span>
@@ -762,7 +764,7 @@
           </div>
 
           <div class="task" id="p3-6">
-            <div class="th"><span class="tid">P3.6</span><h4>History slice and panel</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P3.6</span><h4>History slice and panel</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/store/history.slice.ts</code>, <code>features/history/HistoryDrawer.tsx</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -780,11 +782,11 @@
 
         <!-- ---------------- PHASE 4 ---------------- -->
         <div class="phase" id="p4">
-          <div class="ph"><h3>Phase 4 · Document links and backlinks</h3><span class="badge todo">TODO</span><span class="goal">The signature feature: every link-shaped value anywhere is navigable; every document shows who references it.</span></div>
+          <div class="ph"><h3>Phase 4 · Document links and backlinks</h3><span class="badge done">COMPLETED</span><span class="goal">The signature feature: every link-shaped value anywhere is navigable; every document shows who references it.</span></div>
           <div class="exit"><b>Exit criteria:</b> from the <code>sales.sales_order</code> grid, clicking <code>sales_customer/42</code> in <code>customer_ref</code> and inside nested <code>payload</code> opens <code>document:…/sales/sales_customer/42</code>; a second customer opens a second tab; Backlinks lists orders via FK and via jsonb; Back/Forward works.</div>
 
           <div class="task" id="p4-1">
-            <div class="th"><span class="tid">P4.1</span><h4>Pure doc-link modules: parse, find, rank</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P4.1</span><h4>Pure doc-link modules: parse, find, rank</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/shared/doclink/parseDocRef.ts</code>, <code>findDocRefs.ts</code>, <code>rankCandidates.ts</code>, <code>tests/unit/{parseDocRef,findDocRefs,rankCandidates}.test.ts</code></span>
               <span class="k">Port from</span><span>— (replaces the <code>split('_')</code> heuristics in <code>legacy/.../useDataTableColumns.tsx</code> and <code>MonacoJsonEditor.tsx</code>)</span>
@@ -802,7 +804,7 @@
           </div>
 
           <div class="task" id="p4-2">
-            <div class="th"><span class="tid">P4.2</span><h4>DocLinkResolver and resolve IPC</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P4.2</span><h4>DocLinkResolver and resolve IPC</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/doclink/DocLinkResolver.ts</code>, <code>src/main/ipc/doclink.ipc.ts</code>, <code>tests/integration/docLinkResolver.test.ts</code></span>
               <span class="k">Port from</span><span>— (replaces <code>legacy/.../document/DocumentViewer.tsx:27</code> interpolated SELECT)</span>
@@ -820,7 +822,7 @@
           </div>
 
           <div class="task" id="p4-3">
-            <div class="th"><span class="tid">P4.3</span><h4>BacklinkFinder with FK index and jsonb path scans</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P4.3</span><h4>BacklinkFinder with FK index and jsonb path scans</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/doclink/BacklinkFinder.ts</code>, <code>src/main/catalog/fkIndex.ts</code>, <code>tests/integration/backlinks.test.ts</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -839,7 +841,7 @@
           </div>
 
           <div class="task" id="p4-4">
-            <div class="th"><span class="tid">P4.4</span><h4>useDocLinks hook, link chip, hover preview, ambiguity picker</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P4.4</span><h4>useDocLinks hook, link chip, hover preview, ambiguity picker</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/features/doclink/useDocLinks.ts</code>, <code>DocLinkChip.tsx</code>, <code>DocPreviewCard.tsx</code>, <code>AmbiguityPicker.tsx</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -857,7 +859,7 @@
           </div>
 
           <div class="task" id="p4-5">
-            <div class="th"><span class="tid">P4.5</span><h4>Document tab</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P4.5</span><h4>Document tab</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/tabs/DocumentTab/{index,Header,JsonTree,JsonEditorView,ReferencesPanel,BacklinksPanel,SaveDiffSheet}.tsx</code>, <code>features/editor/MonacoJsonEditor.tsx</code></span>
               <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/components/document/DocumentEditor.tsx</code> (nothing structural; the interpolated UPDATE and <code>formatValue</code> NULL bug are not ported)</span>
@@ -876,7 +878,7 @@
           </div>
 
           <div class="task" id="p4-6">
-            <div class="th"><span class="tid">P4.6</span><h4>Link chips everywhere in the grid and JSON trees</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P4.6</span><h4>Link chips everywhere in the grid and JSON trees</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/features/grid/cells/TextCell.tsx</code>, <code>cells/JsonCell.tsx</code>, <code>features/grid/JsonTree.tsx</code>, <code>features/grid/fkChips.ts</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -894,7 +896,7 @@
           </div>
 
           <div class="task" id="p4-7">
-            <div class="th"><span class="tid">P4.7</span><h4>Monaco link provider for JSON and SQL string literals</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P4.7</span><h4>Monaco link provider for JSON and SQL string literals</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/features/editor/jsonDocLinks.ts</code>, <code>sqlDocLinks.ts</code> (registered from <code>monacoSetup.ts</code>)</span>
               <span class="k">Port from</span><span><code>legacy/src/renderer/src/app/components/editor/MonacoJsonEditor.tsx</code> (replaced; its per-mount provider and accumulating decorations are not ported)</span>
@@ -914,11 +916,11 @@
 
         <!-- ---------------- PHASE 5 ---------------- -->
         <div class="phase" id="p5">
-          <div class="ph"><h3>Phase 5 · Table data editing, filters, DDL actions, export</h3><span class="badge todo">TODO</span><span class="goal">Browse and edit real tables safely with generated, parameterised SQL.</span></div>
+          <div class="ph"><h3>Phase 5 · Table data editing, filters, DDL actions, export</h3><span class="badge done">COMPLETED</span><span class="goal">Browse and edit real tables safely with generated, parameterised SQL.</span></div>
           <div class="exit"><b>Exit criteria:</b> edit 3 cells + insert 1 + delete 1 → one transaction; a constraint violation rolls everything back and highlights the op; NULL and <code>''</code> round-trip distinguishably; <code>numeric(30,10)</code> edits keep every digit; a 10k-row CSV opens in a spreadsheet.</div>
 
           <div class="task" id="p5-1">
-            <div class="th"><span class="tid">P5.1</span><h4>SQL builders: filters, select (keyset/offset), mutations</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P5.1</span><h4>SQL builders: filters, select (keyset/offset), mutations</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/sql/filters.ts</code>, <code>selectBuilder.ts</code>, <code>mutationBuilder.ts</code>, <code>src/shared/sql/quote.ts</code>, <code>tests/unit/{filters,selectBuilder,mutationBuilder,quote}.test.ts</code>, <code>tests/integration/rowsFetch.test.ts</code></span>
               <span class="k">Port from</span><span>— (replaces interpolated SQL in <code>legacy/.../AddRowButton.tsx</code>, <code>DocumentEditor.tsx</code>, <code>ResultsDataTable.tsx</code>)</span>
@@ -937,7 +939,7 @@
           </div>
 
           <div class="task" id="p5-2">
-            <div class="th"><span class="tid">P5.2</span><h4>Rows IPC: fetch, count, mutate</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P5.2</span><h4>Rows IPC: fetch, count, mutate</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/ipc/rows.ipc.ts</code>, <code>tests/integration/rowsMutate.test.ts</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -955,7 +957,7 @@
           </div>
 
           <div class="task" id="p5-3">
-            <div class="th"><span class="tid">P5.3</span><h4>Table data tab with inline editing</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P5.3</span><h4>Table data tab with inline editing</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/tabs/TableDataTab/{index,FilterBar,Pager,EditFooter,AddRowRow,useEditBuffer,useTableData}.tsx</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -974,7 +976,7 @@
           </div>
 
           <div class="task" id="p5-4">
-            <div class="th"><span class="tid">P5.4</span><h4>Confirm dialog and structure-tab DDL actions</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P5.4</span><h4>Confirm dialog and structure-tab DDL actions</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/components/ConfirmSqlDialog.tsx</code>, <code>tabs/TableStructureTab/pendingAlters.ts</code>, <code>features/tree/ddlActions.ts</code>, <code>features/structure/CreateTableDialog.tsx</code></span>
               <span class="k">Port from</span><span><code>legacy/.../tables/AddTableDialogButton.tsx</code>, <code>CreateSchemaButton.tsx</code> (column grid idea; header/checkbox swap and dropped defaults are fixed)</span>
@@ -992,7 +994,7 @@
           </div>
 
           <div class="task" id="p5-5">
-            <div class="th"><span class="tid">P5.5</span><h4>Export and copy</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P5.5</span><h4>Export and copy</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/export/Exporter.ts</code>, <code>src/main/ipc/export.ipc.ts</code>, <code>src/renderer/src/features/grid/exportMenu.tsx</code>, <code>tests/unit/exporter.test.ts</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -1011,11 +1013,11 @@
 
         <!-- ---------------- PHASE 6 ---------------- -->
         <div class="phase" id="p6">
-          <div class="ph"><h3>Phase 6 · Server overview and fleet</h3><span class="badge todo">TODO</span><span class="goal">See each server's health and the whole fleet at a glance; kill runaway sessions.</span></div>
+          <div class="ph"><h3>Phase 6 · Server overview and fleet</h3><span class="badge done">COMPLETED</span><span class="goal">See each server's health and the whole fleet at a glance; kill runaway sessions.</span></div>
           <div class="exit"><b>Exit criteria:</b> with the three fleet servers connected, the fleet page shows all three; adminserver's page lists 31 databases with sizes; cancelling a runaway query from the activity table works.</div>
 
           <div class="task" id="p6-1">
-            <div class="th"><span class="tid">P6.1</span><h4>StatsService and stats IPC</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P6.1</span><h4>StatsService and stats IPC</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/stats/StatsService.ts</code>, <code>src/main/ipc/stats.ipc.ts</code>, <code>tests/integration/stats.test.ts</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -1033,7 +1035,7 @@
           </div>
 
           <div class="task" id="p6-2">
-            <div class="th"><span class="tid">P6.2</span><h4>Server overview tab</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P6.2</span><h4>Server overview tab</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/tabs/ServerOverviewTab/{index,KpiCards,DatabasesPanel,ActivityPanel,LocksPanel,SlowQueriesPanel,ReplicationPanel}.tsx</code>, <code>features/overview/useOverviewPolling.ts</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -1052,7 +1054,7 @@
           </div>
 
           <div class="task" id="p6-3">
-            <div class="th"><span class="tid">P6.3</span><h4>Fleet view</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P6.3</span><h4>Fleet view</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/tabs/ServerOverviewTab/FleetView.tsx</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -1068,7 +1070,7 @@
           </div>
 
           <div class="task" id="p6-4">
-            <div class="th"><span class="tid">P6.4</span><h4>TimescaleDB awareness</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P6.4</span><h4>TimescaleDB awareness</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/catalog/sql/timescale.sql.ts</code>, <code>src/renderer/src/tabs/TableStructureTab/Hypertable.tsx</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -1087,11 +1089,11 @@
 
         <!-- ---------------- PHASE 7 ---------------- -->
         <div class="phase" id="p7">
-          <div class="ph"><h3>Phase 7 · Polish</h3><span class="badge todo">TODO</span><span class="goal">Shortcuts, palette, settings, updates, plan tree, resilience, cleanup.</span></div>
+          <div class="ph"><h3>Phase 7 · Polish</h3><span class="badge done">COMPLETED</span><span class="goal">Shortcuts, palette, settings, updates, plan tree, resilience, cleanup.</span></div>
           <div class="exit"><b>Exit criteria:</b> every shortcut on the welcome screen works; the palette opens any table in &lt; 100 ms with 2,000 tables; auto-update reaches "downloaded" against a local generic server; <code>legacy/</code> is deleted and lint is clean.</div>
 
           <div class="task" id="p7-1">
-            <div class="th"><span class="tid">P7.1</span><h4>Keybindings</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P7.1</span><h4>Keybindings</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/lib/keybindings.ts</code>, <code>components/ShortcutSheet.tsx</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -1107,7 +1109,7 @@
           </div>
 
           <div class="task" id="p7-2">
-            <div class="th"><span class="tid">P7.2</span><h4>Command palette</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P7.2</span><h4>Command palette</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/shell/CommandPalette.tsx</code>, <code>lib/fuzzy.ts</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -1124,7 +1126,7 @@
           </div>
 
           <div class="task" id="p7-3">
-            <div class="th"><span class="tid">P7.3</span><h4>Settings tab</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P7.3</span><h4>Settings tab</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/tabs/SettingsTab/{index,Appearance,Editor,Query,Safety,Data,Links,History,Connections,About}.tsx</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -1141,7 +1143,7 @@
           </div>
 
           <div class="task" id="p7-4">
-            <div class="th"><span class="tid">P7.4</span><h4>Auto-update and packaging</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P7.4</span><h4>Auto-update and packaging</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/main/updates/autoUpdate.ts</code>, <code>src/main/ipc/app.ipc.ts</code>, <code>electron-builder.yml</code>, <code>dev-app-update.yml</code>, <code>build/entitlements.mac.plist</code></span>
               <span class="k">Port from</span><span><code>legacy/src/main/updates/listenForUpdates.ts</code> (events only; native dialogs removed)</span>
@@ -1159,7 +1161,7 @@
           </div>
 
           <div class="task" id="p7-5">
-            <div class="th"><span class="tid">P7.5</span><h4>EXPLAIN plan tree and editor extras</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P7.5</span><h4>EXPLAIN plan tree and editor extras</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/features/editor/PlanTree.tsx</code>, <code>tabs/QueryTab/ExplainPanel.tsx</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -1176,7 +1178,7 @@
           </div>
 
           <div class="task" id="p7-6">
-            <div class="th"><span class="tid">P7.6</span><h4>Loading, empty and error states; reconnect</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P7.6</span><h4>Loading, empty and error states; reconnect</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>src/renderer/src/components/{Skeleton,EmptyState,ErrorState}.tsx</code>, <code>store/connections.slice.ts</code> (reconnect), <code>features/connections/useReconnect.ts</code></span>
               <span class="k">Port from</span><span>—</span>
@@ -1193,7 +1195,7 @@
           </div>
 
           <div class="task" id="p7-7">
-            <div class="th"><span class="tid">P7.7</span><h4>Delete legacy, README, lint clean</h4><span class="badge todo">TODO</span></div>
+            <div class="th"><span class="tid">P7.7</span><h4>Delete legacy, README, lint clean</h4><span class="badge done">COMPLETED</span></div>
             <div class="tb">
               <span class="k">Files</span><span><code>legacy/</code> (deleted), <code>README.md</code>, <code>.eslintrc.cjs</code>, <code>CLAUDE.md</code> (project) </span>
               <span class="k">Port from</span><span>—</span>
@@ -1221,23 +1223,23 @@
       <div class="tbl-wrap"><table>
         <thead><tr><th>Property</th><th>Test file</th><th>Task</th><th>Status</th></tr></thead>
         <tbody>
-          <tr><td>PROP-01 parseDocRef accepts</td><td><code>tests/unit/parseDocRef.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-02 parseDocRef rejects</td><td><code>tests/unit/parseDocRef.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-03 raw reconstruction</td><td><code>tests/unit/parseDocRef.property.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-04 findDocRefs depth/paths</td><td><code>tests/unit/findDocRefs.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-05 rankCandidates fixtures</td><td><code>tests/unit/rankCandidates.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-06 identifiers only via %I</td><td><code>tests/unit/selectBuilder.test.ts</code>, <code>tests/unit/mutationBuilder.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-07 values only via $n</td><td><code>tests/unit/selectBuilder.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-08 DEFAULT / IS NULL</td><td><code>tests/unit/filters.test.ts</code>, <code>tests/unit/mutationBuilder.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-09 keyset tuples</td><td><code>tests/unit/selectBuilder.test.ts</code>, <code>tests/integration/rowsFetch.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-10 UPDATE/DELETE by full PK</td><td><code>tests/unit/mutationBuilder.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-11 NULL round-trip</td><td><code>tests/integration/rowsMutate.test.ts</code></td><td><a href="#p5-2">P5.2</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-12 numeric precision</td><td><code>tests/integration/queryRunner.test.ts</code>, <code>tests/unit/exporter.test.ts</code></td><td><a href="#p3-1">P3.1</a>, <a href="#p5-5">P5.5</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-13 int8 arrays</td><td><code>tests/integration/rowsMutate.test.ts</code></td><td><a href="#p5-2">P5.2</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-14 workspace round-trip</td><td><code>tests/unit/workspace.test.ts</code></td><td><a href="#p2-1">P2.1</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-15 registry lifecycle</td><td><code>tests/integration/registry.test.ts</code></td><td><a href="#p1-3">P1.3</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-16 session persistence</td><td><code>tests/integration/queryRunner.test.ts</code></td><td><a href="#p3-1">P3.1</a></td><td><span class="badge todo">TODO</span></td></tr>
-          <tr><td>PROP-17 event ordering and cap</td><td><code>tests/integration/queryRunner.test.ts</code></td><td><a href="#p3-1">P3.1</a></td><td><span class="badge todo">TODO</span></td></tr>
+          <tr><td>PROP-01 parseDocRef accepts</td><td><code>tests/unit/parseDocRef.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-02 parseDocRef rejects</td><td><code>tests/unit/parseDocRef.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-03 raw reconstruction</td><td><code>tests/unit/parseDocRef.property.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-04 findDocRefs depth/paths</td><td><code>tests/unit/findDocRefs.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-05 rankCandidates fixtures</td><td><code>tests/unit/rankCandidates.test.ts</code></td><td><a href="#p4-1">P4.1</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-06 identifiers only via %I</td><td><code>tests/unit/selectBuilder.test.ts</code>, <code>tests/unit/mutationBuilder.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-07 values only via $n</td><td><code>tests/unit/selectBuilder.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-08 DEFAULT / IS NULL</td><td><code>tests/unit/filters.test.ts</code>, <code>tests/unit/mutationBuilder.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-09 keyset tuples</td><td><code>tests/unit/selectBuilder.test.ts</code>, <code>tests/integration/rowsFetch.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-10 UPDATE/DELETE by full PK</td><td><code>tests/unit/mutationBuilder.test.ts</code></td><td><a href="#p5-1">P5.1</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-11 NULL round-trip</td><td><code>tests/integration/rowsMutate.test.ts</code></td><td><a href="#p5-2">P5.2</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-12 numeric precision</td><td><code>tests/integration/queryRunner.test.ts</code>, <code>tests/unit/exporter.test.ts</code></td><td><a href="#p3-1">P3.1</a>, <a href="#p5-5">P5.5</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-13 int8 arrays</td><td><code>tests/integration/rowsMutate.test.ts</code></td><td><a href="#p5-2">P5.2</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-14 workspace round-trip</td><td><code>tests/unit/workspace.test.ts</code></td><td><a href="#p2-1">P2.1</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-15 registry lifecycle</td><td><code>tests/integration/registry.test.ts</code></td><td><a href="#p1-3">P1.3</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-16 session persistence</td><td><code>tests/integration/queryRunner.test.ts</code></td><td><a href="#p3-1">P3.1</a></td><td><span class="badge done">COMPLETED</span></td></tr>
+          <tr><td>PROP-17 event ordering and cap</td><td><code>tests/integration/queryRunner.test.ts</code></td><td><a href="#p3-1">P3.1</a></td><td><span class="badge done">COMPLETED</span></td></tr>
         </tbody>
       </table></div>
     </section>
@@ -1379,6 +1381,16 @@ END LOOP; END $$;</code></pre>
           <tr><td></td><td></td><td></td></tr>
         </tbody>
       </table>
+      <h3>Where the shipped code differs from this plan</h3>
+      <p>Every task shipped; a few landed in a different file layout than the Files rows above predicted. Checked against the tree on 2026-09-23.</p>
+      <ul>
+        <li><b>P1.5</b> — catalog SQL is grouped by fetch, not by node kind: indexes, constraints, triggers, sequences, types and extensions are queried from <code>relation.sql.ts</code> / <code>schema.sql.ts</code> rather than ten <code>*.sql.ts</code> files.</li>
+        <li><b>P3.5 / P4.6</b> — the grid's cell renderers live in <code>features/grid/cells/</code> with the JSON tree and edit buffer beside them in <code>features/grid/</code>.</li>
+        <li><b>P5.3</b> — table-data editing is <code>useTableData.ts</code>, <code>InsertRows.tsx</code> and <code>EditFooter.tsx</code>; the edit buffer is shared with the results grid.</li>
+        <li><b>P7.3</b> — the settings tab is two panes (<code>PanesGeneral.tsx</code>, <code>PanesData.tsx</code>) over <code>settingsModel.ts</code>, not six files.</li>
+        <li><b>P7.5</b> — the EXPLAIN tree is <code>tabs/QueryTab/ExplainTree.tsx</code>.</li>
+      </ul>
+
       <h3>Issues found during implementation</h3>
       <table>
         <thead><tr><th style="width:120px">Date</th><th>Task</th><th>Issue</th><th>Resolution</th></tr></thead>
