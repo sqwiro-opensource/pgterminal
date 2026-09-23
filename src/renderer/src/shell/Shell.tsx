@@ -38,7 +38,9 @@ function useCrumbs(): string[] {
 
 /**
  * Application frame: title bar / [sidebar | main] / status bar. Tabs are the navigation; the
- * welcome screen shows when no tab is open.
+ * welcome screen shows when no tab is open. The frame is sized in percentages, not `vw`/`vh`:
+ * the UI font-size setting zooms the root element, and viewport units ignore that zoom, so a
+ * `h-screen` frame paints short of the window edge at any size but 13px.
  * TODO: optional inspector panel on the right (Phase 4 uses it for document peeks).
  */
 export function Shell(): JSX.Element {
@@ -75,7 +77,7 @@ export function Shell(): JSX.Element {
   const onEditConnection = (id: string): void => openConnectionsView(id);
 
   return (
-    <div className="grid h-screen w-screen grid-rows-[38px_1fr_24px] bg-background">
+    <div className="grid h-full w-full grid-rows-[38px_1fr_24px] bg-background">
       <TitleBar
         crumbs={crumbs}
         sidebarVisible={!sidebarCollapsed}
