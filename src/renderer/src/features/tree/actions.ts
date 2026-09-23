@@ -15,6 +15,7 @@ import type { TreeActionApi } from './contextMenus';
 import * as T from './sqlTemplates';
 import { executeDdl, type DdlTarget } from './ddlActions';
 import { openCreateTableDialog } from '@renderer/features/structure/CreateTableDialog';
+import { openRenameGroupDialog } from './RenameGroupDialog';
 import { formatBytes, formatCount, type TreeRow } from './treeModel';
 import { copyText } from '@renderer/lib/clipboard';
 
@@ -237,6 +238,7 @@ export function createTreeActions(ui: { editConnection(id: string): void; newCon
       });
     },
     newConnectionInGroup: (group) => ui.newConnection(group),
+    renameGroup: (group) => openRenameGroupDialog(group),
     connectAll: (group) => {
       for (const m of Object.values(s().connections)) if ((m.group ?? '') === group && s().status[m.id]?.state !== 'connected') void s().connect(m.id);
     },

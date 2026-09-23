@@ -8,6 +8,7 @@ import { useCatalogEvents, type NodeKey } from '@renderer/store/catalog.slice';
 import type { MenuEntry } from '@renderer/components/ui/ContextMenu';
 import { ConfirmDialogHost } from '@renderer/components/ui/ConfirmDialog';
 import { CreateTableDialogHost } from '@renderer/features/structure/CreateTableDialog';
+import { RenameGroupDialogHost } from './RenameGroupDialog';
 import { createTreeActions, selectActiveConnectionId } from './actions';
 import { menuFor, type ActionClass } from './contextMenus';
 import { TreeNode } from './TreeNode';
@@ -234,6 +235,7 @@ export function CatalogTree({ onEditConnection, onNewConnection }: CatalogTreePr
       </div>
 
       <ConfirmDialogHost />
+      <RenameGroupDialogHost />
       <CreateTableDialogHost />
     </>
   );

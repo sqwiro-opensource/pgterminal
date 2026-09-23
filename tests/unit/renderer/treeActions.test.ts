@@ -9,7 +9,7 @@ function fakeActions(): TreeActionApi {
   const api = {} as Record<string, unknown>;
   for (const k of [
     'connect', 'disconnect', 'refreshDatabases', 'setReadOnly', 'editConnection', 'duplicateConnection', 'copyUri', 'deleteConnection',
-    'newConnectionInGroup', 'connectAll', 'disconnectAll', 'collapse', 'openDatabase', 'closeDatabase', 'refreshNode', 'copyName',
+    'newConnectionInGroup', 'renameGroup', 'connectAll', 'disconnectAll', 'collapse', 'openDatabase', 'closeDatabase', 'refreshNode', 'copyName',
     'copyQualifiedName', 'copyChildNames', 'openData', 'openStructure', 'openOverview', 'newQuery', 'refreshMatview', 'ddlPreview',
     'generate', 'createTemplate', 'editView', 'editFunction', 'selectFromFunction', 'confirmDrop', 'confirmTruncate', 'confirmRename',
     'confirmRestartSequence'
@@ -39,6 +39,20 @@ describe('menuFor', () => {
     for (const e of [...off, ...on]) expect(Boolean(e.onSelect) || (e.disabled && e.reason)).toBeTruthy();
     on.find((e) => e.label === 'Disconnect')?.onSelect?.();
     expect(a.disconnect).toHaveBeenCalledWith('c1');
+  });
+
+  it('group menu renames a real group and explains why Ungrouped cannot be renamed', () => {
+    const a = fakeActions();
+    const named = menuFor(row('group', { label: 'Fleet' }), { actions: a });
+    expect(labels(named)).toEqual(['New connection here', 'Rename group…', 'Connect all', 'Disconnect all', 'Collapse']);
+    named.find((e) => e.label === 'Rename group…')?.onSelect?.();
+    expect(a.renameGroup).toHaveBeenCalledWith('Fleet');
+
+    const ungrouped = menuFor(row('group', { label: 'Ungrouped' }), { actions: a });
+    const rename = ungrouped.find((e) => e.label === 'Rename group…');
+    expect(rename?.disabled).toBe(true);
+    expect(rename?.reason).toBe('Not a group');
+    expect(a.renameGroup).toHaveBeenCalledTimes(1);
   });
 
   it('table menu follows the spec order and Generate SQL is a submenu', () => {

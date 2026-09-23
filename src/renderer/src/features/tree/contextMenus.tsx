@@ -22,6 +22,7 @@ export interface TreeActionApi {
   copyUri(id: string): void;
   deleteConnection(id: string): void;
   newConnectionInGroup(group: string): void;
+  renameGroup(group: string): void;
   connectAll(group: string): void;
   disconnectAll(group: string): void;
   collapse(row: TreeRow): void;
@@ -84,7 +85,9 @@ export function menuFor(row: TreeRow, ctx: MenuContext): MenuEntry[] {
       const g = row.label === 'Ungrouped' ? '' : row.label;
       return [
         { label: 'New connection here', onSelect: () => a.newConnectionInGroup(g) },
-        later('Rename group', 'inspector'),
+        g
+          ? { label: 'Rename group…', onSelect: () => a.renameGroup(g) }
+          : { label: 'Rename group…', disabled: true, reason: 'Not a group' },
         { label: 'Connect all', onSelect: () => a.connectAll(g), separatorBefore: true },
         { label: 'Disconnect all', onSelect: () => a.disconnectAll(g) },
         { label: 'Collapse', onSelect: () => a.collapse(row), separatorBefore: true }
