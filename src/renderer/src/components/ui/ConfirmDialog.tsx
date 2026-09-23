@@ -105,7 +105,9 @@ function ConfirmBody({ spec, onClose }: { spec: ConfirmSpec; onClose(): void }):
         <DialogDescription className="text-[12.5px] text-foreground">{spec.summary}</DialogDescription>
       </DialogHeader>
 
-      <div className="space-y-3 px-4 pb-3 text-[12.5px]">
+      {/* min-w-0: the dialog is a grid, and without it the SQL block's longest line sizes the
+          column, so the header, footer and Copy button spill past the panel. */}
+      <div className="min-w-0 space-y-3 px-4 pb-3 text-[12.5px]">
         {spec.details && spec.details.length > 0 && (
           <ul className="space-y-0.5 text-muted-foreground">
             {spec.details.map((d) => (
